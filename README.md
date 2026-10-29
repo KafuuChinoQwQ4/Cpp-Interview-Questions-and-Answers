@@ -21,7 +21,6 @@
 
 - [Typst 源文件](Cpp-Interview-Questions-and-Answers.typ)：可编辑的原稿，包含题目、答案、目录和参考文献。
 - [PDF 版本](Cpp-Interview-Questions-and-Answers.pdf)：适合阅读和打印。
-- [增补与去重记录](增补与去重记录.md)：列出各栏目来源题的处理结果、收录位置和答案核对资料。
 
 ## 重新生成 PDF
 
@@ -37,4 +36,4 @@ typst compile "Cpp-Interview-Questions-and-Answers.typ" "Cpp-Interview-Questions
 
 文档末尾列出了 C++ 工作草案、官方手册、IETF RFC、数据库/消息系统与平台文档等技术资料。计算机基础与后端的 14 个栏目入口页、76 篇后端文章正文，以及大模型六栏目的 124 道题目正文均已通过 Windows 原生 Google Chrome 读取；来源问法与题库题目逐项比对，新增答案以独立表述整理。具体行为与 API 细节请结合目标语言标准、库版本和平台文档核对。
 
-本轮补充来源为[图解网络](https://www.xiaolincoding.com/network/)、[图解系统](https://www.xiaolincoding.com/os/)、[图解 MySQL](https://www.xiaolincoding.com/mysql/)、[图解 Redis](https://www.xiaolincoding.com/redis/)、[图解 Agent](https://xiaolinnote.com/agent/)、[图解 Claude Code](https://xiaolinnote.com/claudecode/)及[图解 Codex](https://xiaolinnote.com/codex/)，读取方式同为用户已验证的 Windows 原生 Google Chrome。逐篇处理结果见去重记录；目录、学习方法、重复旧路径和未成文占位页单独标明，不计新增题。
+本轮补充来源为[图解网络](https://www.xiaolincoding.com/network/)、[图解系统](https://www.xiaolincoding.com/os/)、[图解 MySQL](https://www.xiaolincoding.com/mysql/)、[图解 Redis](https://www.xiaolincoding.com/redis/)、[图解 Agent](https://xiaolinnote.com/agent/)、[图解 Claude Code](https://xiaolinnote.com/claudecode/)及[图解 Codex](https://xiaolinnote.com/codex/)，读取方式同为用户已验证的 Windows 原生 Google Chrome。目录、学习方法、重复旧路径和未成文占位页不计新增题。

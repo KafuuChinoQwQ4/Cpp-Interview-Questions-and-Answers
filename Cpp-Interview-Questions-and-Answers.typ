@@ -1,11 +1,8 @@
 #set page(
   paper: "a4",
   margin: (top: 21mm, bottom: 18mm, left: 20mm, right: 20mm),
-  header: context [
-    #align(right)[#text("C++面经八股", size: 8pt, fill: rgb("#687783"))]
-  ],
   footer: context [
-    #align(center)[#text[面试速答版 · #counter(page).display() / #counter(page).final().first()]]
+    #align(center)[#text[#counter(page).display() / #counter(page).final().first()]]
   ],
 )
 #set text(font: "Noto Sans CJK SC", size: 10pt, lang: "zh", fill: rgb("#243442"))
@@ -13,12 +10,6 @@
 #set par(justify: true, leading: 0.68em, spacing: 0.55em)
 #set heading(numbering: none)
 
-#align(center)[#text("C++面经八股", size: 25pt, weight: "bold", fill: rgb("#174B66"))]
-#v(0.45em)
-#align(center)[#text("915 道分类面试题与速记答案", size: 10pt, fill: rgb("#687783"))]
-#v(1.15em)
-#block(width: 100%, fill: rgb("#F1F6F8"), inset: 9pt, radius: 3pt)[#text("全文按主题分类整理，答案突出核心概念、适用场景和常见边界；带注释的伪代码用于解释关键原理、分支和边界，C++ 标准库名称均使用完整的 std:: 限定；参考文献列于文末。", size: 9.5pt)]
-#pagebreak()
 #align(center)[#text("目 录", size: 14pt, weight: "medium", fill: rgb("#000000"))]
 #v(1em)
 #set outline(indent: 1.35em, title: none, depth: 2)
@@ -5334,7 +5325,7 @@
 - [S21] OpenCV 4.x 官方文档：图像处理、矩阵与标定：#link("https://docs.opencv.org/4.x/")[文档入口] · #link("https://docs.opencv.org/4.x/d3/d63/classcv_1_1Mat.html")[cv::Mat] · #link("https://docs.opencv.org/4.x/d4/d94/tutorial_camera_calibration.html")[相机标定]
 - [S22] ROS 2 QoS 官方设计文档：#link("https://design.ros2.org/articles/qos.html")[QoS 策略] · #link("https://design.ros2.org/articles/qos_deadline_liveliness_lifespan.html")[Deadline、Liveliness 与 Lifespan]
 
-#text("S23 为本次增补的选题与去重来源；N 系列为新增答案核对的官方资料。新增题目按考点独立整理，近义问法统一收录，逐项比对清单见仓库《增补与去重记录》。", size: 9.5pt)
+#text("S23 为本次增补的选题与去重来源；N 系列为新增答案核对的官方资料。新增题目按考点独立整理，近义问法统一收录。", size: 9.5pt)
 - [S23] 小林 coding 面试栏目（2026-10-29 读取）：#link("https://www.xiaolincoding.com/interview/cpp.html")[C++] · #link("https://www.xiaolincoding.com/interview/python.html")[Python] · #link("https://www.xiaolincoding.com/interview/mysql.html")[MySQL] · #link("https://www.xiaolincoding.com/interview/redis.html")[Redis] · #link("https://www.xiaolincoding.com/interview/network.html")[计算机网络] · #link("https://www.xiaolincoding.com/interview/os.html")[操作系统] · #link("https://www.xiaolincoding.com/interview/data.html")[数据结构与算法] · #link("https://www.xiaolincoding.com/interview/mq.html")[消息队列] · #link("https://www.xiaolincoding.com/interview/cap.html")[分布式] · #link("https://www.xiaolincoding.com/interview/systemdesign.html")[系统设计] · #link("https://www.xiaolincoding.com/interview/linux.html")[Linux 命令] · #link("https://www.xiaolincoding.com/interview/git.html")[Git] · #link("https://www.xiaolincoding.com/interview/docker.html")[Docker] · #link("https://www.xiaolincoding.com/interview/win.html")[后端进阶路线图]
 - [N1] #link("https://eel.is/c++draft/basic.compound")[C++ 工作草案：复合类型与指针转换]
 - [N2] #link("https://eel.is/c++draft/conv.ptr")[C++ 工作草案：指针转换]
