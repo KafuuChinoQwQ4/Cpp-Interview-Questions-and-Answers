@@ -922,7 +922,7 @@
 #heading(level: 2, outlined: true)[#text("7.5 进程、执行与启动链路", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("016  一个用户态程序从 execve 到 main 经历哪些步骤？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  以 Linux 的动态 ELF 程序为例，shell 或其他进程先调用 execve；内核检查文件格式和权限，建立新的地址空间并映射可加载段，若 ELF 指定解释器则把控制权交给动态装载器。ELF 的 entry point 指向运行时入口或动态解释器，不是 main；运行时设置初始栈、环境与参数，C 运行时的 _start 再完成初始化并调用 main。装载器按依赖映射共享对象、处理重定位和初始化。静态链接、PIE、懒绑定和不同 ABI 会改变细节；“文件能执行”不等于所有依赖或运行时架构都兼容。〔N27、N25、N26〕", size: 9.5pt)
+  #text("答案  以 Linux ELF 程序为例，shell 或其他进程调用 execve 后，内核建立新映像、映射主程序的可加载段，并构造含参数、环境变量和辅助向量的初始栈。若程序带 PT_INTERP，内核先从解释器入口启动动态装载器；它映射共享库、完成重定位，再转到主程序入口。没有解释器时则从主程序入口启动。ELF 的入口地址不是 C/C++ 的 main；常见工具链中主程序入口通常落在 C 运行时的 _start，由其完成运行时初始化后调用 main。静态链接、PIE、懒绑定和不同 ABI 会改变细节；“文件能执行”不等于所有依赖或运行时架构都兼容。〔N27、N25、N26、N252〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
@@ -5016,3 +5016,4 @@
 - [N249] #link("https://prometheus.io/docs/introduction/overview/")[Prometheus：架构与抓取]
 - [N250] #link("https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Task.CDC.html")[AWS DMS：持续变更捕获]
 - [N251] #link("https://kubernetes.io/docs/concepts/overview/")[Kubernetes：声明式编排]
+- [N252] #link("https://man7.org/linux/man-pages/man2/execve.2.html")[Linux man-pages：execve 与 ELF 解释器]
