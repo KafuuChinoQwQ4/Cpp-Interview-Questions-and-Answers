@@ -9,6 +9,7 @@
   ],
 )
 #set text(font: "Noto Sans CJK SC", size: 10pt, lang: "zh", fill: rgb("#243442"))
+#show raw: set text(font: "Noto Sans Mono CJK SC")
 #set par(justify: true, leading: 0.68em, spacing: 0.55em)
 #set heading(numbering: none)
 

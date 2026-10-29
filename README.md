@@ -27,7 +27,7 @@
 typst compile "C++面经八股.typ" "C++面经八股.pdf"
 ```
 
-文档默认使用 **Noto Sans CJK SC** 字体。若本机没有该字体，可安装后编译，或在 Typst 源文件中替换字体设置。
+正文使用 **Noto Sans CJK SC**，代码块使用 **Noto Sans Mono CJK SC**，让中文代码注释保持清晰端正。若本机缺少这些字体，可安装后编译，或在 Typst 源文件中替换字体设置。
 
 ## 参考资料
 
