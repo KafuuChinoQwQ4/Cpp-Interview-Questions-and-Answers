@@ -15,7 +15,7 @@
 
 #align(center)[#text("C++面经八股", size: 25pt, weight: "bold", fill: rgb("#174B66"))]
 #v(0.45em)
-#align(center)[#text("808 道分类面试题与速记答案", size: 10pt, fill: rgb("#687783"))]
+#align(center)[#text("809 道分类面试题与速记答案", size: 10pt, fill: rgb("#687783"))]
 #v(1.15em)
 #block(width: 100%, fill: rgb("#F1F6F8"), inset: 9pt, radius: 3pt)[#text("全文按主题分类整理，答案突出核心概念、适用场景和常见边界；带注释的伪代码用于解释关键原理、分支和边界，C++ 标准库名称均使用完整的 std:: 限定；参考文献列于文末。", size: 9.5pt)]
 #pagebreak()
@@ -155,7 +155,7 @@
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("020  static 在 C++ 中有哪些常见用法？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  局部 static 对象具有静态存储期，在控制流首次经过定义时初始化；C++11 起此初始化由语言保证线程安全。命名空间作用域 static 通常赋予名字内部链接，类 static 数据成员则属于类而非某个实例。初始化完成后对共享状态的读写仍可能有数据竞争，需单独设计同步。", size: 9.5pt)
+  #text("答案  局部 static 对象具有静态存储期，在控制流首次经过定义时初始化；C++11 起此初始化由语言保证线程安全。命名空间作用域 static 通常赋予名字内部链接，类 static 数据成员则属于类而非某个实例。static 成员函数没有 this，不能直接访问非静态成员，也不能声明为 virtual 或带 cv/ref 限定；C++17 前非 inline 静态数据成员通常需在类外定义，C++17 inline static 可在类内定义。初始化完成后对共享状态的读写仍可能有数据竞争，需单独设计同步。", size: 9.5pt)
   #raw("struct Registry { static int count; }; // 类级数据，不属于某个实例\nint Registry::count = 0; // 非 inline 成员在一个源文件定义一次\nint& shared_state() { static int state = 0; return state; }\n// 首次经过时初始化由 C++11 保证线程安全\n++shared_state(); // 初始化安全不代表之后的并发写安全\n// 命名空间 static 通常内部链接；局部 static 生命周期贯穿程序", lang: "cpp", block: true)
 ]
 
@@ -248,8 +248,8 @@
 #heading(level: 2, outlined: true)[#text("1.4 指针、对象表示与调用接口", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("035  对象指针、void* 和成员指针分别能表达什么？大小是否固定？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  对象指针保存某类对象的地址语义；解引用前必须满足非空、对齐及目标生命周期要求。void* 可暂存对象地址，但没有可解引用的对象类型，C++ 中转回 T* 通常需显式转换；不能把任意函数指针也当成可移植的 void*。成员指针还需结合所属类的对象使用，和普通对象指针的表示可能不同。常见 64 位 ABI 的普通对象指针为 8 字节，这不是语言对所有平台、所有指针类别的统一保证。malloc 返回原始存储，强转本身不负责完成任意 C++ 对象的构造。〔N1、N2〕", size: 9.5pt)
-  #raw("int value = 3;\nvoid* storage = &value;\nint* p = static_cast<int*>(storage); // 还原真实对象类型\nstruct Item { int score; };\nint Item::*member = &Item::score; // 成员指针，必须结合对象\nItem item{7};\nint score = item.*member;", lang: "cpp", block: true)
+  #text("答案  对象指针表达某类对象的地址语义；解引用前必须满足非空、对齐及目标生命周期要求。void* 可暂存对象地址，但没有可解引用的对象类型，C++ 中转回 T* 通常需显式转换；不能把任意函数指针也当成可移植的 void*。成员数据指针和成员函数指针都须结合所属类对象使用：前者可写作 int Item::*，后者如 int (Item::*)() const，调用时分别用 .* 或 ->*。非静态成员函数中的 this 指向当前对象，const 成员函数中的 this 指向 const 对象；静态成员函数没有 this。它们与普通对象指针的表示和大小可能不同。常见 64 位 ABI 的普通对象指针为 8 字节，这不是语言对所有平台、所有指针类别的统一保证。malloc 返回原始存储，强转本身不负责完成任意 C++ 对象的构造。〔N1、N2〕", size: 9.5pt)
+  #raw("int value = 3;\nvoid* storage = &value;\nint* p = static_cast<int*>(storage); // 还原真实对象类型\nstruct Item {\n  int score;\n  int read_score() const { return this->score; } // 非静态成员中 this 指向当前对象\n};\nint Item::*member = &Item::score;\nint (Item::*method)() const = &Item::read_score;\nItem item{7};\nint score = item.*member;\nint copy = (item.*method)(); // 成员函数指针须绑定对象", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: false)[
@@ -523,6 +523,12 @@
   #raw("struct Handle {\n  Handle() = default;\n  Handle(const Handle&) = delete;\n  Handle& operator=(const Handle&) = delete;\n  Handle(Handle&&) = default; // 仍须确认成员的移动语义正确\n  Handle& operator=(Handle&&) = default;\n};", lang: "cpp", block: true)
 ]
 
+#heading(level: 2, outlined: true)[#text("3.5 C++11 语言与模板补充", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
+#block(width: 100%, breakable: false)[
+  #heading(level: 2, outlined: false)[#text("022  C++11 的范围 for、enum class 和变长参数模板有何特点？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
+  #text("答案  C++11 范围 for 把范围遍历写成简洁循环，语义上依赖 begin/end；对大型元素使用 const auto& 可避免复制，遍历期间修改容器还要遵守迭代器失效规则。enum class 是有作用域的强类型枚举，枚举值不会隐式转成整数，可显式指定底层整数类型。变长参数模板用参数包表示零个或多个模板/函数参数，并通过展开把同一操作应用到各项；C++11 常用递归重载消费参数包，折叠表达式是 C++17 才加入。移动语义、智能指针、Lambda、auto、nullptr 等其他常见特性已在对应题目单独整理。〔N21、N22、N23〕", size: 9.5pt)
+]
+
 #heading(level: 1, outlined: true)[#text("第4章 并发与线程安全", size: 15pt, weight: "bold", fill: rgb("#000000"))]
 #heading(level: 2, outlined: true)[#text("4.1 同步原语与线程管理", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
 #block(width: 100%, breakable: false)[
@@ -676,7 +682,7 @@
 #heading(level: 2, outlined: true)[#text("5.2 算法、缓存与 I/O", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("007  如何优化 C++ 中的算法复杂度？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  先分析输入规模和操作比例，再选择算法与容器：unordered_map 查找平均期望 O(1) 但最坏可达 O(n)，map 为 O(log n) 且有序；list 只有在已持有位置迭代器时插删才便宜，查找仍是 O(n)。双指针、滑动窗口和二分需满足各自的数据条件，动态规划用于消除重复子问题；用复杂度和实测共同评估。", size: 9.5pt)
+  #text("答案  先声明分析口径：Big-O 描述渐近增长上界，面试中还要区分最坏、平均、期望和均摊复杂度，并分别计算辅助空间与输出空间。顺序代码通常由增长最快的主项决定；嵌套循环要按实际执行次数求和，不能只看语法层数；递归还要计入递归深度和调用栈。再结合输入规模与操作比例选算法和容器：unordered_map 查找平均期望 O(1) 但最坏可达 O(n)，map 为 O(log n) 且有序；list 只有在已持有位置迭代器时插删才便宜，查找仍是 O(n)。双指针、滑动窗口和二分需满足各自的数据条件，动态规划用于消除重复子问题；最后用复杂度和实测共同评估。", size: 9.5pt)
   #raw("#include <algorithm>\n#include <list>\n#include <map>\n#include <unordered_map>\nstd::unordered_map<Key, Value> by_key; // 平均期望 O(1)，最坏 O(n)\nstd::map<Key, Value> ordered; // 有序查找/插入 O(log n)\nstd::list<Value> chain; // 已有迭代器时插删便宜，按值查找仍 O(n)\n// 二分需有序；双指针/滑窗需满足单调条件，DP 消除重复子问题\n// 依输入规模和操作比例选结构，再用代表性负载验证", lang: "cpp", block: true)
 ]
 
@@ -803,18 +809,18 @@
 #heading(level: 2, outlined: true)[#text("6.4 头文件搜索与二进制装载", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("016  头文件包含中的双引号和尖括号怎样影响搜索路径？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  二者都交给预处理器查找并展开文件，区别在于实现定义的搜索策略。以 GCC 为例，双引号形式先查当前被包含文件所在目录，再查 -iquote 路径及尖括号搜索链；尖括号通常查 -I、系统头文件等路径。具体顺序仍受编译器和命令行选项影响，不应简单等同于“用户文件”和“标准库文件”。包含同名文件时，应结合编译命令和预处理输出定位实际路径。选择形式不会自动解决循环依赖、重复定义或 ODR 问题，这些需另外设计声明和定义边界。〔N21〕", size: 9.5pt)
+  #text("答案  二者都交给预处理器查找并展开文件，区别在于实现定义的搜索策略。以 GCC 为例，双引号形式先查当前被包含文件所在目录，再查 -iquote 路径及尖括号搜索链；尖括号通常查 -I、系统头文件等路径。具体顺序仍受编译器和命令行选项影响，不应简单等同于“用户文件”和“标准库文件”。包含同名文件时，应结合编译命令和预处理输出定位实际路径。选择形式不会自动解决循环依赖、重复定义或 ODR 问题，这些需另外设计声明和定义边界。〔N24〕", size: 9.5pt)
   #raw("#include \"project/config.hpp\" // 常用于项目头文件\n#include <vector> // 常用于库头文件\n// GCC 可用 -E -v 查看预处理与搜索目录；实际以构建命令为准", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("017  Linux 进程启动或 dlopen 时，动态库如何映射并完成符号绑定？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  动态链接可执行文件启动时，内核读取 ELF 信息并把控制权交给指定的运行时装载器；装载器按依赖和搜索规则映射共享对象，处理必要重定位、符号解析及初始化，再进入程序。dlopen 可在运行中请求装载额外对象，dlsym 取得符号，dlclose 递减引用，但不保证所有情形都立即卸载。共享库的只读代码页可被多个进程共享，进程的可写数据仍有独立语义。库搜索路径、RUNPATH、符号版本和 RTLD_NOW/RTLD_LAZY 会影响行为；文件存在不代表依赖和 ABI 一定相容。〔N22〕", size: 9.5pt)
+  #text("答案  动态链接可执行文件启动时，内核读取 ELF 信息并把控制权交给指定的运行时装载器；装载器按依赖和搜索规则映射共享对象，处理必要重定位、符号解析及初始化，再进入程序。dlopen 可在运行中请求装载额外对象，dlsym 取得符号，dlclose 递减引用，但不保证所有情形都立即卸载。共享库的只读代码页可被多个进程共享，进程的可写数据仍有独立语义。库搜索路径、RUNPATH、符号版本和 RTLD_NOW/RTLD_LAZY 会影响行为；文件存在不代表依赖和 ABI 一定相容。〔N25〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("018  一次函数调用一定把所有参数压栈吗？栈帧通常保存什么？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  参数传递、返回值和寄存器保存由目标调用约定决定；例如常见 x86-64 System V ABI 优先用若干通用或向量寄存器传递合适的参数，剩余部分才使用栈，不能把 32 位教材的逐个压栈过程套到所有平台。栈帧可能含局部对象、溢出寄存器、保存的返回信息与对齐填充；内联、尾调用和省略帧指针会改变实际形态。调用者与被调用者分别保存哪些寄存器也是 ABI 的一部分。调试回溯还可依赖展开信息，优化后变量和源码帧未必一一存在。〔N23、N11〕", size: 9.5pt)
+  #text("答案  参数传递、返回值和寄存器保存由目标调用约定决定；例如常见 x86-64 System V ABI 优先用若干通用或向量寄存器传递合适的参数，剩余部分才使用栈，不能把 32 位教材的逐个压栈过程套到所有平台。栈帧可能含局部对象、溢出寄存器、保存的返回信息与对齐填充；内联、尾调用和省略帧指针会改变实际形态。调用者与被调用者分别保存哪些寄存器也是 ABI 的一部分。调试回溯还可依赖展开信息，优化后变量和源码帧未必一一存在。〔N26、N11〕", size: 9.5pt)
 ]
 
 #heading(level: 1, outlined: true)[#text("第7章 操作系统与 Linux", size: 15pt, weight: "bold", fill: rgb("#000000"))]
@@ -871,13 +877,13 @@
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("009  如何排查进程 CPU 使用率突然升高？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  先用 top/ps 确认进程 CPU，再查看线程级占用，区分用户态和系统态；用 perf top/record 或采样 profiler 取得热点栈，映射线程 ID 时注意十进制与十六进制转换。结合请求量、日志和最近变更判断忙循环、锁争用、系统调用或算法退化。优化后在相同负载下比较吞吐和延迟，避免只看瞬时百分比。", size: 9.5pt)
+  #text("答案  先用 top/ps 确认进程 CPU，再查看线程级占用并区分用户态和系统态。Linux 可用 mpstat -P ALL 1 看各核的 usr/sys/iowait，再用 pidstat -u 1 找进程；JVM 可用 top -H -p PID 找高 CPU 线程，把线程十进制 TID 转成十六进制后与 jstack 的 nid 对照，也可用 Arthas thread 查看栈。随后用 perf top/record 或采样 profiler 取得热点，结合请求量、日志和最近变更判断忙循环、锁争用、系统调用或算法退化。优化后在相同负载下比较吞吐和延迟，避免只看瞬时百分比。", size: 9.5pt)
   #raw("top_or_ps(pid); // 先确认进程 CPU，再找高占用线程并识别用户态/系统态\nfor (tid : hot_threads(pid)) { // ps -L / top -H 等工具得到线程 ID\n    profile_stack(tid); // perf top/record 或采样 profiler 找热点栈\n    map_tid_decimal_to_hex_for_logs(tid); // 日志/内核工具的 ID 进制可能不同\n}\ncorrelate_with_request_rate_logs_locks_syscalls_and_recent_changes();\noptimize_confirmed_hot_path();\nbenchmark_same_load_and_compare_throughput_and_tail_latency(); // 不凭瞬时 CPU 百分比下结论", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("010  如何用 GDB 定位崩溃？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  先确保 core dump 已生成且二进制与调试符号对应，再执行 gdb ./程序 core 并查看 bt、线程列表及崩溃线程栈。围绕故障指令检查参数、对象生命周期和相邻内存，必要时切换线程并用 frame、print 查看变量。ASan/UBSan 或最小复现可帮助确认越界、空指针、释放后使用；栈顶位置往往只是症状，不一定是根因。", size: 9.5pt)
+  #text("答案  core dump 是进程崩溃时保存的现场快照，可包含线程寄存器、栈、映射内存和信号等信息；具体内容受系统配置、权限和文件大小限制。确保 core 与匹配的可执行文件、共享库和调试符号对应，再执行 gdb ./程序 core 并查看 bt、线程列表及崩溃线程栈。GDB 按符号和展开信息重建调用帧；优化后参数或局部变量可能已被优化掉，不能假设所有变量都在栈中或可恢复。围绕故障指令检查参数、对象生命周期和相邻内存，必要时切换线程并用 frame、print 查看变量。ASan/UBSan 或最小复现可帮助确认越界、空指针、释放后使用；栈顶位置往往只是症状，不一定是根因。", size: 9.5pt)
   #raw("enable_core_dump_and_reproduce();\ngdb(\"./program\", \"core\");\nthread_apply_all(\"bt\"); // 先看所有线程与崩溃线程栈，不把栈顶直接当根因\nselect_thread(crashing_thread); frame(fault_frame); print(arguments_and_nearby_state);\ncheck_binary_matches_core_and_debug_symbols(); // 符号不匹配会误导栈和变量\nrebuild_with_asan_ubsan_or_minimal_reproducer(); // 定位越界、空指针、释放后使用", lang: "cpp", block: true)
 ]
 
@@ -916,92 +922,92 @@
 #heading(level: 2, outlined: true)[#text("7.5 进程、执行与启动链路", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("016  一个用户态程序从 execve 到 main 经历哪些步骤？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  以 Linux 的动态 ELF 程序为例，shell 或其他进程先调用 execve；内核检查文件格式和权限，建立新的地址空间并映射可加载段，若 ELF 指定解释器则把控制权交给动态装载器。装载器按依赖映射共享对象、处理重定位和初始化，随后 C 运行时设置栈、环境与参数并调用 main。静态链接、PIE、懒绑定和不同 ABI 会改变细节；“文件能执行”不等于所有依赖或运行时架构都兼容。〔N24、N22、N23〕", size: 9.5pt)
+  #text("答案  以 Linux 的动态 ELF 程序为例，shell 或其他进程先调用 execve；内核检查文件格式和权限，建立新的地址空间并映射可加载段，若 ELF 指定解释器则把控制权交给动态装载器。ELF 的 entry point 指向运行时入口或动态解释器，不是 main；运行时设置初始栈、环境与参数，C 运行时的 _start 再完成初始化并调用 main。装载器按依赖映射共享对象、处理重定位和初始化。静态链接、PIE、懒绑定和不同 ABI 会改变细节；“文件能执行”不等于所有依赖或运行时架构都兼容。〔N27、N25、N26〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("017  操作系统从固件到第一个用户进程如何启动？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  具体流程取决于平台；以常见 Linux 机器为例，固件完成基本硬件初始化并选择引导项，bootloader 读取内核、命令行和可能的 initramfs，按启动协议把控制权交给内核。内核建立页表、内存管理、驱动和调度器，挂载或切换到根文件系统，再启动 PID 1，由它继续挂载服务、建立设备和用户空间。每一步都要校验架构、启动介质、参数和根文件系统；引导成功不代表服务依赖已就绪。〔N25〕", size: 9.5pt)
+  #text("答案  具体流程取决于平台；以常见 Linux 机器为例，固件完成基本硬件初始化并选择引导项，bootloader 读取内核、命令行和可能的 initramfs，按启动协议把控制权交给内核。内核建立页表、内存管理、驱动和调度器，挂载或切换到根文件系统，再启动 PID 1，由它继续挂载服务、建立设备和用户空间。每一步都要校验架构、启动介质、参数和根文件系统；引导成功不代表服务依赖已就绪。〔N28〕", size: 9.5pt)
 ]
 
 #heading(level: 2, outlined: true)[#text("7.6 内核边界、调度与同步", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("018  用户态与内核态如何切换，系统调用为什么不同于普通函数调用？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  用户态代码受权限约束，不能任意访问内核地址或直接操作受保护硬件；内核态执行调度、内存、文件和设备等受控服务。普通函数调用通常只在当前权限和地址空间内转移控制；系统调用通过架构规定的入口保存必要上下文、进入内核、检查参数权限，完成服务后返回。设备中断和同步异常也可能使 CPU 进入内核。调用 read 等库函数往往会触发系统调用，但库包装和内核入口不是一回事，有些接口可通过 vDSO 等机制完成。进入内核并不等于一定切换到另一个线程，系统调用开销与任务上下文切换开销要分开分析。〔N26〕", size: 9.5pt)
+  #text("答案  用户态代码受权限约束，不能任意访问内核地址或直接操作受保护硬件；内核态执行调度、内存、文件和设备等受控服务。普通函数调用通常只在当前权限和地址空间内转移控制；系统调用通过架构规定的入口保存必要上下文、进入内核、检查参数权限，完成服务后返回。设备中断和同步异常也可能使 CPU 进入内核。调用 read 等库函数往往会触发系统调用，但库包装和内核入口不是一回事，有些接口可通过 vDSO 等机制完成。进入内核并不等于一定切换到另一个线程，系统调用开销与任务上下文切换开销要分开分析。〔N29〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("019  并发与并行怎样区分，进程和线程上下文切换主要保存什么？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  并发表示多个任务在一段时间内交错推进，并行表示它们在同一时刻执行；单核也能通过调度实现并发。切换执行任务时，内核须保存和恢复程序计数器、栈指针、寄存器及调度相关状态，具体布局依架构实现，部分信息保存在任务结构或内核栈中。不同地址空间的任务切换还涉及页表上下文及地址转换缓存管理；同进程线程可共享地址空间，通常省去这部分成本，但线程仍有独立栈和寄存器状态。TLB 标记、缓存局部性、CPU 迁移和实际工作集都会影响开销，不能断言任意线程切换总比任意进程切换快，也不需要复制整个堆来完成切换。〔N27、N28、N29〕", size: 9.5pt)
+  #text("答案  并发表示多个任务在一段时间内交错推进，并行表示它们在同一时刻执行；单核也能通过调度实现并发。切换执行任务时，内核须保存和恢复程序计数器、栈指针、寄存器及调度相关状态，具体布局依架构实现，部分信息保存在任务结构或内核栈中。不同地址空间的任务切换还涉及页表上下文及地址转换缓存管理；同进程线程可共享地址空间，通常省去这部分成本，但线程仍有独立栈和寄存器状态。TLB 标记、缓存局部性、CPU 迁移和实际工作集都会影响开销，不能断言任意线程切换总比任意进程切换快，也不需要复制整个堆来完成切换。〔N30、N31、N32〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("020  多线程程序调用 fork 后，为什么子进程容易卡在锁上？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  fork 后子进程只保留调用 fork 的那个线程，地址空间中的其他线程却不会一同存在；互斥量等对象的状态仍可能来自父进程快照。若某把锁原由已消失的线程持有，子进程再获取它可能永远等待。POSIX 因而限制多线程 fork 后、exec 前的子进程路径，只调用异步信号安全的函数；printf、复杂分配和一般库调用不能随意使用。pthread_atfork 可协调已知锁，但不容易覆盖第三方库的全部内部状态。启动新程序时宜保持子路径极小，或在符合需求时使用 posix_spawn 等接口，不能指望父进程后来解锁会自动修复子进程的锁副本。〔N30〕", size: 9.5pt)
+  #text("答案  fork 后子进程只保留调用 fork 的那个线程，地址空间中的其他线程却不会一同存在；互斥量等对象的状态仍可能来自父进程快照。若某把锁原由已消失的线程持有，子进程再获取它可能永远等待。POSIX 因而限制多线程 fork 后、exec 前的子进程路径，只调用异步信号安全的函数；printf、复杂分配和一般库调用不能随意使用。pthread_atfork 可协调已知锁，但不容易覆盖第三方库的全部内部状态。启动新程序时宜保持子路径极小，或在符合需求时使用 posix_spawn 等接口，不能指望父进程后来解锁会自动修复子进程的锁副本。〔N33〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("021  信号、信号量和互斥量分别表达什么，为什么不能混用？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  信号是向进程或线程报告事件的异步通知机制，例如终止请求或子进程状态变化；处理函数运行上下文受限，只能使用允许的异步信号安全操作，普通信号也不保证按次数排队。信号量维护可用资源计数，等待操作扣减、发布操作增加，适合多个槽位或生产消费协作；它通常没有互斥量那样的所有者约束。互斥量用于保护临界区及共享不变量，通常应由成功加锁的线程释放。把信号量设为 1 可限制并发，却不意味着拥有互斥量的全部语义；选择时还须明确是线程内同步、跨进程同步，还是仅通知一个事件。〔N31、N32〕", size: 9.5pt)
+  #text("答案  信号是向进程或线程报告事件的异步通知机制，例如终止请求或子进程状态变化；处理函数运行上下文受限，只能使用允许的异步信号安全操作，普通信号也不保证按次数排队。信号量维护可用资源计数，等待操作扣减、发布操作增加，适合多个槽位或生产消费协作；它通常没有互斥量那样的所有者约束。互斥量用于保护临界区及共享不变量，通常应由成功加锁的线程释放。把信号量设为 1 可限制并发，却不意味着拥有互斥量的全部语义；选择时还须明确是线程内同步、跨进程同步，还是仅通知一个事件。〔N34、N35〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("022  常见 CPU 调度策略怎样取舍，Linux 是否一直使用同一种公平调度器？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  先来先服务容易受长任务阻塞，短作业优先可降低平均等待但需要估计任务长度；时间片轮转改善交互响应，优先级和多级反馈队列可区别紧急程度与运行行为。任何策略都要兼顾吞吐、响应、公平和切换成本，优先级过强可能使低优先任务长期得不到 CPU。Linux 暴露普通、FIFO、RR、Deadline 等不同调度类别，内核实现也持续演变：公平调度曾长期以 CFS 为核心，较新内核逐步转向 EEVDF，不能把某个版本的红黑树细节说成永久规则。实时策略还需限制运行预算并检查权限，避免普通任务被饿死。〔N28、N33〕", size: 9.5pt)
+  #text("答案  先来先服务容易受长任务阻塞，短作业优先可降低平均等待但需要估计任务长度；时间片轮转改善交互响应，优先级和多级反馈队列可区别紧急程度与运行行为。任何策略都要兼顾吞吐、响应、公平和切换成本，优先级过强可能使低优先任务长期得不到 CPU。Linux 暴露普通、FIFO、RR、Deadline 等不同调度类别，内核实现也持续演变：公平调度曾长期以 CFS 为核心，较新内核逐步转向 EEVDF，不能把某个版本的红黑树细节说成永久规则。实时策略还需限制运行预算并检查权限，避免普通任务被饿死。〔N31、N36〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("023  自旋、阻塞、悲观和乐观并发控制应怎样选择？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  自旋锁竞争时持续检查状态，省去睡眠唤醒但占用 CPU，适合预期很短且持有者能继续运行的临界区；若持锁者被调度走或线程过量，自旋会浪费算力。阻塞锁让等待者睡眠，适合较长等待，代价是调度开销。悲观控制先取得互斥或读写权限，再检查修改状态；乐观控制先计算，提交时用版本或 CAS 检查冲突并决定重试。乐观并不等于“完全没有同步”，冲突频繁或副作用不能撤销时可能更差。读写锁、递归锁等也有各自边界；Linux 内核普通自旋锁在 PREEMPT_RT 下的实现语义还会变化，须区分用户态接口与内核锁。〔N34、N35〕", size: 9.5pt)
+  #text("答案  自旋锁竞争时持续检查状态，省去睡眠唤醒但占用 CPU，适合预期很短且持有者能继续运行的临界区；若持锁者被调度走或线程过量，自旋会浪费算力。阻塞锁让等待者睡眠，适合较长等待，代价是调度开销。悲观控制先取得互斥或读写权限，再检查修改状态；乐观控制先计算，提交时用版本或 CAS 检查冲突并决定重试。乐观并不等于“完全没有同步”，冲突频繁或副作用不能撤销时可能更差。读写锁、递归锁等也有各自边界；Linux 内核普通自旋锁在 PREEMPT_RT 下的实现语义还会变化，须区分用户态接口与内核锁。〔N37、N38〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("024  活锁与饥饿为什么可能在没有死锁时出现？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  死锁中的参与者相互等待，整体无法继续；活锁中的参与者仍执行重试、回退或让步，却始终没有完成有效工作；饥饿则是某个任务长期得不到 CPU、锁或其他资源，其他任务仍能前进。例如两个线程按同样节奏不断释放并重取两把锁，可能形成活锁；持续优先服务高优先任务可能使低优先任务饥饿。治理方式不同：死锁可通过统一锁序或避免持有等待处理，活锁可引入有界且带随机性的退避和明确仲裁，饥饿可考虑公平排队、优先级老化或资源配额。仅证明没有锁环不能保证每个任务最终完成。〔N28、N35〕", size: 9.5pt)
+  #text("答案  死锁中的参与者相互等待，整体无法继续；活锁中的参与者仍执行重试、回退或让步，却始终没有完成有效工作；饥饿则是某个任务长期得不到 CPU、锁或其他资源，其他任务仍能前进。例如两个线程按同样节奏不断释放并重取两把锁，可能形成活锁；持续优先服务高优先任务可能使低优先任务饥饿。治理方式不同：死锁可通过统一锁序或避免持有等待处理，活锁可引入有界且带随机性的退避和明确仲裁，饥饿可考虑公平排队、优先级老化或资源配额。仅证明没有锁环不能保证每个任务最终完成。〔N31、N38〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("025  银行家算法怎样判断资源分配安全，不安全是否等于已经死锁？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  银行家算法假定每个任务预先声明最大资源需求，并维护 Available、Allocation 和 Need=Max−Allocation。收到申请时先检查它不超过剩余需求和当前可用资源，再试分配，搜索是否存在一个顺序，使每个任务都能用当时可用资源满足剩余需求、完成并释放已有分配。能覆盖所有任务即安全，可正式批准；否则回滚并等待。安全性检查是在保证最坏声明需求下仍可完成，不安全只表示无法给出这种保证，并非此刻一定已经死锁。它依赖事先已知需求和可回收资源，因此更适合作为资源分配模型，不能当作任意业务系统可直接套用的通用锁方案。〔N36〕", size: 9.5pt)
+  #text("答案  银行家算法假定每个任务预先声明最大资源需求，并维护 Available、Allocation 和 Need=Max−Allocation。收到申请时先检查它不超过剩余需求和当前可用资源，再试分配，搜索是否存在一个顺序，使每个任务都能用当时可用资源满足剩余需求、完成并释放已有分配。能覆盖所有任务即安全，可正式批准；否则回滚并等待。安全性检查是在保证最坏声明需求下仍可完成，不安全只表示无法给出这种保证，并非此刻一定已经死锁。它依赖事先已知需求和可回收资源，因此更适合作为资源分配模型，不能当作任意业务系统可直接套用的通用锁方案。〔N39〕", size: 9.5pt)
   #raw("work = Available.copy()\nfinished = set()\nwhile 存在 i 不在 finished 且 Need[i] 各维均 <= work:\n    work += Allocation[i]  # 只模拟释放已有分配，不修改真实资源\n    finished.add(i)\nsafe = len(finished) == 任务数  # 试分配后不安全就回滚并等待", lang: "text", block: true)
 ]
 
 #heading(level: 2, outlined: true)[#text("7.7 地址转换与内存回收", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("026  页表、多级页表、分段和 TLB 怎样参与地址转换？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  分页把虚拟地址拆成虚页号与页内偏移，页表记录虚页到物理页框的映射及权限，物理地址由页框和偏移组成。多级页表按虚页号的不同位逐层索引，稀疏地址空间可不建立未使用分支，减少单级大表浪费；代价是未缓存的转换可能需要多次访存。TLB 缓存近期转换，未命中时可由硬件或软件查页表，不代表页面一定不在内存，也不必然触发缺页。分段则按代码、数据等逻辑段描述基址、界限和权限，可与分页组合；分页固定粒度便于分配，分段更贴近逻辑结构，二者不能混同。具体页级数、页大小与转换机制依架构配置。〔N29〕", size: 9.5pt)
+  #text("答案  分页把虚拟地址拆成虚页号与页内偏移，页表记录虚页到物理页框的映射及权限，物理地址由页框和偏移组成。多级页表按虚页号的不同位逐层索引，稀疏地址空间可不建立未使用分支，减少单级大表浪费；代价是未缓存的转换可能需要多次访存。TLB 缓存近期转换，未命中时可由硬件或软件查页表，不代表页面一定不在内存，也不必然触发缺页。固定大小分页便于分配并避免外部碎片，但最后一页或分配粒度可能产生内部碎片；分段按代码、数据等逻辑段描述基址、界限和权限，大小可变且可能产生外部碎片。有些系统把段再分页以组合两者。具体页级数、页大小与转换机制依架构配置。〔N32〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("027  内存紧张时怎样回收页面，页面置换与 OOM 有什么关系？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  系统可先回收可重建的文件缓存，对脏页安排回写，符合条件的匿名页也可换出到交换空间；回收不足时，分配可能阻塞、失败，或在特定内存约束下触发 OOM 处理。是否有空闲内存不能只看 free 数字，还要看可回收内存、工作集和 cgroup 限制。经典置换算法包括 FIFO、LRU、Clock 和理想化的 OPT：OPT 依赖未来访问，主要作理论比较；实际内核常用近似及多代管理，不能说每次都按精确 LRU。工作集超出可用内存可造成频繁换页和抖动，应从减少保留数据、限制并发或扩容等方面处理，避免反复重启掩盖根因。〔N37〕", size: 9.5pt)
+  #text("答案  系统可先回收可重建的文件缓存，对脏页安排回写，符合条件的匿名页也可换出到交换空间；回收不足时，分配可能阻塞、失败，或在特定内存约束下触发 OOM 处理。是否有空闲内存不能只看 free 数字，还要看可回收内存、工作集和 cgroup 限制。经典置换算法包括 FIFO、LRU、Clock、LFU 和理想化的 OPT：LFU 按历史访问频次保留页面，可能长期留住过去的热点而忽略近期工作集变化；OPT 依赖未来访问，主要作理论比较。实际内核常用近似及多代管理，不能说每次都按精确 LRU。工作集超出可用内存可造成频繁换页和抖动，应从减少保留数据、限制并发或扩容等方面处理，避免反复重启掩盖根因。〔N40〕", size: 9.5pt)
 ]
 
 #heading(level: 2, outlined: true)[#text("7.8 文件系统、缓存与持久化", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("028  文件描述符与 inode 的关系是什么，删除文件为何可能不释放空间？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  文件描述符是进程内的整数索引，指向内核的打开文件描述；打开文件描述保存偏移、状态标志等，并关联 inode 等文件系统对象。多个 fd 可经 dup 或 fork 共享同一个打开文件描述，也可对同一 inode 独立 open 而拥有不同偏移。unlink 删除目录项并减少链接计数，不会强制使已经打开的 fd 失效；只有没有硬链接且不再被打开等引用持有时，文件数据才具备最终回收条件。因此日志虽已删除，进程继续持有它仍可能占空间。排查可检查 /proc/<pid>/fd 或 lsof 的已删除文件，先让应用正确关闭或轮转，不能仅重复 rm。〔N38、N39〕", size: 9.5pt)
+  #text("答案  文件描述符是进程内的整数索引，指向内核的打开文件描述；打开文件描述保存偏移、状态标志等，并关联 inode 等文件系统对象。多个 fd 可经 dup 或 fork 共享同一个打开文件描述，也可对同一 inode 独立 open 而拥有不同偏移。unlink 删除目录项并减少链接计数，不会强制使已经打开的 fd 失效；只有没有硬链接且不再被打开等引用持有时，文件数据才具备最终回收条件。因此日志虽已删除，进程继续持有它仍可能占空间。排查可检查 /proc/<pid>/fd 或 lsof 的已删除文件，先让应用正确关闭或轮转，不能仅重复 rm。〔N41、N42〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("029  Page Cache 如何支持 read 与 mmap，mmap 为什么不保证一定更快？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  Page Cache 缓存文件页，普通缓冲文件读取通常先查缓存，未命中再从存储装入，然后把数据复制到用户缓冲区。mmap 建立文件页到进程虚拟地址的映射，访问时可能触发缺页并取得相应缓存页，减少显式 read 和部分复制；但仍有页表管理、缺页、同步和存储访问成本。顺序扫描、随机访问、工作集与并发方式不同，谁更快应实测，不能把 mmap 等同于把整个文件预读到物理内存。共享写映射要按协议同步，文件被截断还可能导致 SIGBUS；直接 I/O 等路径也未必遵循普通 Page Cache 读取模式。〔N40、N41〕", size: 9.5pt)
+  #text("答案  Page Cache 缓存文件页，普通缓冲文件读取通常先查缓存，未命中再从存储装入，然后把数据复制到用户缓冲区。mmap 建立文件页到进程虚拟地址的映射，访问时可能触发缺页并取得相应缓存页，减少显式 read 和部分复制；但仍有页表管理、缺页、同步和存储访问成本。顺序扫描、随机访问、工作集与并发方式不同，谁更快应实测，不能把 mmap 等同于把整个文件预读到物理内存。共享写映射要按协议同步，文件被截断还可能导致 SIGBUS；直接 I/O 等路径也未必遵循普通 Page Cache 读取模式。〔N43、N44〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("030  write 成功与 fsync 成功的持久化保证有何差别？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  普通缓冲 I/O 的 write 返回成功通常表示对应字节已被内核接收，不代表数据已进入可承受掉电的存储；还须正确处理短写和稍后报告的错误。fsync 请求同步文件数据及必要元信息，fdatasync 可减少与取回数据无关的元信息同步。若采用“写临时文件再 rename 替换”的发布流程，要分别处理文件内容及目录项持久化，通常还需同步包含目录。具体保证受文件系统、挂载方式、设备缓存与硬件诚实性影响；数据库的提交还要结合日志刷盘策略。不能把用户态 fflush、内核写缓存、fsync 和远端业务确认当作同一个完成点。〔N42〕", size: 9.5pt)
+  #text("答案  普通缓冲 I/O 的 write 返回成功通常表示对应字节已被内核接收，不代表数据已进入可承受掉电的存储；还须正确处理短写和稍后报告的错误。fsync 请求同步文件数据及必要元信息，fdatasync 可减少与取回数据无关的元信息同步。若采用“写临时文件再 rename 替换”的发布流程，要分别处理文件内容及目录项持久化，通常还需同步包含目录。具体保证受文件系统、挂载方式、设备缓存与硬件诚实性影响；数据库的提交还要结合日志刷盘策略。不能把用户态 fflush、内核写缓存、fsync 和远端业务确认当作同一个完成点。〔N45〕", size: 9.5pt)
 ]
 
 #heading(level: 2, outlined: true)[#text("7.9 中断与 I/O 语义", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("031  硬件中断、同步异常、软中断和工作队列各适合承担什么工作？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  硬件中断让设备报告异步事件，处理器按架构保存必要状态并进入相应入口，内核确认来源、完成紧急处理，再返回或安排后续工作；系统调用和缺页等同步异常也能进入内核，但并非外设 IRQ。Linux 硬中断上下文通常应短小，不能像普通线程一样任意睡眠；延后处理可使用软中断等机制，软中断即使由 ksoftirqd 承载也不能直接按普通可睡眠工作编写。普通工作队列由工作线程执行，适合可能阻塞的延后任务。线程化中断及 PREEMPT_RT 会改变部分执行细节，所以“上半部/下半部”的概念需与具体内核配置对应。〔N43、N44、N35〕", size: 9.5pt)
+  #text("答案  硬件中断让设备报告异步事件；普通外部 IRQ 通常可由内核屏蔽，NMI 不受普通屏蔽控制，常用于机器检查或 watchdog 等紧急观察，不意味着用户进程必然崩溃。处理器按架构保存必要状态并进入相应入口，内核确认来源、完成紧急处理，再返回或安排后续工作；系统调用和缺页等同步异常也能进入内核，但并非外设 IRQ。Linux 硬中断上下文通常应短小，不能像普通线程一样任意睡眠；延后处理可使用软中断等机制，软中断即使由 ksoftirqd 承载也不能直接按普通可睡眠工作编写。普通工作队列由工作线程执行，适合可能阻塞的延后任务。线程化中断及 PREEMPT_RT 会改变部分执行细节，所以“上半部/下半部”的概念需与具体内核配置对应。〔N46、N47、N38〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("032  阻塞、非阻塞、同步与异步 I/O 怎样区分，就绪后为什么仍要检查返回值？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  阻塞与非阻塞关注调用在无法立刻完成时是否等待：非阻塞 read 可返回 EAGAIN，而阻塞调用可能等待数据。同步与异步关注操作如何完成及交付结果：就绪通知通常仍由应用调用读写取得结果，完成通知则报告已提交操作的结果，不能因用了回调就认定内核已经异步读取。epoll 报告可读后，数据可能已被其他执行者读走，也可能对应 EOF 或错误，所以事件循环应使用非阻塞 fd，逐次处理实际返回值；read 为 0 表示流读取结束，EINTR、EAGAIN 和真实错误须区别处理。就绪只提供进行操作的时机，不保证一次调用正好得到完整消息。〔N45、N46〕", size: 9.5pt)
+  #text("答案  阻塞与非阻塞关注调用在无法立刻完成时是否等待：非阻塞 read 可返回 EAGAIN，而阻塞调用可能等待数据。同步与异步关注操作如何完成及交付结果。经典 I/O 模型通常包括阻塞、非阻塞、I/O 多路复用、信号驱动和异步 I/O；前四种最终仍由应用发起 read/recv 取走数据，信号驱动只是先通知就绪，完成通知才表示已提交的异步操作已经取得结果。epoll 报告可读后，数据可能已被其他执行者读走，也可能对应 EOF 或错误，所以事件循环应使用非阻塞 fd，逐次处理实际返回值；read 为 0 表示流读取结束，EINTR、EAGAIN 和真实错误须区别处理。就绪只提供进行操作的时机，不保证一次调用正好得到完整消息。〔N48、N49〕", size: 9.5pt)
 ]
 
 #heading(level: 1, outlined: true)[#text("第8章 计算机网络", size: 15pt, weight: "bold", fill: rgb("#000000"))]
@@ -1014,7 +1020,7 @@
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("002  HTTP/1.1 常见状态码如何分类？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  1xx 是临时信息响应，2xx 表示请求被成功接收、理解或处理，如 200、201、204；3xx 要求重定向或使用缓存结果。4xx 表示请求端问题，如 400、401、403、404、429，5xx 表示服务器处理失败或网关异常，如 500、502、503、504。重试要看状态语义，429/503 可结合 Retry-After，普通 4xx 通常不应盲目重试。", size: 9.5pt)
+  #text("答案  1xx 是临时信息响应，2xx 表示请求被成功接收、理解或处理，如 200、201、204；3xx 要求重定向或使用缓存结果。301 表示永久移动，302 表示临时移动；历史客户端对 POST 的处理可能转成 GET，若需保留方法和请求体应考虑 307/308。4xx 表示请求端问题，如 400、401、403、404、429；5xx 表示服务器处理失败或网关异常，如 500、502、503、504。502 表示网关/代理收到上游无效响应，504 表示等待上游超时。重试要看状态语义，429/503 可结合 Retry-After，普通 4xx 通常不应盲目重试。", size: 9.5pt)
   #raw("switch (response.status) {\ncase 100: case 103: interim_information_only(); break; // 1xx 不是最终结果\ncase 200: success_with_representation(); break; case 201: resource_created(); break;\ncase 204: success_without_body(); break; // 2xx 成功类\ncase 301: follow_redirect_or_cache_by_rules(); break; // 3xx\ncase 401: authenticate_request(); break; case 403: deny_authorized_identity(); break;\ncase 404: resource_absent(); break; case 429: wait_retry_after_with_backoff(); break;\ncase 503: retry_if_safe_and_retry_after_allows(); break; // 5xx\n}\n// 4xx 通常先修正请求，不盲目重试；仍须考虑幂等性和截止时间", lang: "cpp", block: true)
 ]
 
@@ -1114,132 +1120,132 @@
 #heading(level: 2, outlined: true)[#text("8.4 协议分层与应用交互", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("018  OSI 与 TCP/IP 如何对应，socket 和常用协议处于什么位置？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  OSI 将通信分为物理、链路、网络、传输、会话、表示、应用七层；常用 TCP/IP 模型合并为链路、网际、传输和应用四层。以太网处理局部链路，IP 负责跨网寻址和转发，TCP/UDP 提供端到端传输，HTTP、DNS、SMTP 等描述应用消息。socket 是操作系统提供的通信接口，不能与某个应用协议画等号。Nginx 作为 HTTP 反向代理处理应用层消息，stream 模块也能代理传输层连接。端口标识服务约定而非层级：HTTP/HTTPS 常用 80/443，传统 DNS 常用 53；修改端口不会改变协议本质。〔N47、N48〕", size: 9.5pt)
+  #text("答案  OSI 将通信分为物理、链路、网络、传输、会话、表示、应用七层；常用 TCP/IP 模型合并为链路、网际、传输和应用四层。发送端可理解为逐层封装：HTTP 等应用数据交给 TCP/UDP 加端口信息，再由 IP 加源/目的地址，最后由链路层封装为面向下一跳的 MAC 帧和比特流；接收端逐层解封装。MAC 地址用于本地链路转发，经过路由器时链路帧会更新，不能当作端到端地址。socket 是操作系统提供的通信接口，不能与某个应用协议画等号。Nginx 作为 HTTP 反向代理处理应用层消息，stream 模块也能代理传输层连接。修改端口不会改变协议本质。〔N50、N51〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("019  HTTP/1.1 长连接如何区分报文，并在什么情况下关闭？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  HTTP/1.1 请求通常由请求行、首部、空行和可选消息体组成；响应以状态行开始。长连接让多个请求复用连接，本身不提供消息边界。接收方按方法、状态和消息长度规则解析：HEAD 响应等无消息体，其他情况依据有效的 Transfer-Encoding、Content-Length 或关闭连接等条件定界，不能简单按一次 recv 判断。含冲突长度字段的报文应严格拒绝或按规范处理，避免前后端解析不一致。持久连接也会因 Connection: close、空闲超时、错误或进程退出而结束。HTTP 复用连接与 TCP 的空闲探测用途不同。〔N49〕", size: 9.5pt)
+  #text("答案  HTTP/1.1 请求通常由请求行、首部、空行和可选消息体组成；响应以状态行开始。长连接让多个请求复用连接，本身不提供消息边界。接收方按方法、状态和消息长度规则解析：HEAD 响应等无消息体，其他情况依据有效的 Transfer-Encoding、Content-Length 或关闭连接等条件定界，不能简单按一次 recv 判断。含冲突长度字段的报文应严格拒绝或按规范处理，避免前后端解析不一致。持久连接也会因 Connection: close、空闲超时、错误或进程退出而结束。HTTP 复用连接与 TCP 的空闲探测用途不同。〔N52〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("020  HEAD、PUT、DELETE、PATCH 与 OPTIONS 分别表达什么操作？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  HEAD 与 GET 的响应语义相近，但不返回响应消息体，适合获取资源元信息。PUT 通常要求用提交的表示创建或替换指定资源；DELETE 请求解除目标资源与其当前功能的关联，二者按 HTTP 语义均幂等，但幂等不代表每次返回码相同。PATCH 表达部分修改，是否幂等取决于补丁格式和业务约定。OPTIONS 查询目标支持的通信选项，也用于某些 CORS 预检。方法名称不能替代权限校验或自动保证实现正确；服务端仍须约束副作用、验证输入，并为重试设计一致的业务语义。〔N48〕", size: 9.5pt)
+  #text("答案  HEAD 与 GET 的响应语义相近，但不返回响应消息体，适合获取资源元信息。PUT 通常要求用提交的表示创建或替换指定资源；DELETE 请求解除目标资源与其当前功能的关联，二者按 HTTP 语义均幂等，但幂等不代表每次返回码相同。PATCH 表达部分修改，是否幂等取决于补丁格式和业务约定。OPTIONS 查询目标支持的通信选项，也用于某些 CORS 预检。方法名称不能替代权限校验或自动保证实现正确；服务端仍须约束副作用、验证输入，并为重试设计一致的业务语义。〔N51〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("021  HTTP 断点续传如何使用 Range，并保证拼接的是同一份资源？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  客户端保存已经接收的字节范围，再发送 Range: bytes=起点- 请求剩余内容；支持范围请求的服务端可返回 206，并用 Content-Range 说明该片段在完整表示中的位置。超出有效范围可能返回 416，服务端也可以忽略 Range 而返回完整的 200 响应，因此客户端必须检查状态和头部。若下载期间资源变化，直接拼接会损坏文件，可配合 If-Range 和强 ETag 等验证器，仅在表示未变化时续传，否则重新获取。字节范围针对选定表示，压缩编码或版本变化也要纳入校验；断点续传并非 TCP 自动记住上次下载位置。〔N48〕", size: 9.5pt)
+  #text("答案  客户端保存已经接收的字节范围，再发送 Range: bytes=起点- 请求剩余内容；支持范围请求的服务端可返回 206，并用 Content-Range 说明该片段在完整表示中的位置。超出有效范围可能返回 416，服务端也可以忽略 Range 而返回完整的 200 响应，因此客户端必须检查状态和头部。若下载期间资源变化，直接拼接会损坏文件，可配合 If-Range 和强 ETag 等验证器，仅在表示未变化时续传，否则重新获取。字节范围针对选定表示，压缩编码或版本变化也要纳入校验；断点续传并非 TCP 自动记住上次下载位置。〔N51〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("022  DNS 通常用什么端口和传输协议，何时会使用 TCP？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  传统 DNS 查询使用端口 53；多数普通查询以 UDP 为起点，解析器和权威服务器也必须支持 TCP。区域传送通常用 TCP；UDP 响应被截断（TC 置位）、超出可安全传送的大小或其他实现策略要求时，解析器可改用 TCP 重试。EDNS 扩展允许协商更大的 UDP 响应，但大报文会遇到 IP 分片丢失和路径 MTU 问题，所以不能简单说 DNS 只用 UDP 或只有超过 512 字节才用 TCP。DoT、DoH 及 DoQ 也使用各自的安全传输端口或封装；题目若只问传统 DNS，答案应注明 53 端口的语境。〔N53〕", size: 9.5pt)
+  #text("答案  传统 DNS 查询使用端口 53；多数普通查询以 UDP 为起点，解析器和权威服务器也必须支持 TCP。区域传送通常用 TCP；UDP 响应被截断（TC 置位）、超出可安全传送的大小或其他实现策略要求时，解析器可改用 TCP 重试。EDNS 扩展允许协商更大的 UDP 响应，但大报文会遇到 IP 分片丢失和路径 MTU 问题，所以不能简单说 DNS 只用 UDP 或只有超过 512 字节才用 TCP。DoT、DoH 及 DoQ 也使用各自的安全传输端口或封装；题目若只问传统 DNS，答案应注明 53 端口的语境。〔N56〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("023  已经使用 HTTP，为什么系统还会引入 RPC 框架？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  HTTP 规定请求响应等通信语义，RPC 规定如何把远端能力表达成服务、方法和参数；两者不在同一个抽象层，也可以组合，例如 gRPC 通常通过 HTTP/2 承载调用。RPC 框架往往配套接口描述、代码生成、序列化、流式调用、截止时间、状态传播和拦截器，减少团队重复实现通信约定。选择应比较跨语言契约、调试方式、浏览器兼容、性能和服务治理需求，而不是认为 HTTP 一定慢或 RPC 必然使用某种传输。远程调用仍可能超时、部分失败或重复执行，不能因调用外观像本地函数就忽略失败语义。〔N59〕", size: 9.5pt)
+  #text("答案  HTTP 规定请求响应等通信语义，RPC 规定如何把远端能力表达成服务、方法和参数；两者不在同一个抽象层，也可以组合，例如 gRPC 通常通过 HTTP/2 承载调用。RPC 框架往往配套接口描述、代码生成、序列化、流式调用、截止时间、状态传播和拦截器，减少团队重复实现通信约定。选择应比较跨语言契约、调试方式、浏览器兼容、性能和服务治理需求，而不是认为 HTTP 一定慢或 RPC 必然使用某种传输。远程调用仍可能超时、部分失败或重复执行，不能因调用外观像本地函数就忽略失败语义。〔N62〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("024  HTTP 长连接与 WebSocket 的连接复用和双向通信有何差别？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  HTTP 长连接只是让多次 HTTP 交互复用底层连接，消息仍遵循对应版本的请求响应或流语义；并不自动变成可任意推送的自定义双向通道。经典 WebSocket 通过 HTTP/1.1 握手升级，随后以独立帧协议在连接上双向传输消息，可携带文本、二进制、控制帧并维护消息边界，适合聊天和实时协作。WebSocket 不会自动提供业务级 ACK、离线消息、重连补发或权限续期，应用仍须设计这些行为；代理空闲超时和慢客户端背压也要处理。选择时还可考虑 SSE 等单向推送方式。〔N60〕", size: 9.5pt)
+  #text("答案  HTTP 长连接只是让多次 HTTP 交互复用底层连接，消息仍遵循对应版本的请求响应或流语义；并不自动变成可任意推送的自定义双向通道。经典 WebSocket 通过 HTTP/1.1 握手升级，随后以独立帧协议在连接上双向传输消息，可携带文本、二进制、控制帧并维护消息边界，适合聊天和实时协作。WebSocket 不会自动提供业务级 ACK、离线消息、重连补发或权限续期，应用仍须设计这些行为；代理空闲超时和慢客户端背压也要处理。选择时还可考虑 SSE 等单向推送方式。〔N63〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("025  正向代理与反向代理分别代表谁，TLS 终止后需要注意什么？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  正向代理通常由客户端选择，代客户端访问外部资源，可承担出口控制、缓存或隧道转发；反向代理位于服务入口，代表一组后端接收请求，可承担路由、负载均衡、缓存和 TLS 终止。二者区别在部署角色和通信对象，不由是否修改报文或使用哪一端口决定。若代理终止 TLS，客户端到代理与代理到源站就是两段独立连接，后段是否加密及如何认证须另行配置。后端获取原始地址、协议等信息时，只可信任受控代理写入的转发头，并清理客户端伪造值；代理头不是天然可信的身份凭证。〔N48〕", size: 9.5pt)
+  #text("答案  正向代理通常由客户端选择，代客户端访问外部资源，可承担出口控制、缓存或隧道转发；反向代理位于服务入口，代表一组后端接收请求，可承担路由、负载均衡、缓存和 TLS 终止。二者区别在部署角色和通信对象，不由是否修改报文或使用哪一端口决定。若代理终止 TLS，客户端到代理与代理到源站就是两段独立连接，后段是否加密及如何认证须另行配置。后端获取原始地址、协议等信息时，只可信任受控代理写入的转发头，并清理客户端伪造值；代理头不是天然可信的身份凭证。〔N51〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("026  CDN 怎样加速内容访问，缓存键和回源有哪些边界？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  CDN 把请求导向较合适的边缘节点，节点命中可复用的缓存表示时直接响应，降低源站负载和长距离传输；未命中则按规则回源并决定是否缓存。它还可能复用连接、优化跨地域链路，但不保证每个动态请求都更快。缓存键及转发策略要与资源语义一致，谨慎处理查询参数、Cookie、鉴权头和压缩差异，避免缓存污染或把个人数据跨用户共享。发布更新可用内容哈希版本名、较短 TTL 或失效刷新策略；源站故障时能否提供旧内容取决于配置与一致性要求。CDN 加速也不能代替源站鉴权。〔N62、N50〕", size: 9.5pt)
+  #text("答案  CDN 把请求导向较合适的边缘节点，节点命中可复用的缓存表示时直接响应，降低源站负载和长距离传输；未命中则按规则回源并决定是否缓存。常见调度从 DNS 开始：权威解析可用 CNAME 指向 CDN/GSLB，由调度服务结合递归解析器带来的客户端地址信息、运营商、URL、节点负载和健康状态返回边缘 IP；递归解析器会按 TTL 缓存结果，所以切换节点并非立刻对所有用户生效。CDN 还可能复用连接、优化跨地域链路，但不保证每个动态请求都更快。缓存键及转发策略要与资源语义一致，谨慎处理查询参数、Cookie、鉴权头和压缩差异，避免缓存污染或把个人数据跨用户共享。发布更新可用内容哈希版本名、较短 TTL 或失效刷新策略；源站故障时能否提供旧内容取决于配置与一致性要求。CDN 加速也不能代替源站鉴权。〔N65、N53〕", size: 9.5pt)
 ]
 
 #heading(level: 2, outlined: true)[#text("8.5 HTTP 缓存、会话与浏览器安全", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("027  HTTP 新鲜缓存与条件验证如何配合，no-cache 和 no-store 有何差别？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  缓存先判断已有响应能否直接复用：max-age 等新鲜度约束尚满足时，通常无需回源；过期或要求验证时，携带 If-None-Match/ETag 或 If-Modified-Since/Last-Modified，请服务端判断表示是否变化。未变化可用 304 响应继续使用本地内容，否则接收新表示。no-cache 允许存储，但复用前须成功验证；no-store 要求不存储该次请求或响应，不能等价成“每次都返回 200”。还要区分 private 与共享缓存、考虑 Vary 和鉴权内容，避免把用户 A 的响应提供给用户 B。缓存命中、是否过期与连接是否复用是不同维度。〔N50〕", size: 9.5pt)
+  #text("答案  缓存先判断已有响应能否直接复用：max-age 等新鲜度约束尚满足时，通常无需回源；过期或要求验证时，携带 If-None-Match/ETag 或 If-Modified-Since/Last-Modified，请服务端判断表示是否变化。未变化可用 304 响应继续使用本地内容，否则接收新表示。no-cache 允许存储，但复用前须成功验证；no-store 要求不存储该次请求或响应，不能等价成“每次都返回 200”。还要区分 private 与共享缓存、考虑 Vary 和鉴权内容，避免把用户 A 的响应提供给用户 B。缓存命中、是否过期与连接是否复用是不同维度。〔N53〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("028  hosts 文件怎样影响名称解析，如何区分本地配置与 DNS 劫持？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  hosts 保存本机主机名到地址的静态映射；使用系统解析器的程序通常按名称服务配置查询它和 DNS，顺序由平台及配置决定。dig 等直接查询 DNS 的工具可能绕过 hosts，所以它的结果与应用实际解析结果不一定相同。定位解析异常时应比较 hosts、解析器配置、缓存、递归器返回和权威记录，并确认浏览器是否使用独立的安全 DNS。DNS 劫持可能来自篡改解析配置、恶意递归器或伪造记录。DNSSEC 验证可保护已签名数据的真实性与完整性；DoH/DoT 保护传输，不能保证恶意解析器给出的答案正确。〔N51、N52〕", size: 9.5pt)
+  #text("答案  hosts 保存本机主机名到地址的静态映射；使用系统解析器的程序通常按名称服务配置查询它和 DNS，顺序由平台及配置决定。dig 等直接查询 DNS 的工具可能绕过 hosts，所以它的结果与应用实际解析结果不一定相同。定位解析异常时应比较 hosts、解析器配置、缓存、递归器返回和权威记录，并确认浏览器是否使用独立的安全 DNS。DNS 劫持可能来自篡改解析配置、恶意递归器或伪造记录。DNSSEC 验证可保护已签名数据的真实性与完整性；DoH/DoT 保护传输，不能保证恶意解析器给出的答案正确。〔N54、N55〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("029  HTTP 无状态与 Cookie、Session、Token 登录态是什么关系？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  HTTP 无状态指协议语义不要求服务器记住前一次请求才能理解本次请求，不代表应用不能维护会话。Cookie 是浏览器按域、路径等规则保存并附带的数据；Session 通常把会话状态放在服务端，客户端只保存随机会话标识。Token 是代表身份或授权的凭证形式，既可是不透明随机串，也可采用自包含格式。会话标识可以装在 Cookie 或显式请求头中，携带 Cookie 并不会改变 HTTP 协议本身的无状态属性。禁用 Cookie 后可设计其他传递方式，但把凭证放 URL 容易进入历史、日志和引用来源，需谨慎处理。〔N54、N48〕", size: 9.5pt)
+  #text("答案  HTTP 无状态指协议语义不要求服务器记住前一次请求才能理解本次请求，不代表应用不能维护会话。Cookie 是浏览器按域、路径等规则保存并附带的数据；Session 通常把会话状态放在服务端，客户端只保存随机会话标识。Token 是代表身份或授权的凭证形式，既可是不透明随机串，也可采用自包含格式。会话标识可以装在 Cookie 或显式请求头中，携带 Cookie 并不会改变 HTTP 协议本身的无状态属性。禁用 Cookie 后可设计其他传递方式，但把凭证放 URL 容易进入历史、日志和引用来源，需谨慎处理。〔N57、N51〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("030  Cookie 与 localStorage 如何选择，登录凭证需要哪些浏览器侧保护？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  Cookie 可由浏览器按作用范围自动随请求发送，适合会话标识，但自动携带也要求防范 CSRF；localStorage 按源提供脚本可读的持久键值存储，不会自动成为 HTTP 请求头，常用于非敏感界面偏好。HttpOnly 限制脚本读取 Cookie，Secure 限制经安全通道发送，SameSite 约束跨站携带；它们解决的问题不同，并非开启一个属性就全面安全。JWT 放 localStorage 时可被成功执行的同源恶意脚本读取；放 HttpOnly Cookie 时则要设计 CSRF 防护。HttpOnly 也不能阻止 XSS 在页面内代用户发请求，应同时治理脚本注入。〔N55、N56〕", size: 9.5pt)
+  #text("答案  Cookie 可由浏览器按作用范围自动随请求发送，适合会话标识，但自动携带也要求防范 CSRF；localStorage 按源提供脚本可读的持久键值存储，不会自动成为 HTTP 请求头，常用于非敏感界面偏好。HttpOnly 限制脚本读取 Cookie，Secure 限制经安全通道发送，SameSite 约束跨站携带；它们解决的问题不同，并非开启一个属性就全面安全。JWT 放 localStorage 时可被成功执行的同源恶意脚本读取；放 HttpOnly Cookie 时则要设计 CSRF 防护。HttpOnly 也不能阻止 XSS 在页面内代用户发请求，应同时治理脚本注入。〔N58、N59〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("031  JWT 为什么便于跨实例校验，它的结构与撤销边界是什么？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  常见签名型 JWT 由头部、声明载荷和签名三段编码组成；声明可包含签发者、受众、主体和有效期。实例持有受信公钥或约定密钥便可验证，不必为每次认证查询同一会话表，便于多实例部署；但会话系统也可通过共享存储扩展。签名不等于加密，普通 JWT 载荷可读，不应直接装入秘密。验证时须限制算法并检查签名、iss、aud、exp 等预期条件。纯离线验证的令牌泄露后通常无法立即撤销，需要短有效期、刷新令牌轮换、撤销列表或版本检查等机制；这些机制会重新引入状态和运维成本。〔N57、N58〕", size: 9.5pt)
+  #text("答案  常见签名型 JWT 由头部、声明载荷和签名三段编码组成；声明可包含签发者、受众、主体和有效期。实例持有受信公钥或约定密钥便可验证，不必为每次认证查询同一会话表，便于多实例部署；但会话系统也可通过共享存储扩展。签名不等于加密，普通 JWT 载荷可读，不应直接装入秘密。验证时须限制算法并检查签名、iss、aud、exp 等预期条件。纯离线验证的令牌泄露后通常无法立即撤销，需要短有效期、刷新令牌轮换、撤销列表或版本检查等机制；这些机制会重新引入状态和运维成本。〔N60、N61〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("032  跨源访问为什么受限，CORS 预检能否代替身份认证？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  浏览器以协议、主机和端口组成源，并用同源策略限制脚本读取跨源资源。CORS 让服务器通过允许来源、方法、头部等响应字段声明哪些跨源脚本可访问结果；部分请求会先发送 OPTIONS 预检，但满足条件的简单请求可直接发出。携带凭证时，允许来源不能简单用通配符代替指定来源，并须按规范允许凭证。CORS 是浏览器执行的读取控制，不是服务端访问控制：非浏览器客户端可以直接发请求，有些跨源写请求也已到达服务端。服务端仍要独立认证、授权和防范 CSRF，不能仅信任 Origin 或预检成功。〔N61〕", size: 9.5pt)
+  #text("答案  浏览器以协议、主机和端口组成源，并用同源策略限制脚本读取跨源资源。CORS 让服务器通过允许来源、方法、头部等响应字段声明哪些跨源脚本可访问结果；部分请求会先发送 OPTIONS 预检，但满足条件的简单请求可直接发出。携带凭证时，允许来源不能简单用通配符代替指定来源，并须按规范允许凭证。CORS 是浏览器执行的读取控制，不是服务端访问控制：非浏览器客户端可以直接发请求，有些跨源写请求也已到达服务端。服务端仍要独立认证、授权和防范 CSRF，不能仅信任 Origin 或预检成功。〔N64〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("033  XSS 与 CSRF 分别怎样利用浏览器身份，防护重点为何不同？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  XSS 让不可信输入变成受信页面中的脚本执行，可读取脚本可见数据或代用户操作；应按 HTML、属性、URL、脚本等输出上下文编码，使用安全 DOM 接口，对允许的富文本做可信净化，并以 CSP 等措施加强约束。CSRF 则诱导浏览器向目标站发送带有现有凭证的操作请求，攻击者不一定能读取响应或执行目标源脚本。服务端可用不可预测的 CSRF token、合适的 SameSite Cookie、Origin 等校验，并让敏感操作避开 GET。二者都与身份凭证有关，但仅设置 HttpOnly 或 CORS 无法完整解决；成功的 XSS 还可能绕过某些 CSRF 防护。〔N72、N73〕", size: 9.5pt)
+  #text("答案  XSS 让不可信输入变成受信页面中的脚本执行，可读取脚本可见数据或代用户操作；应按 HTML、属性、URL、脚本等输出上下文编码，使用安全 DOM 接口，对允许的富文本做可信净化，并以 CSP 等措施加强约束。CSRF 则诱导浏览器向目标站发送带有现有凭证的操作请求，攻击者不一定能读取响应或执行目标源脚本。服务端可用不可预测的 CSRF token、合适的 SameSite Cookie、Origin 等校验，并让敏感操作避开 GET。二者都与身份凭证有关，但仅设置 HttpOnly 或 CORS 无法完整解决；成功的 XSS 还可能绕过某些 CSRF 防护。〔N75、N76〕", size: 9.5pt)
 ]
 
 #heading(level: 2, outlined: true)[#text("8.6 TCP 状态与应用确认", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("034  如何识别一条 TCP 连接，TCP 头部字段分别解决什么问题？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  在相同协议和网络命名空间中，通常用源 IP、源端口、目的 IP、目的端口组成四元组识别 TCP 连接；监听 socket 与已经建立的连接不是同一个连接实例。TCP 首部含端口、序号、确认号、首部长度、控制位、窗口、校验和等，选项还能协商 MSS、窗口缩放、时间戳和 SACK 能力。序号与确认号描述字节流位置，窗口描述接收能力，SYN/FIN 等控制位驱动连接状态；最小首部为 20 字节，带选项会更长。理解字段要与具体方向和状态结合，抓到一个 ACK 并不等价于某次业务操作已经成功。〔N63〕", size: 9.5pt)
+  #text("答案  在相同协议和网络命名空间中，通常用源 IP、源端口、目的 IP、目的端口组成四元组识别 TCP 连接；监听 socket 与已经建立的连接不是同一个连接实例。TCP 首部含端口、序号、确认号、首部长度、控制位、窗口、校验和等，选项还能协商 MSS、窗口缩放、时间戳和 SACK 能力。序号与确认号描述字节流位置，窗口描述接收能力，SYN/FIN 等控制位驱动连接状态；最小首部为 20 字节，带选项会更长。理解字段要与具体方向和状态结合，抓到一个 ACK 并不等价于某次业务操作已经成功。〔N66〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("035  握手报文丢失或重复时 TCP 怎样恢复，accept 参与握手吗？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  客户端发送 SYN 后等待 SYN+ACK，超时会按实现策略重传；服务端收到 SYN 后通常进入 SYN-RECEIVED，发出 SYN+ACK 并等待确认。若最终 ACK 丢失，客户端可已进入 ESTABLISHED，而服务端仍重传 SYN+ACK；客户端对重传再次确认，或者后续携带合适 ACK 的数据推动服务端完成握手。重复 SYN 不应创建无限多条相同连接，协议按四元组、序号和当前状态处理。Linux accept 通常从握手完成的队列取出连接并返回新 fd，不是由应用调用它才发送第三次握手；使用 TCP Fast Open 等机制时还需看具体扩展。〔N63、N64〕", size: 9.5pt)
+  #text("答案  客户端发送 SYN 后等待 SYN+ACK，超时会按实现策略重传；服务端收到 SYN 后通常进入 SYN-RECEIVED，发出 SYN+ACK 并等待确认。若最终 ACK 丢失，客户端可已进入 ESTABLISHED，而服务端仍重传 SYN+ACK；客户端对重传再次确认，或者后续携带合适 ACK 的数据推动服务端完成握手。重复 SYN 不应创建无限多条相同连接，协议按四元组、序号和当前状态处理。Linux accept 通常从握手完成的队列取出连接并返回新 fd，不是由应用调用它才发送第三次握手；使用 TCP Fast Open 等机制时还需看具体扩展。〔N66、N67〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("036  CLOSE_WAIT 和 FIN_WAIT_2 积压通常说明什么，半关闭还能做什么？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  TCP 两个方向可独立关闭。某端收到 FIN 后确认它并进入 CLOSE_WAIT，表示对端不再发送，但本地应用尚未关闭自己的发送方向；大量长期 CLOSE_WAIT 通常要检查异常路径是否遗漏 close、任务是否一直阻塞。主动方 FIN 被确认后进入 FIN_WAIT_2，等待对端也关闭，等待多久取决于应用生命周期与内核策略。shutdown 写方向后仍可接收对端剩余数据，不能再发送应用数据。若首个 FIN 丢失，接收方可能仍处 ESTABLISHED，由发送方的重传恢复。排查应定位 socket 所属进程、调用栈和超时流程，不能只调整 TIME_WAIT 参数。〔N67、N63〕", size: 9.5pt)
+  #text("答案  TCP 两个方向可独立关闭。某端收到 FIN 后确认它并进入 CLOSE_WAIT，表示对端不再发送，但本地应用尚未关闭自己的发送方向；大量长期 CLOSE_WAIT 通常要检查异常路径是否遗漏 close、任务是否一直阻塞。主动方 FIN 被确认后进入 FIN_WAIT_2，等待对端也关闭，等待多久取决于应用生命周期与内核策略。shutdown 写方向后仍可接收对端剩余数据，不能再发送应用数据。若首个 FIN 丢失，接收方可能仍处 ESTABLISHED，由发送方的重传恢复。排查应定位 socket 所属进程、调用栈和超时流程，不能只调整 TIME_WAIT 参数。〔N70、N66〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("037  send 返回成功与 TCP ACK 分别能证明什么？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  流式 socket 的 send 返回正数通常表示相应字节已经被本地发送路径接受，返回值还可能小于请求长度；它并不保证对端已经收到，更不保证对端业务处理完成。连接在返回后仍可能断开，错误也可能稍后才被观察到。TCP ACK 只确认对端传输层按序接收了相应字节，应用可能尚未读取或在处理前崩溃。业务成功必须由应用协议定义确认点，例如持久化完成后返回结果。若请求超时而结果未知，应依赖请求 ID、幂等约束或状态查询收敛，不能把 send 成功或一次 ACK 当成资金、订单操作已经提交。〔N71〕", size: 9.5pt)
+  #text("答案  流式 socket 的 send 返回正数通常表示相应字节已经被本地发送路径接受，返回值还可能小于请求长度；它并不保证对端已经收到，更不保证对端业务处理完成。连接在返回后仍可能断开，错误也可能稍后才被观察到。TCP ACK 只确认对端传输层按序接收了相应字节，应用可能尚未读取或在处理前崩溃。业务成功必须由应用协议定义确认点，例如持久化完成后返回结果。若请求超时而结果未知，应依赖请求 ID、幂等约束或状态查询收敛，不能把 send 成功或一次 ACK 当成资金、订单操作已经提交。〔N74〕", size: 9.5pt)
 ]
 
 #heading(level: 2, outlined: true)[#text("8.7 网络故障与安全", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("038  DDoS 与 SYN Flood 会耗尽哪些资源，应怎样分层缓解？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  DDoS 通过多个来源消耗带宽、连接状态或应用处理能力，正常流量因此无法获得服务；SYN Flood 主要利用未完成握手消耗连接建立阶段的资源。应先监测流量、半连接数量、入口错误率与应用耗时，区分链路饱和和业务热点。网络侧可配合运营商或清洗服务、边缘分发与合理过滤，主机侧审慎使用 SYN cookies 和队列参数，应用侧设置有界并发、超时、鉴权和公平限流。单纯增大队列或扩机器不保证解决问题，源站地址绕过和误伤正常用户也要评估；防护容量与恢复流程应提前验证。〔N65、N66〕", size: 9.5pt)
+  #text("答案  DDoS 通过多个来源消耗带宽、连接状态或应用处理能力，正常流量因此无法获得服务；常见方式包括 UDP/NTP 反射放大、SYN Flood 消耗未完成握手资源、TLS/SSL 握手耗尽计算资源，以及 DNS 或 HTTP 请求洪泛。应先监测流量、半连接数量、入口错误率与应用耗时，区分链路饱和和业务热点。网络侧可配合运营商或清洗服务、边缘分发与合理过滤，主机侧审慎使用 SYN cookies 和队列参数，应用侧设置有界并发、超时、鉴权和公平限流。单纯增大队列或扩机器不保证解决问题，源站地址绕过和误伤正常用户也要评估；防护容量与恢复流程应提前验证。〔N68、N69〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("039  服务已经启动但请求失败或很慢，应怎样按阶段定位？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  先记录请求的目标地址、时间、错误和复现条件，区分 DNS、连接、TLS、首字节与响应体阶段。核对实际解析地址、路由、防火墙和代理配置，再用 ss 查看监听地址、端口和连接状态，避免服务只监听回环地址或错误网络命名空间。可用 curl 的分阶段计时、证书检查和经过授权的抓包判断故障停在哪里，并对照服务日志、请求 ID、队列、线程池及依赖耗时。TCP 连接成功只说明到该端口可建立传输，不能证明鉴权或业务正常；超时也未必是网络丢包，应把客户端与服务端时间线关联。〔N67、N71〕", size: 9.5pt)
+  #text("答案  先记录请求的目标地址、时间、错误和复现条件，区分 DNS、连接、TLS、首字节与响应体阶段。核对实际解析地址、路由、防火墙和代理配置，再用 ss 查看监听地址、端口和连接状态，避免服务只监听回环地址或错误网络命名空间。可用 curl 的分阶段计时、证书检查和经过授权的抓包判断故障停在哪里，并对照服务日志、请求 ID、队列、线程池及依赖耗时。TCP 连接成功只说明到该端口可建立传输，不能证明鉴权或业务正常；超时也未必是网络丢包，应把客户端与服务端时间线关联。〔N70、N74〕", size: 9.5pt)
   #raw("curl -sS -o /dev/null \\\n  -w \"dns=%{time_namelookup} connect=%{time_connect} tls=%{time_appconnect} first=%{time_starttransfer} total=%{time_total}\\n\" \\\n  https://example.com/\n# 指标为从请求开始的累计时间，按差值分析各阶段；不要记录鉴权头。", lang: "sh", block: true)
 ]
 
 #heading(level: 2, outlined: true)[#text("8.8 网络层与链路层", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("040  IP 与 MAC 地址如何协作，访问外网时 ARP 解析谁的地址？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  IP 地址用于网络层寻址和路由，MAC 地址用于具体链路上的帧交付；同一个 IP 包逐跳转发时，链路帧通常会被重新封装，源、目的 MAC 也随跳点变化。主机先查路由，判断目的地址是否在直连链路：同网段可解析目的主机的 MAC，跨网段通常解析下一跳网关的 MAC，而不是远端服务器的 MAC。ARP 在 IPv4 以太网场景中把下一跳 IPv4 地址映射为链路地址，并缓存结果；IPv6 使用邻居发现等机制。MAC 不是跨互联网查找服务器的全局路径标识，单凭 MAC 也不能提供可信身份认证。〔N68、N47〕", size: 9.5pt)
+  #text("答案  IP 地址用于网络层寻址和路由，MAC 地址用于具体链路上的帧交付；同一个 IP 包逐跳转发时，链路帧通常会被重新封装，源、目的 MAC 也随跳点变化。主机先查路由，判断目的地址是否在直连链路：同网段可解析目的主机的 MAC，跨网段通常解析下一跳网关的 MAC，而不是远端服务器的 MAC。ARP 在 IPv4 以太网场景中把下一跳 IPv4 地址映射为链路地址，并缓存结果；IPv6 使用邻居发现等机制。MAC 不是跨互联网查找服务器的全局路径标识，单凭 MAC 也不能提供可信身份认证。〔N71、N50〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("041  ping 与 traceroute 怎样工作，ping 不通为什么不代表 HTTP 不通？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  ping 通常发送 ICMP Echo Request，并根据 Echo Reply 观察往返时间和丢包；它测试的是对应 ICMP 交换，不会验证目标端口、TLS 或应用是否可用。traceroute 逐步增加 IP 生存时间，使中间路由器在到期时返回 ICMP Time Exceeded，由此推测路径；探测可使用 UDP、ICMP 或 TCP，返回路径也未必相同。防火墙限速或丢弃 ICMP 时，ping 可以失败而 TCP/HTTP 正常；反过来 ping 成功也可能遇到端口未监听或应用错误。某跳不回应探测不等于该跳不转发业务流量，应结合实际协议验证。〔N69〕", size: 9.5pt)
+  #text("答案  ping 通常发送 ICMP Echo Request，并根据 Echo Reply 观察往返时间和丢包；它测试的是对应 ICMP 交换，不会验证目标端口、TLS 或应用是否可用。traceroute 逐步增加 IP 生存时间，使中间路由器在到期时返回 ICMP Time Exceeded，由此推测路径；探测可使用 UDP、ICMP 或 TCP，返回路径也未必相同。防火墙限速或丢弃 ICMP 时，ping 可以失败而 TCP/HTTP 正常；反过来 ping 成功也可能遇到端口未监听或应用错误。某跳不回应探测不等于该跳不转发业务流量，应结合实际协议验证。〔N72〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("042  多个内网设备怎样通过 NAT/NAPT 共用一个公网地址？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  基本 NAT 在地址域之间改写 IP 地址；常见的 NAPT 还改写传输层端口，用不同外部端口区分多个内部连接。网关维护映射状态，出站包被改写为公网地址及映射端口，返回包再依据状态还原到内部主机。映射会过期，外部主机通常不能凭一个公网地址直接找到任意内网服务，入站访问需明确的映射、转发或其他连通机制。NAT 会影响端到端寻址，携带地址的应用协议、点对点连接和故障切换可能需要特别处理；它也不等同于防火墙策略，安全边界仍应由明确的访问控制决定。〔N70〕", size: 9.5pt)
+  #text("答案  基本 NAT 在地址域之间改写 IP 地址；常见的 NAPT 还改写传输层端口，用不同外部端口区分多个内部连接。网关维护映射状态，出站包被改写为公网地址及映射端口，返回包再依据状态还原到内部主机。映射会过期，外部主机通常不能凭一个公网地址直接找到任意内网服务，入站访问需明确的映射、转发或其他连通机制。NAT 会影响端到端寻址，携带地址的应用协议、点对点连接和故障切换可能需要特别处理；它也不等同于防火墙策略，安全边界仍应由明确的访问控制决定。〔N73〕", size: 9.5pt)
 ]
 
 #heading(level: 1, outlined: true)[#text("第9章 数据库与缓存", size: 15pt, weight: "bold", fill: rgb("#000000"))]
@@ -1352,242 +1358,242 @@
 #heading(level: 2, outlined: true)[#text("9.4 Redis 与缓存设计", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("018  Redis 的进程、事件循环、持久化与集群边界是什么？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  Redis 服务端通常在一个主执行路径中顺序处理键空间命令，以事件循环和 I/O 多路复用管理连接；网络 I/O、异步释放等工作可由线程辅助，持久化与复制是独立的可靠性边界。RDB/AOF 影响重启恢复和丢失窗口，副本与 Sentinel 处理可用性，Cluster 按哈希槽分片。客户端、单机实例、副本组和集群的路由语义不同，热键、长命令、巨大返回值和异步复制仍可能造成延迟或丢失；不能把“内存数据库”当作自动持久或强一致。〔N74〕", size: 9.5pt)
+  #text("答案  Redis 服务端通常在一个主执行路径中顺序处理键空间命令，以事件循环和 I/O 多路复用管理连接；网络 I/O、异步释放等工作可由线程辅助，持久化与复制是独立的可靠性边界。RDB/AOF 影响重启恢复和丢失窗口，副本与 Sentinel 处理可用性，Cluster 按哈希槽分片。客户端、单机实例、副本组和集群的路由语义不同，热键、长命令、巨大返回值和异步复制仍可能造成延迟或丢失；不能把“内存数据库”当作自动持久或强一致。〔N77〕", size: 9.5pt)
 ]
 
 #heading(level: 2, outlined: true)[#text("9.5 SQL 基础与数据建模", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("019  关系型数据库与 NoSQL 应怎样按数据访问方式选型？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  关系型数据库以表、键、约束和 SQL 为核心，适合多实体关联、复杂查询以及需要事务维护不变量的业务。NoSQL 是文档、键值、列族、图等模型的统称，适合围绕某类访问路径组织数据；它不等于“没有模式”或“没有事务”。选型应先明确主要查询、数据规模、延迟、跨记录原子性及一致性目标，再评估索引、分片和运维成本。订单核心数据可以放关系库，查询视图或缓存采用另一模型；避免仅因预期高并发就先放弃约束，也不要假设任何 NoSQL 都能无代价水平扩展。〔N75〕", size: 9.5pt)
+  #text("答案  关系型数据库以表、键、约束和 SQL 为核心，适合多实体关联、复杂查询以及需要事务维护不变量的业务。NoSQL 是文档、键值、列族、图等模型的统称，适合围绕某类访问路径组织数据；它不等于“没有模式”或“没有事务”。选型应先明确主要查询、数据规模、延迟、跨记录原子性及一致性目标，再评估索引、分片和运维成本。订单核心数据可以放关系库，查询视图或缓存采用另一模型；避免仅因预期高并发就先放弃约束，也不要假设任何 NoSQL 都能无代价水平扩展。〔N78〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("020  第一、第二、第三范式分别在消除什么数据依赖？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  第一范式要求关系中的属性值符合选定的原子域，避免在同一列塞入需要独立查询的重复组。第二范式在第一范式上消除非主属性对候选键的部分依赖，尤其要检查复合键只取一部分就能决定的字段。第三范式继续消除非主属性对候选键的传递依赖，例如订单中直接重复保存客户地址可能产生更新异常。规范化的目标是减少插入、修改、删除异常，并不意味着表越拆越好；在明确读取模式、同步机制和一致性代价后，可以有意识地反规范化保存冗余读模型。〔N76〕", size: 9.5pt)
+  #text("答案  第一范式要求关系中的属性值符合选定的原子域，避免在同一列塞入需要独立查询的重复组。第二范式在第一范式上消除非主属性对候选键的部分依赖，尤其要检查复合键只取一部分就能决定的字段。第三范式继续消除非主属性对候选键的传递依赖，例如订单中直接重复保存客户地址可能产生更新异常。规范化的目标是减少插入、修改、删除异常，并不意味着表越拆越好；在明确读取模式、同步机制和一致性代价后，可以有意识地反规范化保存冗余读模型。〔N79〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("021  内连接、外连接和反连接各适合什么查询？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  内连接只保留满足连接条件的组合；左外连接保留左表全部行，匹配不到的右表列补 NULL。查“选了课程 02 但没选 01”的学生，可用 EXISTS 配合 NOT EXISTS，避免连接后的多行放大；展示所有学生的选课情况则从学生表 LEFT JOIN 选课表。外连接的右表过滤放在 WHERE 还是 ON 会改变结果：WHERE right.col = 值会排除补 NULL 的行。连接前应确认一对一或一对多基数、外键和索引，不能依靠随手加 DISTINCT 掩盖错误的连接条件。〔N77、N78〕", size: 9.5pt)
+  #text("答案  内连接只保留满足连接条件的组合；左外连接保留左表全部行，匹配不到的右表列补 NULL，右外连接则保留右表全部行。MySQL 没有原生 FULL OUTER JOIN，可用左连接与右连接的结果 UNION ALL，并在右连接部分用左表主键 IS NULL 只取未匹配的右表行来模拟。查“选了课程 02 但没选 01”的学生，可用 EXISTS 配合 NOT EXISTS，避免连接后的多行放大；展示所有学生的选课情况则从学生表 LEFT JOIN 选课表。外连接的右表过滤放在 WHERE 还是 ON 会改变结果：WHERE right.col = 值会排除补 NULL 的行。连接前应确认一对一或一对多基数、外键和索引，不能依靠随手加 DISTINCT 掩盖错误的连接条件。〔N80、N81〕", size: 9.5pt)
   #raw("SELECT s.stu_id\nFROM student AS s\nWHERE EXISTS (SELECT 1 FROM score AS c\n              WHERE c.stu_id=s.stu_id AND c.subject_id='02')\n  AND NOT EXISTS (SELECT 1 FROM score AS c\n                  WHERE c.stu_id=s.stu_id AND c.subject_id='01');\n-- 半连接/反连接表达存在性，不会因同一学生多条成绩而重复输出。", lang: "sql", block: true)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("022  MySQL 字符串列的长度、字节数和 TEXT 上限怎样区分？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  CHAR(M) 与 VARCHAR(M) 的 M 表示字符数；实际占用还取决于字符集，例如 utf8mb4 的一个字符最多需要四字节。CHAR 偏向固定长度值，VARCHAR 保存可变长内容并有长度开销，比较和尾部空格行为还受类型及排序规则影响。TEXT 也有上限，普通 TEXT 最多约 64 KiB 字节，另有更小或更大的系列，不能认为能无限保存；VARCHAR 还受整行大小约束。应以字符语义设计长度，用 CHAR_LENGTH 看字符数、LENGTH 看字节数，结合索引限制、行格式及实际数据选择类型。〔N79、N80〕", size: 9.5pt)
+  #text("答案  CHAR(M) 与 VARCHAR(M) 的 M 表示字符数；实际占用还取决于字符集，例如 utf8mb4 的一个字符最多需要四字节。CHAR 偏向固定长度值，VARCHAR 保存可变长内容并有长度开销，比较和尾部空格行为还受类型及排序规则影响。TEXT 也有上限，普通 TEXT 最多约 64 KiB 字节，另有更小或更大的系列，不能认为能无限保存；VARCHAR 还受整行大小约束。应以字符语义设计长度，用 CHAR_LENGTH 看字符数、LENGTH 看字节数，结合索引限制、行格式及实际数据选择类型。〔N82、N83〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("023  INT 的显示宽度会改变取值范围或存储空间吗？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  INT(1) 和 INT(10) 的历史括号值是显示宽度，不把整数限制为一位或十位，也不改变 INT 的四字节存储及有符号范围。不要把它与 VARCHAR 的长度参数混淆。整数显示宽度在 MySQL 8.0 中已经弃用，旧版本配合 ZEROFILL 的显示补零也不是数值精度控制。需要业务范围时应选 TINYINT、SMALLINT、INT、BIGINT，明确是否允许负数，并用约束及应用校验限制有效值。若编号必须显示前导零，它通常是格式化字符串，输出层处理比依赖整数列的显示属性更明确。〔N81〕", size: 9.5pt)
+  #text("答案  INT(1) 和 INT(10) 的历史括号值是显示宽度，不把整数限制为一位或十位，也不改变 INT 的四字节存储及有符号范围。不要把它与 VARCHAR 的长度参数混淆。整数显示宽度在 MySQL 8.0 中已经弃用，旧版本配合 ZEROFILL 的显示补零也不是数值精度控制。需要业务范围时应选 TINYINT、SMALLINT、INT、BIGINT，明确是否允许负数，并用约束及应用校验限制有效值。若编号必须显示前导零，它通常是格式化字符串，输出层处理比依赖整数列的显示属性更明确。〔N84〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("024  金额列为什么通常使用 DECIMAL 或整数最小货币单位？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  FLOAT 和 DOUBLE 按二进制近似表示数值，许多十进制小数无法精确表达，累加、比较与舍入可能出现意外结果。DECIMAL(p,s) 保存精确十进制值，p 是总有效位数，s 是小数位数，适合金额及按十进制规则结算的数量；另一方案是用整数保存分、厘等约定单位。类型本身不能替业务决定税率精度、换汇时机及舍入方向，运算中也要避免先转为浮点再写回。设计时明确最大金额、币种和小数位，边界输入要验证溢出与舍入结果，跨服务传输保持相同的单位和精度约定。〔N82〕", size: 9.5pt)
+  #text("答案  FLOAT 和 DOUBLE 按二进制近似表示数值，许多十进制小数无法精确表达，累加、比较与舍入可能出现意外结果。DECIMAL(p,s) 保存精确十进制值，p 是总有效位数，s 是小数位数，适合金额及按十进制规则结算的数量；另一方案是用整数保存分、厘等约定单位。类型本身不能替业务决定税率精度、换汇时机及舍入方向，运算中也要避免先转为浮点再写回。设计时明确最大金额、币种和小数位，边界输入要验证溢出与舍入结果，跨服务传输保持相同的单位和精度约定。〔N85〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("025  数据库应如何统一保存 IPv4 和 IPv6 地址？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  可以用 VARCHAR 保存规范文本，调试直观，但占空间且同一 IPv6 地址存在多种等价写法；需要紧凑存储和精确相等比较时，可用 VARBINARY(16) 保存 INET6_ATON 的结果，用 INET6_NTOA 转回文本。该函数处理 IPv4 时会返回四字节结果，因此应预先约定是否统一映射为十六字节及如何区分地址族，不能混用两套归一化规则。IPv4 也可用无符号整数，但不适合直接承接 IPv6。若要做网段匹配、范围检索或黑名单，应明确网络字节序、前缀长度与边界计算，不把展示字符串的字典序当作地址数值顺序。〔N83〕", size: 9.5pt)
+  #text("答案  可以用 VARCHAR 保存规范文本，调试直观，但占空间且同一 IPv6 地址存在多种等价写法；需要紧凑存储和精确相等比较时，可用 VARBINARY(16) 保存 INET6_ATON 的结果，用 INET6_NTOA 转回文本。该函数处理 IPv4 时会返回四字节结果，因此应预先约定是否统一映射为十六字节及如何区分地址族，不能混用两套归一化规则。IPv4 也可用无符号整数，但不适合直接承接 IPv6。若要做网段匹配、范围检索或黑名单，应明确网络字节序、前缀长度与边界计算，不把展示字符串的字典序当作地址数值顺序。〔N86〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("026  外键约束怎样维护引用完整性，有哪些使用代价？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  外键让子表中的引用必须匹配父表键，或按允许的 NULL 语义为空；父表更新和删除时可选择拒绝、级联或置 NULL 等动作。它把引用完整性落实在数据库中，能阻止绕过应用写入的孤儿记录，但不替代事务中的其他业务条件。InnoDB 对外键和被引用键有索引要求，级联操作还可能扩大锁定范围与一次写入的工作量。跨库分片或跨服务时通常无法直接保留同样的约束，需要事件、补偿及对账。是否采用外键应依据数据所有权和运维需求，而不能笼统地认为外键一定拖慢所有查询。〔N84〕", size: 9.5pt)
+  #text("答案  外键让子表中的引用必须匹配父表键，或按允许的 NULL 语义为空；父表更新和删除时可选择拒绝、级联或置 NULL 等动作。它把引用完整性落实在数据库中，能阻止绕过应用写入的孤儿记录，但不替代事务中的其他业务条件。InnoDB 对外键和被引用键有索引要求，级联操作还可能扩大锁定范围与一次写入的工作量。跨库分片或跨服务时通常无法直接保留同样的约束，需要事件、补偿及对账。是否采用外键应依据数据所有权和运维需求，而不能笼统地认为外键一定拖慢所有查询。〔N87〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("027  IN 和 EXISTS 的语义差异是什么，怎样避免 NOT IN 的空值陷阱？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  IN 判断一个值是否属于候选集合，EXISTS 只判断子查询是否产生至少一行，子查询 SELECT 的具体字段通常不影响存在性。相关子查询可以表达逐行关联，但数据库也可能将 IN 或 EXISTS 改写成半连接等计划，因此不能只凭“外表大用某个写法”判断性能。尤其要注意 NOT IN：候选集合只要包含 NULL，就可能使原本以为成立的判断变成 UNKNOWN，最终被 WHERE 过滤；NOT EXISTS 通常更直接表达不存在关联行。先保证 NULL 语义与连接键正确，再用 EXPLAIN 和实际数据评估计划、索引及执行次数。〔N78〕", size: 9.5pt)
+  #text("答案  IN 判断一个值是否属于候选集合，EXISTS 只判断子查询是否产生至少一行，子查询 SELECT 的具体字段通常不影响存在性。相关子查询可以表达逐行关联，但数据库也可能将 IN 或 EXISTS 改写成半连接等计划，因此不能只凭“外表大用某个写法”判断性能。尤其要注意 NOT IN：候选集合只要包含 NULL，就可能使原本以为成立的判断变成 UNKNOWN，最终被 WHERE 过滤；NOT EXISTS 通常更直接表达不存在关联行。先保证 NULL 语义与连接键正确，再用 EXPLAIN 和实际数据评估计划、索引及执行次数。〔N81〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("028  SQL 常见标量函数应怎样使用才不改变业务语义？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  字符串处理可用 CONCAT、SUBSTRING，数值处理有 ROUND、ABS，时间处理有日期提取和区间运算，条件表达式常用 CASE、COALESCE。选择函数时要确认 NULL 如何传播、字符串按字符还是字节计数、舍入规则和会话时区，避免把展示格式参与数值计算。对索引列直接套普通函数可能妨碍常规索引范围定位，例如把时间列格式化后再比较日期，通常可改成明确的半开时间区间；存在函数索引或生成列时另行评估。应将字段类型、参数类型和边界样本一起验证，不靠函数名字推断隐式转换或空值处理。〔N85〕", size: 9.5pt)
+  #text("答案  字符串处理可用 CONCAT、SUBSTRING，数值处理有 ROUND、ABS，时间处理有日期提取和区间运算，条件表达式常用 CASE、COALESCE。选择函数时要确认 NULL 如何传播、字符串按字符还是字节计数、舍入规则和会话时区，避免把展示格式参与数值计算。对索引列直接套普通函数可能妨碍常规索引范围定位，例如把时间列格式化后再比较日期，通常可改成明确的半开时间区间；存在函数索引或生成列时另行评估。应将字段类型、参数类型和边界样本一起验证，不靠函数名字推断隐式转换或空值处理。〔N88〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("029  COUNT 和 NULL 的组合会怎样影响统计结果？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  NULL 表示缺失或未知，空字符串则是一个存在的字符串值，两者在比较、约束及聚合中的语义不同。COUNT(*) 统计结果集行数，COUNT(1) 对每一行计算非空常量，语义上同样统计行数；COUNT(col) 只数该表达式非 NULL 的行，COUNT(DISTINCT col) 还要去重。测试空值要用 IS NULL，而不是 col = NULL，因为后者通常得到 UNKNOWN。LEFT JOIN 后统计子表记录时，应数非空的子表键，不能直接 COUNT(*) 把无匹配的父行也计为一条。对 InnoDB，计数还受事务可见性影响，不存在适用于所有事务的即时精确总行数。〔N86〕", size: 9.5pt)
+  #text("答案  NULL 表示缺失或未知，空字符串则是一个存在的字符串值，两者在比较、约束及聚合中的语义不同。COUNT(*) 统计结果集行数，COUNT(1) 对每一行计算非空常量，语义上同样统计行数；COUNT(col) 只数该表达式非 NULL 的行，COUNT(DISTINCT col) 还要去重。测试空值要用 IS NULL，而不是 col = NULL，因为后者通常得到 UNKNOWN。LEFT JOIN 后统计子表记录时，应数非空的子表键，不能直接 COUNT(*) 把无匹配的父行也计为一条。对 InnoDB，计数还受事务可见性影响，不存在适用于所有事务的即时精确总行数。〔N89〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("030  DELETE、TRUNCATE 和 DROP 的事务及对象语义有何区别？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  DELETE 删除符合条件的行，保留表结构；对 InnoDB 可在事务中回滚，但实际日志、锁和执行时间随删除范围增长。TRUNCATE 清空整张表并重建相关存储，属于 DDL，通常会隐式提交，不能像普通事务 DELETE 那样回滚，还会重置自增计数并受外键引用限制。DROP 则删除表对象及其数据，后续语句不能继续把它当作原表使用。不能仅按“哪个快”决定命令：先确认是否保留结构、是否需按条件删、引用关系、备份恢复和权限，再评估分批清理方案。一次误执行的 DDL 不能靠应用层重试恢复。〔N87〕", size: 9.5pt)
+  #text("答案  DELETE 删除符合条件的行，保留表结构；对 InnoDB 可在事务中回滚，但实际日志、锁和执行时间随删除范围增长。TRUNCATE 清空整张表并重建相关存储，属于 DDL，通常会隐式提交，不能像普通事务 DELETE 那样回滚，还会重置自增计数并受外键引用限制。DROP 则删除表对象及其数据，后续语句不能继续把它当作原表使用。不能仅按“哪个快”决定命令：先确认是否保留结构、是否需按条件删、引用关系、备份恢复和权限，再评估分批清理方案。一次误执行的 DDL 不能靠应用层重试恢复。〔N90〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("031  SELECT 的逻辑处理顺序与实际执行计划有什么不同？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  理解查询可按 FROM/JOIN、WHERE、GROUP BY、HAVING、窗口计算、SELECT/DISTINCT、ORDER BY、LIMIT 这样的逻辑阶段推理：WHERE 过滤分组前的行，HAVING 过滤分组后的结果，窗口函数通常在分组之后保留每行输出。这个顺序解释了为何很多位置不能直接使用 SELECT 中定义的别名，也解释了外连接过滤的位置为何影响结果。MySQL 对别名等有自己的语法扩展，应按具体规则判断。优化器可在保持语义的前提下下推过滤、重排内连接或改写子查询，所以逻辑顺序不是逐步执行的物理流水线；真实访问路径应查看执行计划。〔N88、N89〕", size: 9.5pt)
+  #text("答案  理解查询可按 FROM/JOIN、WHERE、GROUP BY、HAVING、窗口计算、SELECT/DISTINCT、ORDER BY、LIMIT 这样的逻辑阶段推理：WHERE 过滤分组前的行，HAVING 过滤分组后的结果，窗口函数通常在分组之后保留每行输出。这个顺序解释了为何很多位置不能直接使用 SELECT 中定义的别名，也解释了外连接过滤的位置为何影响结果。MySQL 对别名等有自己的语法扩展，应按具体规则判断。优化器可在保持语义的前提下下推过滤、重排内连接或改写子查询，所以逻辑顺序不是逐步执行的物理流水线；真实访问路径应查看执行计划。〔N91、N92〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("032  按学生总分取第 5 到第 10 名，怎样定义并列与分页？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  先按学生聚合 SUM(score)，再给聚合结果计算排名，最后过滤排名区间；不能先对成绩明细做 LIMIT 再汇总。ROW_NUMBER 为每行分配不同序号，若必须恰好取六名学生，可在总分后加学生 ID 作为稳定次序。RANK 遇到并列时共享名次且后续跳号，DENSE_RANK 则不跳号，适合按业务定义处理并列。窗口函数不能在同层 WHERE 中直接过滤结果，可放到 CTE 或子查询中。需要说明成绩为 NULL、同课程多条成绩及补考记录怎样计入，排名规则的一致性比仅给出一段可执行 SQL 更重要。〔N89〕", size: 9.5pt)
+  #text("答案  先按学生聚合 SUM(score)，再给聚合结果计算排名，最后过滤排名区间；不能先对成绩明细做 LIMIT 再汇总。ROW_NUMBER 为每行分配不同序号，若必须恰好取六名学生，可在总分后加学生 ID 作为稳定次序。RANK 遇到并列时共享名次且后续跳号，DENSE_RANK 则不跳号，适合按业务定义处理并列。窗口函数不能在同层 WHERE 中直接过滤结果，可放到 CTE 或子查询中。需要说明成绩为 NULL、同课程多条成绩及补考记录怎样计入，排名规则的一致性比仅给出一段可执行 SQL 更重要。〔N92〕", size: 9.5pt)
   #raw("WITH total AS (\n  SELECT stu_id, SUM(score) AS total_score\n  FROM student_score GROUP BY stu_id\n), ranked AS (\n  SELECT total.*, ROW_NUMBER() OVER\n    (ORDER BY total_score DESC, stu_id) AS rn FROM total\n)\nSELECT stu_id, total_score FROM ranked\nWHERE rn BETWEEN 5 AND 10 ORDER BY rn;\n-- 此处按稳定序号选六行；业务按并列名次时改用 RANK/DENSE_RANK。", lang: "sql", block: true)
 ]
 
 #heading(level: 2, outlined: true)[#text("9.6 MySQL 引擎与存储", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("033  一条查询或更新怎样经过 MySQL Server 与 InnoDB？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  客户端连接后先完成认证和权限相关检查，Server 解析 SQL，优化器选择访问路径和连接顺序，执行器按计划调用存储引擎接口。InnoDB 通过 Buffer Pool 访问数据页，按隔离级别使用版本链或锁；更新还会产生用于回滚与恢复的日志，提交时协调引擎和 binlog。权限、元数据锁以及锁等待可能出现在不同阶段，慢查询不一定是查找算法慢。MySQL 8.0 已移除旧的查询缓存，不能把过时执行流程直接套用。定位时将连接耗时、执行计划、页命中、事务等待与日志刷盘分别观测，不能仅根据一次总耗时归因。〔N90、N91、N92〕", size: 9.5pt)
+  #text("答案  客户端连接后先完成认证和权限相关检查，Server 解析 SQL，优化器选择访问路径和连接顺序，执行器按计划调用存储引擎接口。InnoDB 通过 Buffer Pool 访问数据页，按隔离级别使用版本链或锁；更新还会产生用于回滚与恢复的日志，提交时协调引擎和 binlog。权限、元数据锁以及锁等待可能出现在不同阶段，慢查询不一定是查找算法慢。MySQL 8.0 已移除旧的查询缓存，不能把过时执行流程直接套用。定位时将连接耗时、执行计划、页命中、事务等待与日志刷盘分别观测，不能仅根据一次总耗时归因。〔N93、N94、N95〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("034  InnoDB 与 MyISAM 在事务、索引和并发上怎样取舍？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  InnoDB 提供事务、崩溃恢复、MVCC、行级锁与外键，是现代 MySQL 的默认通用引擎；其聚簇索引组织整行数据，二级索引保存主键，主键宽度也会放大辅助索引。MyISAM 不提供同等的事务及恢复语义，数据与索引文件分离，写入主要依赖表级锁，更适合少数明确的兼容场景，不能仅因简单 COUNT(*) 较快就迁移业务表。InnoDB 的行锁不代表任何语句只锁单行，范围、索引及隔离级别仍决定锁范围。引擎选型应一起评估故障恢复、一致性、并发读写和备份方案，而不只比较单次查询耗时。〔N90〕", size: 9.5pt)
+  #text("答案  InnoDB 提供事务、崩溃恢复、MVCC、行级锁与外键，是现代 MySQL 的默认通用引擎；其聚簇索引组织整行数据，二级索引保存主键，主键宽度也会放大辅助索引。MyISAM 不提供同等的事务及恢复语义，数据与索引文件分离，写入主要依赖表级锁，更适合少数明确的兼容场景，不能仅因简单 COUNT(*) 较快就迁移业务表。InnoDB 的行锁不代表任何语句只锁单行，范围、索引及隔离级别仍决定锁范围。引擎选型应一起评估故障恢复、一致性、并发读写和备份方案，而不只比较单次查询耗时。〔N93〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("035  MySQL 表结构和数据文件的布局为什么必须区分版本？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  MySQL 5.7 常见 .frm 保存表定义，启用独立表空间的 InnoDB 表以 .ibd 保存数据及索引；这套描述不能直接当作 MySQL 8.x 的文件规范。8.0 起采用事务型数据字典，移除了 .frm 等旧元数据文件。InnoDB 还可使用系统、通用、独立、undo 和临时等表空间，是否一表一个 .ibd 取决于表空间配置及建表方式，不能只凭目录中某个扩展名判断全部数据归属。排查前先确认版本、datadir、引擎和表空间，备份迁移使用受支持的流程；单独复制正在运行中的一个表文件，不能自动保证元数据和事务状态一致。〔N93、N94〕", size: 9.5pt)
+  #text("答案  MySQL 5.7 常见 .frm 保存表定义，启用独立表空间的 InnoDB 表以 .ibd 保存数据及索引；这套描述不能直接当作 MySQL 8.x 的文件规范。8.0 起采用事务型数据字典，移除了 .frm 等旧元数据文件。InnoDB 还可使用系统、通用、独立、undo 和临时等表空间，是否一表一个 .ibd 取决于表空间配置及建表方式，不能只凭目录中某个扩展名判断全部数据归属。排查前先确认版本、datadir、引擎和表空间，备份迁移使用受支持的流程；单独复制正在运行中的一个表文件，不能自动保证元数据和事务状态一致。〔N96、N97〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("036  Buffer Pool 怎样减少磁盘访问，脏页又在何时落盘？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  Buffer Pool 是 InnoDB 缓存数据页和索引页的主要内存区域。读取先查缓存，未命中才从存储加载；修改通常先发生在内存页中并把页面标为脏页，redo 先行保证之后可恢复，再由后台刷脏等流程把页面写回磁盘，所以事务提交不必逐一把所有改过的数据页写盘。它还维护页状态和替换队列，扫描大量冷数据可能冲击热点，需观察命中率、脏页比例及淘汰等待。容量并非越大越好，应给连接、排序、日志、操作系统和其他进程留空间；仅看高命中率也不能排除锁等待、慢存储或低效扫描。〔N91〕", size: 9.5pt)
+  #text("答案  Buffer Pool 是 InnoDB 缓存数据页和索引页的主要内存区域。读取先查缓存，未命中才从存储加载；修改通常先发生在内存页中并把页面标为脏页，redo 先行保证之后可恢复，再由后台刷脏等流程把页面写回磁盘，所以事务提交不必逐一把所有改过的数据页写盘。它还维护页状态和替换队列，扫描大量冷数据可能冲击热点，需观察命中率、脏页比例及淘汰等待。容量并非越大越好，应给连接、排序、日志、操作系统和其他进程留空间；仅看高命中率也不能排除锁等待、慢存储或低效扫描。〔N94〕", size: 9.5pt)
 ]
 
 #heading(level: 2, outlined: true)[#text("9.7 MySQL 索引补充", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("037  InnoDB 主键为何偏好短且稳定，自增值为什么会有空洞？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  主键决定聚簇索引的组织顺序，二级索引也携带主键，因此短、稳定、具有局部递增性的键通常能降低空间、页分裂与随机写入。随机 UUID 较宽且插入位置分散，但是否采用仍要考虑离线生成、隐私及跨库唯一性；有序 UUID 或业务号也要结合具体编码验证。AUTO_INCREMENT 保证分配规则，不保证提交后的编号连续：事务回滚、失败插入或批量预分配都可能留下空洞，不能用相邻 ID 之差推断删除数量。数据库主键与对外业务编号可以分离，要求严格连续的财务流水需专门协议，不能依赖普通自增列。〔N95、N94〕", size: 9.5pt)
+  #text("答案  主键决定聚簇索引的组织顺序，二级索引也携带主键，因此短、稳定、具有局部递增性的键通常能降低空间、页分裂与随机写入。随机 UUID 较宽且插入位置分散，但是否采用仍要考虑离线生成、隐私及跨库唯一性；有序 UUID 或业务号也要结合具体编码验证。AUTO_INCREMENT 保证分配规则，不保证提交后的编号连续：事务回滚、失败插入或批量预分配都可能留下空洞，不能用相邻 ID 之差推断删除数量。数据库主键与对外业务编号可以分离，要求严格连续的财务流水需专门协议，不能依赖普通自增列。〔N98、N97〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("038  覆盖索引与索引条件下推分别减少哪一类工作？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  覆盖索引指查询所需的列都能从所用索引取得，无须为了补齐这些列再读取聚簇记录；它由查询投影和索引内容共同决定。索引条件下推则把可用索引列判断的部分条件交给存储引擎，先在索引记录上过滤，再对通过者读取完整记录，从而减少不必要回表。二者可以共同发生，但不是同一概念。复合索引后面的列即使不能继续缩小定位范围，也可能仍用于过滤或覆盖，不能一概叫作“完全失效”。应结合 EXPLAIN 中的访问路径和 Extra 信息检查，索引越宽也会增加写入与存储成本。〔N96〕", size: 9.5pt)
+  #text("答案  覆盖索引指查询所需的列都能从所用索引取得，无须为了补齐这些列再读取聚簇记录；它由查询投影和索引内容共同决定。索引条件下推则把可用索引列判断的部分条件交给存储引擎，先在索引记录上过滤，再对通过者读取完整记录，从而减少不必要回表。二者可以共同发生，但不是同一概念。复合索引后面的列即使不能继续缩小定位范围，也可能仍用于过滤或覆盖，不能一概叫作“完全失效”。应结合 EXPLAIN 中的访问路径和 Extra 信息检查，索引越宽也会增加写入与存储成本。〔N99〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("039  字符串前缀索引怎样节省空间，有哪些功能限制？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  前缀索引只索引字符串的前若干字符或字节，具体计量取决于字符串类型；常用于较长文本以控制索引大小和维护开销。前缀越短通常冲突越多，查询仍需核对完整值，必须用真实数据比较前缀区分度，而不是任意选一个长度。它不能天然替代完整列索引的全部能力，例如仅凭前缀不足以证明完整列相等或覆盖完整列输出，排序和分组是否可利用也要看执行条件。TEXT/BLOB 创建普通索引通常需明确前缀长度，同时受引擎与字符集的索引字节上限约束。唯一前缀索引限制的是前缀唯一，可能拒绝完整值不同但前缀相同的数据。〔N97〕", size: 9.5pt)
+  #text("答案  前缀索引只索引字符串的前若干字符或字节，具体计量取决于字符串类型；常用于较长文本以控制索引大小和维护开销。前缀越短通常冲突越多，查询仍需核对完整值，必须用真实数据比较前缀区分度，而不是任意选一个长度。它不能天然替代完整列索引的全部能力，例如仅凭前缀不足以证明完整列相等或覆盖完整列输出，排序和分组是否可利用也要看执行条件。TEXT/BLOB 创建普通索引通常需明确前缀长度，同时受引擎与字符集的索引字节上限约束。唯一前缀索引限制的是前缀唯一，可能拒绝完整值不同但前缀相同的数据。〔N100〕", size: 9.5pt)
 ]
 
 #heading(level: 2, outlined: true)[#text("9.8 MySQL 锁与恢复", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("040  数据库发生死锁后应用应怎样恢复，如何降低再发生概率？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  死锁是事务之间形成循环等待，增加锁等待时间不能消除这个环。InnoDB 通常会检测死锁并选择事务回滚，应用需识别相应错误、回滚并有限次重试完整事务，而不是只重放最后一条 SQL 导致部分业务状态遗漏。应收集事务语句、执行计划与死锁日志，统一访问多行和多表的顺序，缩短事务并建立合适索引，以减少锁范围和持有时间。关闭死锁检测时还需理解超时回滚策略。锁等待超时与死锁并不相同，默认情况下它们对语句及整个事务的回滚范围可能不同，错误处理必须主动收敛事务状态。〔N98〕", size: 9.5pt)
+  #text("答案  死锁是事务之间形成循环等待，增加锁等待时间不能消除这个环。InnoDB 通常会检测死锁并选择事务回滚，应用需识别相应错误、回滚并有限次重试完整事务，而不是只重放最后一条 SQL 导致部分业务状态遗漏。应收集事务语句、执行计划与死锁日志，统一访问多行和多表的顺序，缩短事务并建立合适索引，以减少锁范围和持有时间。关闭死锁检测时还需理解超时回滚策略。锁等待超时与死锁并不相同，默认情况下它们对语句及整个事务的回滚范围可能不同，错误处理必须主动收敛事务状态。〔N101〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("041  为什么 ALTER TABLE 可能让后续普通查询也排队？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  元数据锁保护表结构在语句或事务使用期间保持有效；已有事务持有兼容的元数据锁时，要求更强锁的 ALTER TABLE 可能等待。新的查询又可能排在待授予的排他元数据锁后面，形成看似“一个改表拖住整张表”的队列，源头往往是未结束的长事务。排查应观察 performance_schema.metadata_locks、会话及事务状态，识别等待者与真正阻塞者；只杀等待的查询未必解决源头。上线 DDL 前设置合理等待策略、控制长事务并验证 Online DDL 支持范围，不能把 LOCK=NONE 理解成绝不会申请任何元数据锁。〔N99〕", size: 9.5pt)
+  #text("答案  元数据锁保护表结构在语句或事务使用期间保持有效；已有事务持有兼容的元数据锁时，要求更强锁的 ALTER TABLE 可能等待。新的查询又可能排在待授予的排他元数据锁后面，形成看似“一个改表拖住整张表”的队列，源头往往是未结束的长事务。排查应观察 performance_schema.metadata_locks、会话及事务状态，识别等待者与真正阻塞者；只杀等待的查询未必解决源头。上线 DDL 前设置合理等待策略、控制长事务并验证 Online DDL 支持范围，不能把 LOCK=NONE 理解成绝不会申请任何元数据锁。〔N102〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("042  innodb_flush_log_at_trx_commit 的三个值如何影响故障丢失窗口？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  值为 1 时，提交要求相应 redo 写出并同步持久存储；值为 2 时提交写到文件层，但刷盘通常由后台周期进行；值为 0 时提交不要求立即完成写出及刷盘。日志先经过内存缓冲和文件缓存，进程崩溃、操作系统崩溃与掉电的影响因此不同。后台默认周期常是一秒，但调度、存储和配置会影响实际窗口，不能声称 0 或 2 严格最多丢一秒。若启用 binlog，还要配合 sync_binlog 和存储设备的真实耐久保证评估完整事务。组提交能合并刷盘工作，并不意味着可以忽略耐久参数或备份恢复演练。〔N100、N92〕", size: 9.5pt)
+  #text("答案  值为 1 时，提交要求相应 redo 写出并同步持久存储；值为 2 时提交写到文件层，但刷盘通常由后台周期进行；值为 0 时提交不要求立即完成写出及刷盘。日志先经过内存缓冲和文件缓存，进程崩溃、操作系统崩溃与掉电的影响因此不同。后台默认周期常是一秒，但调度、存储和配置会影响实际窗口，不能声称 0 或 2 严格最多丢一秒。若启用 binlog，还要配合 sync_binlog 和存储设备的真实耐久保证评估完整事务。组提交能合并刷盘工作，并不意味着可以忽略耐久参数或备份恢复演练。〔N103、N95〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("043  Redo 空间将耗尽时，为何 checkpoint 和刷脏会限制写入？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  Redo 是有容量边界的循环日志，不能覆盖崩溃恢复仍需要的记录。Checkpoint 表示此前相应页面修改已具备足够的落盘进度，恢复可以从较新的位置开始，旧日志空间才可复用。若写入产生 redo 太快而脏页刷盘跟不上，检查点推进不足，系统会加强刷脏甚至限制前台写入，表现为延迟升高。应检查 redo 容量、checkpoint age、存储吞吐及脏页压力，不能仅靠无限增加日志容量掩盖持续过载。WAL 将提交关键路径从随机写多个数据页转向日志顺序写，但页面最终仍须落盘，并没有消除数据页 I/O。〔N101〕", size: 9.5pt)
+  #text("答案  Redo 是有容量边界的循环日志，不能覆盖崩溃恢复仍需要的记录。Checkpoint 表示此前相应页面修改已具备足够的落盘进度，恢复可以从较新的位置开始，旧日志空间才可复用。若写入产生 redo 太快而脏页刷盘跟不上，检查点推进不足，系统会加强刷脏甚至限制前台写入，表现为延迟升高。应检查 redo 容量、checkpoint age、存储吞吐及脏页压力，不能仅靠无限增加日志容量掩盖持续过载。WAL 将提交关键路径从随机写多个数据页转向日志顺序写，但页面最终仍须落盘，并没有消除数据页 I/O。〔N104〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("044  组提交怎样提高日志刷盘效率，代价是什么？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  多个并发事务可以共享一次日志同步操作，减少每个事务独占 fsync 所造成的 I/O 和等待开销。Server 的 binlog 提交流水线可把相关工作分阶段批量处理，并与 InnoDB 提交协调；它提升吞吐的关键是摊薄耐久操作成本，不是让多个业务事务合成同一个可回滚事务。适当等待更多提交者可能形成更大批次，但也会增加单事务延迟，低并发场景未必受益。评估时同时看吞吐、提交尾延迟、存储延迟和持久化参数，不能通过关闭刷盘获得的性能数字推断组提交自身效果。〔N92、N100〕", size: 9.5pt)
+  #text("答案  多个并发事务可以共享一次日志同步操作，减少每个事务独占 fsync 所造成的 I/O 和等待开销。Server 的 binlog 提交流水线可把相关工作分阶段批量处理，并与 InnoDB 提交协调；它提升吞吐的关键是摊薄耐久操作成本，不是让多个业务事务合成同一个可回滚事务。适当等待更多提交者可能形成更大批次，但也会增加单事务延迟，低并发场景未必受益。评估时同时看吞吐、提交尾延迟、存储延迟和持久化参数，不能通过关闭刷盘获得的性能数字推断组提交自身效果。〔N95、N103〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("045  InnoDB doublewrite 为什么不能简单地由 redo 替代？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  数据库页较大，而底层写入可能在崩溃时只完成一部分，留下撕裂页；redo 描述页变更，并不意味着能安全地在任意损坏页上直接重放。Doublewrite 先把待刷页写到受管理的双写区域并保证相应持久性，再写目标数据文件，恢复时可用完好的页副本修复受影响页，然后应用 redo。它解决页写完整性，与事务提交的日志持久性互补。现代 MySQL 的实现和存储优化随版本演进，应按版本及设备保证配置；不能仅因为 SSD 较快就推断支持数据库页的完整原子写，从而随意关闭保护。〔N102〕", size: 9.5pt)
+  #text("答案  数据库页较大，而底层写入可能在崩溃时只完成一部分，留下撕裂页；redo 描述页变更，并不意味着能安全地在任意损坏页上直接重放。Doublewrite 先把待刷页写到受管理的双写区域并保证相应持久性，再写目标数据文件，恢复时可用完好的页副本修复受影响页，然后应用 redo。它解决页写完整性，与事务提交的日志持久性互补。现代 MySQL 的实现和存储优化随版本演进，应按版本及设备保证配置；不能仅因为 SSD 较快就推断支持数据库页的完整原子写，从而随意关闭保护。〔N105〕", size: 9.5pt)
 ]
 
 #heading(level: 2, outlined: true)[#text("9.9 MySQL 查询与复制补充", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("046  深分页为什么常变慢，如何用游标方式继续读取？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  LIMIT offset,count 往往仍要访问并丢弃前 offset 条符合条件的结果，偏移越大扫描和回表成本越高，并发插入还会让按页号翻页发生重复或跳行。若业务支持“下一页”，可按稳定且唯一的排序键记录上一页末尾位置，用范围条件继续扫描，例如按创建时间和 ID 的组合游标。需要任意页跳转时，可评估覆盖索引先取主键再回表、限制最大页深或预计算结果，但这些方案不会自动消除偏移扫描。游标应包含全部排序列并处理同值和方向，过滤条件及索引顺序也要匹配，不能只凭 ID 大小替代业务的实际排序。〔N103、N88〕", size: 9.5pt)
+  #text("答案  LIMIT offset,count 往往仍要访问并丢弃前 offset 条符合条件的结果，偏移越大扫描和回表成本越高，并发插入还会让按页号翻页发生重复或跳行。若业务支持“下一页”，可按稳定且唯一的排序键记录上一页末尾位置，用范围条件继续扫描，例如按创建时间和 ID 的组合游标。需要任意页跳转时，可评估覆盖索引先取主键再回表、限制最大页深或预计算结果，但这些方案不会自动消除偏移扫描。游标应包含全部排序列并处理同值和方向，过滤条件及索引顺序也要匹配，不能只凭 ID 大小替代业务的实际排序。〔N106、N91〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("047  MySQL 复制、半同步与 GTID 分别解决什么问题？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  典型复制中，源端记录 binlog，副本接收写入 relay log，再由应用线程执行；接收和应用是不同进度，因此收到日志不代表查询已经可见。异步复制提交无需等待副本，半同步则按配置等待副本的日志接收确认，能缩小部分丢失窗口，但不等于等待副本完成应用，也不自动提供无损切主或线性一致读。GTID 为事务提供全局身份，可帮助识别已执行集合并简化重新定位复制起点；它不是物理文件偏移，也不会消除复制延迟。应把确认条件、超时退化、候选副本和业务读后写策略一同设计。〔N104、N105、N106〕", size: 9.5pt)
+  #text("答案  典型复制中，源端记录 binlog，副本接收写入 relay log，再由应用线程执行；接收和应用是不同进度，因此收到日志不代表查询已经可见。异步复制提交无需等待副本，半同步则按配置等待副本的日志接收确认，能缩小部分丢失窗口，但不等于等待副本完成应用，也不自动提供无损切主或线性一致读。GTID 为事务提供全局身份，可帮助识别已执行集合并简化重新定位复制起点；它不是物理文件偏移，也不会消除复制延迟。应把确认条件、超时退化、候选副本和业务读后写策略一同设计。〔N107、N108、N109〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("048  分库分表怎样选择分片键并规划扩容？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  分表把数据拆到多个表，分库进一步分散到多个数据库实例，主要解决单节点容量、写入和故障影响范围，代价是跨片查询、关联、唯一性与事务更复杂。分片键应兼顾主要路由条件、分布均匀性和增长模式；只按时间或大客户 ID 切分都可能形成热点。哈希能均衡但范围查询可能广播，范围分片便于区间检索但需处理尾部热点。扩容要有迁移批次、增量追平、路由版本、校验和回滚机制，避免一次改模数导致绝大多数数据重新定位。全局 ID、分页、聚合、对账及跨片事务应在拆分前定义清楚。〔N107〕", size: 9.5pt)
+  #text("答案  分表把数据拆到多个表，分库进一步分散到多个数据库实例，主要解决单节点容量、写入和故障影响范围，代价是跨片查询、关联、唯一性与事务更复杂。分片键应兼顾主要路由条件、分布均匀性和增长模式；若按买家 ID 分片但只拿订单主键查详情，就需要路由映射、冗余分片字段或把分片信息编码到 ID，否则只能广播。分页要定义全局排序：浅页可让每片返回 offset+limit 条再归并，代价随 offset 和分片数上升；连续翻页优先使用稳定复合排序键作游标。任意深页可考虑单独排序/搜索索引，并评估一致性与维护成本。扩容还要有迁移批次、增量追平、路由版本、校验和回滚机制。全局聚合、对账及跨片事务应在拆分前定义清楚。〔N110〕", size: 9.5pt)
 ]
 
 #heading(level: 2, outlined: true)[#text("9.10 Redis 内部结构与执行模型", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("049  Redis 的大规模有序集合为什么使用跳表配合字典？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  以 Redis 7.2 的典型实现为例，较大的 ZSet 使用字典支持按成员快速定位，再用跳表按分数及同分成员顺序维护有序关系；较小的集合可采用紧凑编码。跳表由多层有序链构成，节点层高按概率选择，形成稀疏的上层索引，平均查找、插入、删除约为 O(log n)，从已定位位置继续范围遍历则按输出量推进。它避免每次插入移动整个数组，也便于实现排名所需的跨度统计。选择跳表主要契合内存中的更新与范围操作，不意味着它在磁盘页访问、空间或任何负载下都比 B+ 树更好；编码阈值和结构应按具体 Redis 版本核对。〔N108〕", size: 9.5pt)
+  #text("答案  以 Redis 7.2 的典型实现为例，较大的 ZSet 使用字典支持按成员快速定位，再用跳表按分数及同分成员顺序维护有序关系；较小的集合可采用紧凑编码。跳表由多层有序链构成，节点层高按概率选择，形成稀疏的上层索引，平均查找、插入、删除约为 O(log n)，从已定位位置继续范围遍历则按输出量推进。它避免每次插入移动整个数组，也便于实现排名所需的跨度统计。选择跳表主要契合内存中的更新与范围操作，不意味着它在磁盘页访问、空间或任何负载下都比 B+ 树更好；编码阈值和结构应按具体 Redis 版本核对。〔N111〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("050  listpack 等紧凑编码如何节省内存，为什么不适合无限增大？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  紧凑编码把多个小元素连续存放，减少指针、分配器和对象头开销，并改善访问局部性；小 Hash、ZSet 及 List 的某些内部节点会使用这类结构，但使用条件随版本与配置变化。旧 ziplist 的前项长度编码可能引起级联扩展，listpack 使用不同的记录长度设计，避免该类连锁更新。连续布局仍有代价：按位置查找常需顺序遍历，插入或扩容也可能移动一段内容，因此不能将“小对象省内存”推广为任意规模都更快。分析实际对象先查 OBJECT ENCODING、元素数量和最大元素长度，再结合命令复杂度判断是否会转换编码。〔N109〕", size: 9.5pt)
+  #text("答案  紧凑编码把多个小元素连续存放，减少指针、分配器和对象头开销，并改善访问局部性；小 Hash、ZSet 及 List 的某些内部节点会使用这类结构，但使用条件随版本与配置变化。旧 ziplist 的前项长度编码可能引起级联扩展，listpack 使用不同的记录长度设计，避免该类连锁更新。连续布局仍有代价：按位置查找常需顺序遍历，插入或扩容也可能移动一段内容，因此不能将“小对象省内存”推广为任意规模都更快。分析实际对象先查 OBJECT ENCODING、元素数量和最大元素长度，再结合命令复杂度判断是否会转换编码。〔N112〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("051  Redis 字典扩容为什么要渐进迁移，迁移期间怎样读写？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  大字典若一次把全部桶搬到新表，会长时间占用处理请求的线程。渐进 rehash 在一段过渡期保留旧表和新表，把迁移工作分摊到后续操作及后台推进步骤，直到旧表清空后再完成切换。过渡期间查找需要按规则检查两个表，新插入通常进入新表，删除和更新也必须处理记录可能位于哪一边，不能只查新表就返回不存在。迁移粒度可以降低单次停顿，但碰撞链、负载、内存和执行节奏仍会影响延迟；“渐进”不等于零额外开销。这里指 Redis 字典的实现，不应与业务把一个 Redis 分片迁到另一个节点的扩容流程混为一谈。〔N110〕", size: 9.5pt)
+  #text("答案  大字典若一次把全部桶搬到新表，会长时间占用处理请求的线程。渐进 rehash 在一段过渡期保留旧表和新表，把迁移工作分摊到后续操作及后台推进步骤，直到旧表清空后再完成切换。过渡期间查找需要按规则检查两个表，新插入通常进入新表，删除和更新也必须处理记录可能位于哪一边，不能只查新表就返回不存在。迁移粒度可以降低单次停顿，但碰撞链、负载、内存和执行节奏仍会影响延迟；“渐进”不等于零额外开销。这里指 Redis 字典的实现，不应与业务把一个 Redis 分片迁到另一个节点的扩容流程混为一谈。〔N113〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("052  SDS 与 C 风格字符串相比怎样支持二进制值和高效增长？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  SDS 在数据前维护长度与容量等元信息，长度不靠扫描到第一个零字节计算，因此可以保存包含零字节的二进制内容；末尾保留终止符便于兼容部分 C 接口，但逻辑长度仍以元信息为准。追加时可检查剩余容量、预分配并更新长度，减少反复求长和某些重复分配。以 Redis 7.2 的 String 对象为例，合适的整数可能用 int 编码，小字符串可用 embstr 紧凑布局，较大或修改后的对象可采用 raw；这些是对象编码，不能等同于对外数据类型。阈值及转换受版本实现影响，应用应依据命令语义而不是内存布局使用 Redis。〔N111〕", size: 9.5pt)
+  #text("答案  SDS 在数据前维护长度与容量等元信息，长度不靠扫描到第一个零字节计算，因此可以保存包含零字节的二进制内容；末尾保留终止符便于兼容部分 C 接口，但逻辑长度仍以元信息为准。追加时可检查剩余容量、预分配并更新长度，减少反复求长和某些重复分配。以 Redis 7.2 的 String 对象为例，合适的整数可能用 int 编码，小字符串可用 embstr 紧凑布局，较大或修改后的对象可采用 raw；这些是对象编码，不能等同于对外数据类型。阈值及转换受版本实现影响，应用应依据命令语义而不是内存布局使用 Redis。〔N114〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("053  Redis 的高吞吐来自哪些因素，多线程负责什么？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  典型 Redis 以内存数据和合适的数据结构减少存储等待，用事件循环及 I/O 多路复用同时管理连接，并在主要命令执行路径上串行访问键空间，降低常见锁竞争；网络往返、序列化和命令复杂度依然有成本。现代 Redis 会在网络 I/O、异步释放、后台任务等环节使用线程，RDB/AOF 任务还可能涉及子进程，所以“整个 Redis 永远只有一个线程”并不准确。增加 I/O 线程也不意味着任意慢命令可并行执行，长脚本、大范围操作和巨型返回值仍可能拖住其他请求。性能结论应明确版本、持久化配置、命令和数据大小。〔N112、N113〕", size: 9.5pt)
+  #text("答案  典型 Redis 以内存数据和合适的数据结构减少存储等待，用事件循环及 I/O 多路复用同时管理连接，并在主要命令执行路径上串行访问键空间，降低常见锁竞争；网络往返、序列化和命令复杂度依然有成本。现代 Redis 会在网络 I/O、异步释放、后台任务等环节使用线程，RDB/AOF 任务还可能涉及子进程，所以“整个 Redis 永远只有一个线程”并不准确。增加 I/O 线程也不意味着任意慢命令可并行执行，长脚本、大范围操作和巨型返回值仍可能拖住其他请求。性能结论应明确版本、持久化配置、命令和数据大小。〔N115、N116〕", size: 9.5pt)
 ]
 
 #heading(level: 2, outlined: true)[#text("9.11 Redis 事务与生命周期", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("054  MULTI/EXEC、WATCH、Lua 与 Pipeline 在原子性上怎样区分？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  MULTI 把命令排队，EXEC 执行时命令组不会被其他客户端命令插入；但执行期某条命令出错不会自动回滚此前成功的命令。WATCH 在被监视键变化后使 EXEC 放弃执行，用于先读后改的乐观并发控制，失败需要重新读取并重试。Lua 脚本将条件判断与写入放在服务端一次执行，但运行期错误也不提供数据库式自动回滚，长脚本会阻塞其他工作。Pipeline 只是批量发送以减少往返，可以与事务结合，本身不保证隔离或原子性。多条命令修改库存等共享状态时，必须选明确的原子方案并处理失败语义，而不能依赖连接发送顺序。〔N114、N115〕", size: 9.5pt)
+  #text("答案  MULTI 把命令排队，EXEC 执行时命令组不会被其他客户端命令插入；但执行期某条命令出错不会自动回滚此前成功的命令。WATCH 在被监视键变化后使 EXEC 放弃执行，用于先读后改的乐观并发控制，失败需要重新读取并重试。Lua 脚本将条件判断与写入放在服务端一次执行，但运行期错误也不提供数据库式自动回滚，长脚本会阻塞其他工作。Pipeline 只是批量发送以减少往返，可以与事务结合，本身不保证隔离或原子性。多条命令修改库存等共享状态时，必须选明确的原子方案并处理失败语义，而不能依赖连接发送顺序。〔N117、N118〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("055  键过期与内存淘汰有什么区别，更新值会保留 TTL 吗？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  过期由每个键的失效时间驱动，内存淘汰则在内存压力下按 maxmemory 策略选择牺牲对象，未到期键也可能被淘汰。Redis 通常结合访问时检查和主动扫描清理过期键，逻辑失效不要求在同一时刻立即释放所有物理内存；过期键不能因为尚未清理就正常作为有效值返回。修改值是否保留 TTL 要按命令判断：INCR、HSET 等原地修改通常保留，普通 SET 覆盖值会清除原 TTL，需显式使用相应过期选项或 KEEPTTL。不能笼统声称“写入就续期”或“任何更新都不影响 TTL”，缓存续期策略应被明确编码。〔N116〕", size: 9.5pt)
+  #text("答案  过期由每个键的失效时间驱动，内存淘汰则在内存压力下按 maxmemory 策略选择牺牲对象，未到期键也可能被淘汰。Redis 通常结合访问时检查和主动扫描清理过期键，逻辑失效不要求在同一时刻立即释放所有物理内存；过期键不能因为尚未清理就正常作为有效值返回。修改值是否保留 TTL 要按命令判断：INCR、HSET 等原地修改通常保留，普通 SET 覆盖值会清除原 TTL，需显式使用相应过期选项或 KEEPTTL。不能笼统声称“写入就续期”或“任何更新都不影响 TTL”，缓存续期策略应被明确编码。〔N119〕", size: 9.5pt)
 ]
 
 #heading(level: 2, outlined: true)[#text("9.12 Redis 复制、集群与缓存", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("056  Redis 全量复制和部分重同步怎样衔接，复制能保证强一致吗？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  连接正常时主节点向副本发送复制流，并跟踪复制标识和偏移。断线重连后，若复制历史及积压缓冲仍能覆盖缺失区间，可按偏移进行部分重同步；否则需全量同步快照，再补齐生成快照期间的新写入。积压缓冲容量和断线时长会影响是否频繁触发昂贵全量同步。默认复制是异步的，主节点已确认的写入在切换时仍可能丢失；WAIT 等确认机制可提高某些故障下的数据安全性，却不能自动把整个集群变为线性一致系统。应分别设计备份、持久化、复制确认和切换约束，并明确允许的丢失及读旧窗口。〔N117〕", size: 9.5pt)
+  #text("答案  连接正常时主节点向副本发送复制流，并跟踪复制标识和偏移。断线重连后，若复制历史及积压缓冲仍能覆盖缺失区间，可按偏移进行部分重同步；否则需全量同步快照，再补齐生成快照期间的新写入。积压缓冲容量和断线时长会影响是否频繁触发昂贵全量同步。默认复制是异步的，主节点已确认的写入在切换时仍可能丢失；WAIT 等确认机制可提高某些故障下的数据安全性，却不能自动把整个集群变为线性一致系统。应分别设计备份、持久化、复制确认和切换约束，并明确允许的丢失及读旧窗口。〔N120〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("057  Sentinel 怎样判定故障并切主，脑裂风险为何仍然存在？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  Sentinel 负责监控主从、通知客户端及协调故障转移，并不替代数据分片。单个 Sentinel 怀疑主节点不可达属于主观判断，达到配置的故障认定条件后再由 Sentinel 多数派授权执行转移；候选副本会按可用性、优先级和复制进度等规则选择，不能只理解为随意选一台。网络分区中旧主可能仍接受部分客户端写入，而另一侧已提升新主，异步复制使这些写入存在丢失风险。可用 min-replicas-to-write 等约束降低部分风险，但会牺牲可用性，也不是严格一致性证明。客户端必须支持发现新主、连接重建和幂等重试。〔N118〕", size: 9.5pt)
+  #text("答案  Sentinel 负责监控主从、通知客户端及协调故障转移，并不替代数据分片。单个 Sentinel 怀疑主节点不可达属于主观判断，达到配置的故障认定条件后再由 Sentinel 多数派授权执行转移；候选副本会按可用性、优先级和复制进度等规则选择，不能只理解为随意选一台。网络分区中旧主可能仍接受部分客户端写入，而另一侧已提升新主，异步复制使这些写入存在丢失风险。可用 min-replicas-to-write 等约束降低部分风险，但会牺牲可用性，也不是严格一致性证明。客户端必须支持发现新主、连接重建和幂等重试。〔N121〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("058  Redis Cluster 如何按槽路由，MOVED、ASK 和 CROSSSLOT 表示什么？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  Redis Cluster 把键映射到 16384 个哈希槽，由不同主节点负责，副本提供相应故障转移能力；客户端缓存槽到节点的映射，而不是每次随机询问全部节点。MOVED 表示应更新路由，迁槽期间 ASK 表示该次请求临时转向另一节点并按协议发送 ASKING，不能当成永久映射。涉及多个键的某些命令或脚本要求同槽，否则报 CROSSSLOT；hash tag 可让大括号中的共同部分参与槽计算，把相关键放在一起。这样也可能制造单槽热点，不能为方便将所有键放到同一个 tag。分片扩展容量与吞吐，但并不自动解决热键、跨槽原子操作和异步复制丢失窗口。〔N119〕", size: 9.5pt)
+  #text("答案  Redis Cluster 把键映射到 16384 个哈希槽，由不同主节点负责，副本提供相应故障转移能力；客户端缓存槽到节点的映射，而不是每次随机询问全部节点。MOVED 表示应更新路由，迁槽期间 ASK 表示该次请求临时转向另一节点并按协议发送 ASKING，不能当成永久映射。涉及多个键的某些命令或脚本要求同槽，否则报 CROSSSLOT；hash tag 可让大括号中的共同部分参与槽计算，把相关键放在一起。这样也可能制造单槽热点，不能为方便将所有键放到同一个 tag。分片扩展容量与吞吐，但并不自动解决热键、跨槽原子操作和异步复制丢失窗口。〔N122〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("059  本地缓存和共享 Redis 缓存怎样组合而不过度牺牲一致性？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  本地缓存省去网络往返，适合小而热、允许短暂陈旧的数据，但每个进程各存一份，更新传播、容量和冷启动都要处理；共享 Redis 让实例复用缓存，并增加网络和集群可用性依赖。二级缓存可先查本地再查 Redis，未命中再回源，但每一层都应规定 TTL、失效通知和降级行为，否则旧值会多层滞留。Redis 客户端缓存跟踪可辅助发出失效信息，连接中断时仍须按协议清理或重新建立可信状态。权限、余额等要求强实时判断的数据不宜仅依据本地副本，命中率提升也必须与陈旧读容忍度、数据库保护和内存成本共同评估。〔N120、N121〕", size: 9.5pt)
+  #text("答案  本地缓存省去网络往返，适合小而热、允许短暂陈旧的数据，但每个进程各存一份，更新传播、容量和冷启动都要处理；共享 Redis 让实例复用缓存，并增加网络和集群可用性依赖。二级缓存可先查本地再查 Redis，未命中再回源，但每一层都应规定 TTL、失效通知和降级行为，否则旧值会多层滞留。Redis 客户端缓存跟踪可辅助发出失效信息，连接中断时仍须按协议清理或重新建立可信状态。权限、余额等要求强实时判断的数据不宜仅依据本地副本，命中率提升也必须与陈旧读容忍度、数据库保护和内存成本共同评估。〔N123、N124〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("060  为什么生产环境遍历键通常用 SCAN，游标返回意味着什么？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  KEYS 一次扫描并返回匹配键，大键空间会长时间占用执行线程且产生大响应；SCAN 用游标把工作拆成多次调用，降低单次阻塞，但它不是稳定快照。完整迭代通常从零游标开始，直到服务端再次返回零，COUNT 只是工作量提示，某一批返回空集合不代表遍历结束。同一个键可能重复出现，调用者应保证处理幂等；全程持续存在的元素有相应返回保证，而迭代过程中新增或删除的元素不能依赖精确覆盖。Cluster 还需遍历目标分片并考虑迁槽。扫描后删除或修改时应分批限速，避免把扫描的压力转移成大批同步写。〔N122〕", size: 9.5pt)
+  #text("答案  KEYS 一次扫描并返回匹配键，大键空间会长时间占用执行线程且产生大响应；SCAN 用游标把工作拆成多次调用，降低单次阻塞，但它不是稳定快照。完整迭代通常从零游标开始，直到服务端再次返回零，COUNT 只是工作量提示，某一批返回空集合不代表遍历结束。同一个键可能重复出现，调用者应保证处理幂等；全程持续存在的元素有相应返回保证，而迭代过程中新增或删除的元素不能依赖精确覆盖。Cluster 还需遍历目标分片并考虑迁槽。扫描后删除或修改时应分批限速，避免把扫描的压力转移成大批同步写。〔N125〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("061  Cache Aside 中为什么先提交数据库再删缓存，仍有哪些竞态？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  数据库是事实源时，先提交数据库再删除缓存，可让后续未命中读取新值；直接更新缓存还会引入并发写乱序，并为未必会被访问的数据付出重建成本。这个顺序仍不是强一致事务：旧读请求可能先读到旧数据库值，在写事务提交并删缓存后才把旧值回填；删除失败也会让旧缓存继续存在。可结合 TTL、可靠重试或基于日志的失效事件、版本校验及按键串行重建减少窗口，不能把延迟双删当成证明。需要严格实时正确的关键判断应回到数据库或受控的一致性机制，并对删除积压和版本异常持续观测。〔N121〕", size: 9.5pt)
+  #text("答案  数据库是事实源时，Cache Aside 由应用显式读缓存、未命中读库并回填，写入后通常提交数据库再删缓存；Read/Write Through 由缓存层代管读写，Write Back 先确认缓存并延迟落库，性能较高但故障时有数据丢失风险。这个顺序仍不是强一致事务：旧读请求可能先读到旧数据库值，在写事务提交并删缓存后才把旧值回填；删除失败也会让旧缓存继续存在。Singleflight 只合并同一键的并发 miss，不提供跨请求一致性。异步失效事件最好作为删除信号后回查数据库最新值；若消息携带新值，则需用原子版本比较拒绝较旧事件，避免乱序把缓存回滚。可结合 TTL、可靠重试、版本校验及按键串行重建减少窗口，不能把延迟双删当成证明。〔N124〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("062  Redis Stream 消费者宕机后，怎样找回未确认消息？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  使用消费组读取时，已投递但未确认的记录进入待处理条目列表，消费者成功完成业务后调用 XACK；ACK 只是移出待处理状态，不自动删除流中的消息。消费者宕机后，可检查 XPENDING，按空闲时间用 XCLAIM 或 XAUTOCLAIM 把消息移交给存活消费者，并让业务按消息 ID 幂等执行。不能只用新消息读取模式，就假设历史待处理项会自动重放。流裁剪、消息删除、组状态和重试上限需协调，过早删除可能使待处理记录失去内容；持久化与复制也决定故障后的数据保留边界，因此 Stream 不会免除可靠投递和对账设计。〔N123〕", size: 9.5pt)
+  #text("答案  使用消费组读取时，已投递但未确认的记录进入待处理条目列表，消费者成功完成业务后调用 XACK；ACK 只是移出待处理状态，不自动删除流中的消息。消费者宕机后，可检查 XPENDING，按空闲时间用 XCLAIM 或 XAUTOCLAIM 把消息移交给存活消费者，并让业务按消息 ID 幂等执行。不能只用新消息读取模式，就假设历史待处理项会自动重放。流裁剪、消息删除、组状态和重试上限需协调，过早删除可能使待处理记录失去内容；持久化与复制也决定故障后的数据保留边界，因此 Stream 不会免除可靠投递和对账设计。〔N126〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("063  Redis 突然变慢，应怎样区分服务端、网络与客户端排队？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  先把延迟拆成客户端连接池等待、网络往返、服务端排队和命令执行，结合慢日志、延迟监控、INFO、CPU、网络及系统指标定位；慢日志主要记录命令执行，不能覆盖所有网络和排队时间。检查复杂度较高的命令、长 Lua、大键与巨大返回值，再看 fork、写时复制、AOF 同步、内存碎片、换页或 CPU 争用。不要在故障时反复运行全量 KEYS 或输出全部数据加重负载。修复按证据选择拆键、限流、异步释放、批次大小和容量调整，并用相同负载比较尾延迟及错误率，而不是仅凭“内存数据库应该很快”排除服务端瓶颈。〔N113〕", size: 9.5pt)
+  #text("答案  先把延迟拆成客户端连接池等待、网络往返、服务端排队和命令执行，结合慢日志、延迟监控、INFO、CPU、网络及系统指标定位；慢日志主要记录命令执行，不能覆盖所有网络和排队时间。检查复杂度较高的命令、长 Lua、大键与巨大返回值，再看 fork、写时复制、AOF 同步、内存碎片、换页或 CPU 争用。不要在故障时反复运行全量 KEYS 或输出全部数据加重负载。修复按证据选择拆键、限流、异步释放、批次大小和容量调整，并用相同负载比较尾延迟及错误率，而不是仅凭“内存数据库应该很快”排除服务端瓶颈。〔N116〕", size: 9.5pt)
 ]
 
 #heading(level: 1, outlined: true)[#text("第10章 系统设计与分布式", size: 15pt, weight: "bold", fill: rgb("#000000"))]
@@ -1612,7 +1618,7 @@
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("004  分布式 ID 生成器要满足什么要求？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  分布式 ID 通常要求唯一、可用、吞吐足够，并按业务决定是否要大致有序、紧凑或不可预测。数据库号段简单但需管理分配服务和缓存段；Snowflake 类 ID 把时间、节点号和序列组合，必须确保节点号不冲突并处理时钟回拨和单毫秒序列耗尽。UUID 易生成且分布式方便，但较长、按时间排序能力有限。 若要求严格全局单调，跨节点时钟与协调会明显降低生成可用性。", size: 9.5pt)
+  #text("答案  分布式 ID 通常要求唯一、可用、吞吐足够，并按业务决定是否要大致有序、紧凑或不可预测。数据库号段可在事务里原子预留一段 [start,end)，服务在本地缓存使用，并以双 Buffer 后台预取下一段；进程崩溃可能留下未用 ID 空洞，号段耗尽或预取失败要明确定义等待、拒绝或降级策略。分片键还应与常见查询路由相配：若按买家 ID 分片却只拿订单 ID 查详情，需要路由映射、冗余分片字段或把分片信息编码进主键，否则会广播查询。Snowflake 类 ID 把时间、节点号和序列组合，必须确保节点号不冲突并处理时钟回拨和单毫秒序列耗尽。UUID 易生成且分布式方便，但较长、按时间排序能力有限；严格全局单调通常要以协调和可用性为代价。", size: 9.5pt)
   #raw("id = database_allocated_range(); // 简单；需分配服务、缓存段和故障恢复\nid = UUID_random(); // 易分布式生成但较长，通常不按生成时间顺序聚集\nid = (timestamp_ms << (node_bits + seq_bits)) | (node_id << seq_bits) | sequence;\nif (node_id_conflicts) reject_configuration();\nif (clock_moves_backwards || sequence_exhausted) wait_or_reject_or_use_new_epoch();\n// 明确唯一/大致有序/紧凑/不可预测等要求；严格全局单调需协调，降低可用性。", lang: "cpp", block: true)
 ]
 
@@ -1625,19 +1631,19 @@
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("006  如何处理分布式事务？TCC 与 Saga 有何区别？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  TCC 把一次业务拆为 Try 预留、Confirm 确认和 Cancel 释放，能显式控制资源但要求各阶段幂等，并处理空回滚、悬挂和超时重试。Saga 将多个本地事务串成流程，失败时执行补偿动作；补偿是业务语义，不一定能精确还原，且中间结果可能被其他事务看到。能避免跨服务强事务时优先本地事务加 Outbox，按隔离和补偿要求选择。", size: 9.5pt)
+  #text("答案  分布式事务方案要根据一致性、可用性、锁持有时间和业务补偿能力取舍。XA/2PC 通过协调者准备后统一提交，但同步阻塞和协调节点故障会影响可用性；Seata AT 通过数据源代理和 undo log 降低业务侵入，但受数据库、SQL 和版本支持边界约束。TCC 把一次业务拆为 Try 预留、Confirm 确认和 Cancel 释放，能显式控制资源但要求各阶段幂等，并处理空回滚、悬挂和超时重试。Saga 将多个本地事务串成流程，失败时执行补偿动作；补偿是新的业务操作，不一定能精确还原，且中间结果可能被其他事务看到。能避免跨服务强事务时优先本地事务加 Outbox，按隔离和补偿要求选择。", size: 9.5pt)
   #raw("// TCC：Try 预留；各阶段按 transaction_id 幂等，并记录事务状态\nif (!inventory.try_reserve(txn_id)) return Failed;\nif (payment.try_charge(txn_id)) inventory.confirm(txn_id);\nelse { inventory.cancel_if_reserved(txn_id); payment.cancel_if_charged(txn_id); }\n// 空回滚：Try 未发生也可能收到 Cancel；悬挂：迟到 Try 不能复活已取消事务\n// Saga 则串本地事务，失败执行逆序业务补偿；补偿不保证精确还原\n// 能避免跨服务强事务时，用本地事务 + Outbox 降低协调复杂度", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("007  如何实现业务幂等？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  为每个逻辑请求生成唯一业务键，并在数据库唯一约束或原子条件更新下记录处理状态和结果；同键重试时返回已保存结果或正在处理状态。仅先查询再写入有并发竞态，两请求可能同时通过检查。还需规定幂等键作用域、过期时间、失败重试和同键不同参数的冲突行为。 状态记录最好含处理中、成功、失败及结果摘要，避免客户端重试产生新副作用。", size: 9.5pt)
+  #text("答案  为每个逻辑请求生成唯一业务键，并在数据库唯一约束或原子条件更新下记录处理状态和结果；同键重试时返回已保存结果或正在处理状态。仅先查询再写入有并发竞态，两请求可能同时通过检查。Kafka PID/sequence 或 Broker 去重能减少生产重试造成的重复，但通常受 producer、topic/partition 等协议范围限制；ACK 丢失仍会引发重投，不能替代消费者按全局业务 ID 原子幂等。MySQL 可用 INSERT ... ON DUPLICATE KEY UPDATE；8.0.19 起可给待插入行取别名，VALUES(col) 引用方式从 8.0.20 起弃用。不要把 INSERT IGNORE 当作只忽略重复键，它也可能把截断等数据问题降为 warning；唯一索引允许多行包含 NULL，若缺值也须视为冲突应声明 NOT NULL。还需规定幂等键作用域、过期时间、失败重试和同键不同参数的冲突行为。", size: 9.5pt)
   #raw("BEGIN;\nINSERT INTO request_dedup(request_id, status, parameter_hash)\nVALUES (?, 'processing', ?); // 唯一键原子抢占，避免“先查再写”竞态\n-- duplicate key 时读取已保存状态/结果，不重复执行副作用。\nUPDATE orders SET status = 'created' WHERE id = ?;\nUPDATE request_dedup SET status = 'done', result = ? WHERE request_id = ?;\nCOMMIT;\n-- 同 key 不同参数应拒绝；处理中超时需恢复/重试，键作用域与 TTL 要明确", lang: "sql", block: true)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("008  如何检索 TB 级日志中的关键词？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  先把 TB 级日志按时间、服务、租户或分区缩小扫描范围，并通过并行分片扫描或索引检索关键词；频繁全文查询适合建立倒排索引。压缩和列式存储可降低 I/O，但解压、索引维护也耗资源。为防查询拖垮集群，应限制时间范围、并发、返回量和敏感字段访问。 若关键词模式稳定，倒排索引能把逐字节扫描转为候选文档定位。", size: 9.5pt)
+  #text("答案  先把 TB 级日志按时间、服务、租户或分区缩小扫描范围；全文检索可把文本分析成 term，倒排索引中的 term dictionary 定位词项，postings 列表记录匹配文档 ID，必要时还含词频和位置，再合并/求交候选列表并评分。Term Index 用于导航词典，Stored Fields 按文档 ID 取回原始字段，Doc Values 以适合排序和聚合的布局读取字段。Lucene/Elasticsearch 的 segment 通常不可变，新写入先形成新 segment，后台 merge 合并并回收已删除文档，因此还要考虑合并期间的磁盘与 CPU 成本。压缩和列式存储可降低 I/O，但解压、索引维护也耗资源；为防查询拖垮集群，应限制时间范围、并发、返回量和敏感字段访问。", size: 9.5pt)
   #raw("partitions = narrow_by_time_service_tenant_and_region(query);\nif (frequent_full_text_search) candidates = inverted_index.lookup(keyword);\nelse candidates = parallel_scan_compressed_partitions(partitions, keyword);\n// 列式/压缩可减少 I/O，但有解压和索引维护成本。\napply_time_range_concurrency_result_limit_and_field_acl();\n// 防止无范围查询拖垮集群；对敏感字段做访问控制和审计。", lang: "cpp", block: true)
 ]
 
@@ -1674,7 +1680,7 @@
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("014  常见负载均衡算法有哪些？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  轮询简单，适合实例能力近似的无状态流量；加权轮询可按容量分配，最少连接适用于请求时长差异明显的场景。一致性哈希有利于会话或缓存局部性，随机/延迟感知策略可减轻热点。负载均衡还要结合健康检查、连接池、重试放大和跨区成本，避免把故障实例继续选中。 健康检查应区分进程存活与业务就绪，避免恢复中实例过早接收大流量。", size: 9.5pt)
+  #text("答案  轮询简单，适合实例能力近似的无状态流量；加权轮询可按容量分配，最少连接适用于请求时长差异明显的场景。一条 HTTP/2 等复用连接可能同时承载多个在途请求，因此连接数未必代表实际负载；可观察活跃请求数和延迟，但请求成本不同仍会造成估计误差。一致性哈希有利于会话或缓存局部性，随机/延迟感知策略可减轻热点。负载均衡还要结合健康检查、连接池、重试放大和跨区成本，避免把故障实例继续选中。健康检查应区分进程存活与业务就绪，避免恢复中实例过早接收大流量。", size: 9.5pt)
   #raw("if (instances_have_similar_capacity) choose_round_robin();\nelse if (capacity_weights_known) choose_weighted_round_robin();\nelse if (request_durations_vary) choose_least_connections();\nif (session_or_cache_locality_matters) choose_consistent_hash();\nexclude_if_unhealthy_or_not_ready(); // 活着不等于业务就绪\n// 同时控制重试放大、连接池和跨区成本；策略按实际延迟/负载验证。", lang: "cpp", block: true)
 ]
 
@@ -1686,25 +1692,25 @@
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("016  消息队列如何尽量避免消息丢失？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  生产端等待 Broker 确认并启用合适的持久化/副本策略，避免消息只留在客户端缓冲或单个易失节点。消费者应先完成可恢复的业务处理，再提交位点或 ACK；否则先确认后崩溃会丢业务。至少一次投递会重发，所以消费者按消息 ID 幂等、设置重试和死信队列，并监控积压与复制状态。 确认和 ACK 的先后关系决定故障时是可能重复还是可能丢失，需按目标选取。", size: 9.5pt)
+  #text("答案  生产端等待 Broker 确认并启用合适的持久化/副本策略，避免消息只留在客户端缓冲或单个易失节点。消费者应先完成可恢复的业务处理，再提交位点或 ACK；否则先确认后崩溃会丢业务。可在业务消息内维护 producer 与 partition 维度的递增序号，消费侧检查序号缺口来发现丢失；多个生产者要分别维护序列，不能把不同来源的编号混为一条连续流。至少一次投递会重发，所以消费者按消息 ID 幂等、设置重试和死信队列，并监控积压与复制状态。确认和 ACK 的先后关系决定故障时是可能重复还是可能丢失，需按目标选取。", size: 9.5pt)
   #raw("producer.send(message); await broker_durable_replica_ack(); // 持久化确认后再报成功\nconsumer_result = apply_business_idempotently(message.id, message.payload);\nif (consumer_result.durable) consumer.ack_or_commit_offset(message);\n// 先 ACK 再持久处理会丢业务；先处理后 ACK 崩溃会重放\nretry_with_limit_and_dead_letter_after_policy(); monitor_lag_and_replica_health();\n// 按消息 ID 幂等，监控复制健康/积压；Broker ACK 语义要核对配置\n// 保证边界还依赖副本数、刷盘策略和故障类型", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("017  限流常用算法有哪些？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  固定窗口以简单计数实现，但窗口切换边界可能让短时间请求量接近双倍；滑动日志或计数窗口更平滑但状态更多。令牌桶按速率补充令牌，允许桶容量范围内的突发；漏桶以较稳定速率放行。分布式实现还需定义原子计数、限流状态丢失时的降级以及按用户/接口的公平性。 对突发敏感的入口可用令牌桶，对希望匀速处理的后台任务可用漏桶。", size: 9.5pt)
+  #text("答案  固定窗口以简单计数实现，但窗口切换边界可能让短时间请求量接近双倍；滑动日志或计数窗口更平滑但状态更多。令牌桶按速率补充令牌，允许桶容量范围内的突发；漏桶以较稳定速率放行。部署可在网关、独立限流服务或进程内完成：中心化便于共享额度但增加网络依赖，进程内延迟低但多副本总额度需协调。共享令牌桶的读-改-写必须原子执行，热键可按用户/资源分片并定义跨片额度。规则应带版本并可靠传播；限流服务故障时按业务风险选择 fail-open 或 fail-closed，关键写路径通常不能默默放行。", size: 9.5pt)
   #raw("#include <algorithm>\n// 固定窗口易实现，但边界前后短时间内可接近两倍限额\nif (fixed_window_count(key, now) < limit) allow();\n// 令牌桶按 rate 补充，最多 burst_capacity，允许短突发\ntokens = std::min(capacity, tokens + elapsed * rate);\nif (tokens >= 1) { tokens -= 1; allow(); }\n// 滑动日志更精确但状态多；漏桶适合较匀速处理后台任务\n// 分布式还要定义原子更新、公平性和状态丢失时的降级", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("018  高可用系统通常从哪些方面设计？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  高可用从消除单点开始：跨进程/机器冗余、健康检查、故障切换和可恢复的数据备份。调用链配置有限超时、带抖动退避的重试、熔断与降级，避免局部故障扩散；对关键依赖明确 RTO/RPO。监控告警、故障演练和回滚验证机制是否真能在目标时间内恢复。 备份只有通过定期恢复演练验证，才能证明满足恢复时间和数据点目标。", size: 9.5pt)
+  #text("答案  高可用从消除单点开始：跨进程/机器冗余、健康检查、故障切换和可恢复的数据备份。先定义服务可用性 SLO 与停机预算，冗余、超时、重试和降级才有可验收目标；例如全年 99.9% 可用性约允许 8.76 小时停机，99.99% 约 52.56 分钟。调用链配置有限超时、带抖动退避的重试、熔断与降级，避免局部故障扩散；对关键依赖明确 RTO/RPO。监控告警、故障演练和回滚验证机制是否真能在目标时间内恢复。备份只有通过定期恢复演练验证，才能证明满足恢复时间和数据点目标。", size: 9.5pt)
   #raw("replicate_across_processes_and_failure_domains(); health_check_readiness_and_fail_over();\ncall_dependency_with_deadline(); retry_with_bounded_jittered_backoff();\nif (failure_rate_high) circuit_break_and_serve_degraded_result();\nbackup_data(); periodically_restore_test_and_measure_RTO_RPO();\n// RTO 是恢复所需时间，RPO 是可接受的数据丢失窗口\n// 监控告警、回滚和故障演练验证冗余可恢复，而非只看副本数\n// 备份需定期实测恢复，才能证明目标满足", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("019  高并发 IM 或消息推送服务如何拆分？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  连接网关维护长连接和心跳，认证服务管理身份，路由层定位用户所在网关，消息服务负责持久化、投递、ACK 和离线存储。按会话或用户分片并通过消息队列解耦突发流量，客户端重连后按序号补拉未确认消息。还要处理多端在线、重复投递、消息顺序、离线 TTL 和连接状态过期。 连接网关故障后客户端通常要指数退避重连，避免整群同时冲击认证和路由服务。", size: 9.5pt)
+  #text("答案  连接网关维护长连接和心跳，认证服务管理身份，路由层定位用户所在网关，消息服务负责持久化、投递、ACK 和离线存储。按会话或用户分片并通过消息队列解耦突发流量，客户端重连后按序号补拉未确认消息。评论类写入还要在发布前做权限与内容审核，可同步拦截明显风险、异步复核边界内容。直播广播若用简单 Pub/Sub 让每台实时节点处理所有房间消息，会浪费带宽和 CPU；可按 liveVideoId 分区，并把房间路由到负责节点。还要处理多端在线、重复投递、消息顺序、离线 TTL 和连接状态过期。网关故障后客户端通常要指数退避重连，避免整群同时冲击认证和路由服务。", size: 9.5pt)
   #raw("gateway.accept_long_connection(); authenticate_and_heartbeat();\nroute = presence_service.locate_user_gateway(user_id);\nmessage_store.persist_with_sequence_and_ttl(message); queue.deliver(route, message);\nif (client_ack(message.id)) mark_delivered_idempotently();\nif (reconnect) backoff_with_jitter(); fetch_messages_after(last_acked_sequence);\n// 设计多端、离线存储、重复投递、顺序和路由状态过期语义。", lang: "cpp", block: true)
 ]
 
@@ -1735,13 +1741,13 @@
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("024  消息系统里的“恰好一次”语义通常有什么边界？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  “恰好一次”要说明是生产者写入日志、Broker 内消费，还是连外部数据库副作用也包括。Kafka 幂等生产者可避免重试造成同一分区重复记录，事务可把多分区输出和消费位点原子提交，并由 read_committed 消费已提交数据。若业务还写外部数据库，仍需事务性 Sink、Outbox 或幂等键，不能由 Kafka 单独保证端到端只执行一次。〔S12〕", size: 9.5pt)
+  #text("答案  最多一次可能丢消息但不重投，至少一次通过重试提高送达机会但可能重复，消费者需要幂等；“恰好一次”要说明是生产者写入日志、Broker 内消费，还是连外部数据库副作用也包括。Kafka 幂等生产者可避免协议范围内的重试重复记录，事务可把多分区输出和消费位点原子提交，并由 read_committed 消费已提交数据。若业务还写外部数据库，仍需事务性 Sink、Outbox 或幂等键，不能由 Kafka 单独保证端到端只执行一次。〔S12〕", size: 9.5pt)
   #raw("producer.enable_idempotence(); // 去除生产重试带来的同分区重复记录\nbegin_broker_transaction(); write_output_records(); commit_consumed_offsets_atomically();\nconsumer.read_committed(); // 只读已提交事务数据\n// 若还写外部数据库，Kafka 事务不能把 DB 副作用纳入同一原子提交。\nuse_transactional_sink_or_outbox_or_idempotency_key_for_external_effect();\n// 先说清“一次”覆盖生产、Broker 内消费，还是端到端业务副作用。", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("025  分布式系统中的熔断器是什么？Closed、Open 和 Half-Open 状态如何工作？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  熔断器统计依赖调用结果：Closed 正常转发并累计失败率，达到阈值后进入 Open，快速拒绝请求以给下游恢复空间。冷却后进入 Half-Open，只放少量探测请求；成功则关闭并恢复流量，失败则重新打开。熔断不是重试：重试增加调用次数，熔断在故障持续时减少调用，通常还需配合超时、降级和监控。〔S15〕", size: 9.5pt)
+  #text("答案  熔断器统计依赖调用结果：Closed 正常转发并累计失败率，达到阈值后进入 Open，快速拒绝请求以给下游恢复空间。阈值应结合下游 SLA、历史错误率和延迟分位数设定，并要求在统计窗口持续超限以过滤单次尖峰。冷却后进入 Half-Open，只放少量探测请求；成功后逐步恢复流量，失败则重新打开，避免冷却结束一次性放开造成反复过载。熔断不是重试：重试增加调用次数，熔断在故障持续时减少调用。降级应按业务价值选择明确兜底，例如保留核心读取、暂停非核心写，或缓存命中时继续服务而 miss 时跳过数据库慢路径；不能把未完成的写伪造成成功。〔S15〕", size: 9.5pt)
   #raw("switch (state) { // 每次请求只执行当前状态的一条路径\ncase Closed: forward_call_and_record_result();\n    if (failure_rate() > threshold) state = Open; break;\ncase Open: fail_fast_or_degrade();\n    if (now >= cooldown_end) state = HalfOpen; break;\ncase HalfOpen:\n    if (allow_limited_probe()) state = probe_succeeds() ? Closed : Open;\n    break;\n}\n// Open 降低持续故障时的下游调用；Half-Open 限量探测恢复情况\n// 熔断不是重试；失败可延长冷却，并配合超时、降级和指标告警", lang: "cpp", block: true)
 ]
 
@@ -1749,154 +1755,154 @@
 #heading(level: 2, outlined: true)[#text("10.5 分布式协调与服务治理", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("026  怎样实现可重入的业务锁，并处理持有者失联？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  可重入锁要按锁名保存全局唯一的持有者标识和重入计数：空闲时设置 owner 并置一，同一 owner 再入则递增，释放时只有 owner 可递减，归零才释放。数据库可用固定锁记录和短事务 SELECT FOR UPDATE 串行修改；Redis 可用 Hash 与 Lua 原子判断。数据库事务结束释放的是行锁，持久记录表示的业务锁仍存在，两者不可混淆。还需租约、续租、故障恢复和下游 fencing 校验，避免失联的旧持有者恢复后继续写入。ZooKeeper/etcd 等协调服务也可构建锁，但会话过期后的旧客户端同样不能凭本地“仍持锁”状态绕过资源校验。〔N124、N125、N126〕", size: 9.5pt)
+  #text("答案  可重入锁要按锁名保存全局唯一的持有者标识和重入计数：空闲时设置 owner 并置一，同一 owner 再入则递增，释放时只有 owner 可递减，归零才释放。数据库可用固定锁记录和短事务 SELECT FOR UPDATE 串行修改；Redis 可用 Hash 与 Lua 原子判断。数据库事务结束释放的是行锁，持久记录表示的业务锁仍存在，两者不可混淆。还需租约、续租、故障恢复和下游 fencing 校验，避免失联的旧持有者恢复后继续写入。ZooKeeper/etcd 等协调服务也可构建锁，但会话过期后的旧客户端同样不能凭本地“仍持锁”状态绕过资源校验。〔N127、N128、N129〕", size: 9.5pt)
 ]
 
 #heading(level: 2, outlined: true)[#text("10.6 系统设计补充", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("027  流量增加十倍时，怎样估算瓶颈并验证扩容方案？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  不能给单 Redis 或单 MySQL 一个脱离条件的固定 QPS。先确定请求分布、读写比例、命中率、数据大小、连接数、持久化和延迟目标，再用接近生产的数据压测，找出 CPU、网络、锁、磁盘和下游哪个先饱和。用吞吐与响应时间估计同时在途请求，保留故障与突发余量；流量过载时先做准入、限流、降级和有界排队，避免无界线程或重试把系统压垮。随后针对瓶颈选择缓存、批处理、只读副本、分片或异步化，逐层验证扩容后新瓶颈及尾延迟。容量规划应包含切换、积压恢复和成本，不能只看短时成功吞吐。〔N127〕", size: 9.5pt)
+  #text("答案  不能给单 Redis 或单 MySQL 一个脱离条件的固定 QPS。先确定请求分布、读写比例、命中率、数据大小、连接数、持久化和延迟目标，再用接近生产的数据压测，找出 CPU、网络、锁、磁盘和下游哪个先饱和。用吞吐与响应时间估计同时在途请求，保留故障与突发余量；流量过载时先做准入、限流、降级和有界排队，避免无界线程或重试把系统压垮。随后针对瓶颈选择缓存、批处理、只读副本、分片或异步化，逐层验证扩容后新瓶颈及尾延迟。容量规划应包含切换、积压恢复和成本，不能只看短时成功吞吐。〔N130〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("028  跨服务接口超时如何沿调用链排查，而不把所有问题归因于网络？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  先为请求生成 trace/span 标识，记录入口排队、DNS/连接、序列化、服务处理、下游调用和响应写回的耗时及状态；把客户端 deadline 与各子调用预算关联起来。再按时间线比较成功、超时、重试和取消请求，核对 CPU、锁、线程池、连接池、数据库等待、消息积压及网络错误。一个客户端超时不说明服务端没有执行，重试可能令副作用执行多次，因此写操作要结合幂等键和状态查询。指标适合发现总体和尾延迟趋势，日志提供单事件细节，trace 串起跨服务因果，三者须统一采样和脱敏。修复应先止血限流或降级，再根据证据调整资源、依赖和超时，不用单纯延长 timeout 掩盖瓶颈。〔N145、N143、N127〕", size: 9.5pt)
+  #text("答案  先为请求生成 trace/span 标识，记录入口排队、DNS/连接、序列化、服务处理、下游调用和响应写回的耗时及状态；把客户端 deadline 与各子调用预算关联起来。再按时间线比较成功、超时、重试和取消请求，核对 CPU、锁、线程池、连接池、数据库等待、消息积压及网络错误。一个客户端超时不说明服务端没有执行，重试可能令副作用执行多次，因此写操作要结合幂等键和状态查询。指标适合发现总体和尾延迟趋势，日志提供单事件细节，trace 串起跨服务因果，三者须统一采样和脱敏。修复应先止血限流或降级，再根据证据调整资源、依赖和超时，不用单纯延长 timeout 掩盖瓶颈。〔N148、N146、N130〕", size: 9.5pt)
 ]
 
 #heading(level: 2, outlined: true)[#text("10.7 消息队列模型与运行", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("029  消息队列如何实现异步解耦，自研时至少需要哪些状态？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  生产者把工作或事件交给中间层，消费者按自己的进度处理，可在一定范围内隔离故障、削平突发并支持发布订阅；同一个消费组内分工与不同订阅组各收一份是两种不同语义。队列只能暂存峰值，长期生产速率超过消费能力仍会耗尽容量。自研持久队列至少需要定义消息标识、主题或队列、存储与恢复、确认及重投、消费进度、保留清理和配额，再决定复制及分区方式。引入 MQ 也增加端到端延迟、重复投递和运维复杂度，异步处理未必适合要求立即得到确定结果的接口；先定义失败语义，才能谈解耦收益。〔N128、N129、N130〕", size: 9.5pt)
+  #text("答案  生产者把工作或事件交给中间层，消费者按自己的进度处理，可在一定范围内隔离故障、削平突发并支持发布订阅；同一个消费组内分工与不同订阅组各收一份是两种不同语义。队列只能暂存峰值，长期生产速率超过消费能力仍会耗尽容量。自研持久队列至少需要定义消息标识、主题或队列、存储与恢复、确认及重投、消费进度、保留清理和配额，再决定复制及分区方式。引入 MQ 也增加端到端延迟、重复投递和运维复杂度，异步处理未必适合要求立即得到确定结果的接口；先定义失败语义，才能谈解耦收益。〔N131、N132、N133〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("030  Kafka、RocketMQ 与 RabbitMQ 应按哪些需求比较？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  Kafka 以可保留、可重放的分区日志及流处理生态见长；RocketMQ 提供面向业务消息的队列、顺序、定时和事务消息等能力；RabbitMQ 的交换机路由、消费确认和工作队列模型适合灵活任务分发。它们都能用于多个场景，不能把选型简化成“某个一定更快”。应确认吞吐及尾延迟、消息大小、保留周期、路由和重放、顺序范围、消费组规模、事务边界、部署成本与团队经验，再按目标版本压测。所谓可靠性还取决于复制、持久化、确认和业务幂等配置；产品支持事务不等于可以原子覆盖任意外部数据库副作用。〔N130、N128、N129〕", size: 9.5pt)
+  #text("答案  Kafka 以可保留、可重放的分区日志及流处理生态见长；RocketMQ 提供面向业务消息的队列、顺序、定时和事务消息等能力；RabbitMQ 的交换机路由、消费确认和工作队列模型适合灵活任务分发。它们都能用于多个场景，不能把选型简化成“某个一定更快”。应确认吞吐及尾延迟、消息大小、保留周期、路由和重放、顺序范围、消费组规模、事务边界、部署成本与团队经验，再按目标版本压测。所谓可靠性还取决于复制、持久化、确认和业务幂等配置；产品支持事务不等于可以原子覆盖任意外部数据库副作用。〔N133、N131、N132〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("031  如何按订单维持消息顺序，而不把整个系统串行化？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  先界定需要顺序的业务键，例如同一订单，而不是追求全局消息有序。将同键消息路由到同一分区、队列或受支持的消息组，生产端保持同键发送关系，消费端按该范围串行处理并在成功后推进进度；不同键仍可并行。Kafka 的分区顺序和 RocketMQ 的 FIFO 消息组都有各自范围及前提，不能把跨分区到达时间当成业务顺序。重试、切换和多生产者可能制造重复、迟到或断序，因此业务状态机还应校验版本、事件序号与合法迁移；遇到毒消息要明确等待、隔离还是补偿，跳过消息可能破坏后续因果关系。〔N130、N131〕", size: 9.5pt)
+  #text("答案  先界定需要顺序的业务键，例如同一订单，而不是追求全局消息有序。将同键消息路由到同一分区、队列或受支持的消息组，生产端保持同键发送关系，消费端按该范围串行处理并在成功后推进进度；不同键仍可并行。Kafka 的分区顺序和 RocketMQ 的 FIFO 消息组都有各自范围及前提，不能把跨分区到达时间当成业务顺序。重试、切换和多生产者可能制造重复、迟到或断序，因此业务状态机还应校验版本、事件序号与合法迁移；遇到毒消息要明确等待、隔离还是补偿，跳过消息可能破坏后续因果关系。〔N133、N134〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("032  消息积压时怎样定位生产、消费或依赖瓶颈？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  先观察积压条数、最老消息年龄、生产与处理速率、失败重试、消费者存活及分区分布，区分突发峰值、某个热分区和整体消费能力不足。Kafka 的 lag 应结合提交进度与处理耗时解释，不能只看队列总长度就断言业务停顿。消费者慢可能来自下游数据库、外部接口、串行锁或频繁重平衡，盲目加线程会放大压力；扩容也受分区数和顺序约束。短期可限产、隔离失败消息并保护关键依赖，长期优化批处理和瓶颈资源。恢复后验证去重、业务延迟和保留周期，不能直接丢弃积压来让监控归零。〔N132、N133〕", size: 9.5pt)
+  #text("答案  先观察积压条数、最老消息年龄、生产与处理速率、失败重试、消费者存活及分区分布，区分突发峰值、某个热分区和整体消费能力不足。Kafka 的 lag 应结合提交进度与处理耗时解释，不能只看队列总长度就断言业务停顿。消费者慢可能来自下游数据库、外部接口、串行锁或频繁重平衡，盲目加线程会放大压力；扩容也受分区数和顺序约束。短期可限产、隔离失败消息并保护关键依赖，长期优化批处理和瓶颈资源。恢复后验证去重、业务延迟和保留周期，不能直接丢弃积压来让监控归零。〔N135、N136〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("033  消费失败应怎样退避重试，并让死信可以恢复处理？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  把可重试的临时故障与永久的格式或业务错误区分，使用有次数及总时长上限的退避重试，记录消息 ID、失败原因和尝试次数，避免立即反复重投形成热循环。达到上限后转到死信队列或隔离存储，告警并提供经过修复的审计回放流程；消费者仍要幂等。RabbitMQ 可通过拒绝且不重新入队、TTL 或队列限制等机制触发死信交换机路由，死信不是“消息自动安全永久保存”的保证。TTL 配合死信可构建某些延迟处理，但顺序、到期精度及重新发布安全性需按队列类型和版本确认，关键状态最终还要对账。〔N133、N134〕", size: 9.5pt)
+  #text("答案  把可重试的临时故障与永久的格式或业务错误区分，使用有次数及总时长上限的退避重试，记录消息 ID、失败原因和尝试次数，避免立即反复重投形成热循环。达到上限后转到死信队列或隔离存储，告警并提供经过修复的审计回放流程；消费者仍要幂等。RabbitMQ 可通过拒绝且不重新入队、TTL 或队列限制等机制触发死信交换机路由，死信不是“消息自动安全永久保存”的保证。TTL 配合死信可构建某些延迟处理，但顺序、到期精度及重新发布安全性需按队列类型和版本确认，关键状态最终还要对账。〔N136、N137〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("034  延迟消息关闭未支付订单时，怎样避免误关已付款订单？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  延迟消息只负责在目标时间附近触发检查，不能把“收到关单消息”当成订单仍未支付的证据。消费者须检查订单当前状态与到期时间，并用条件更新原子迁移状态，例如仅当 status=pending 且截止时间已到才取消；支付回调和关单以同一状态机协调，库存释放也按订单唯一键幂等。RocketMQ 4.x 的延迟级别与 5.x 的时间戳定时能力不同，调度精度和最大范围也受版本限制，不能视作硬实时定时器。消息可能晚到、重复或暂时失败，应有重试和数据库定期扫描补偿，不能仅在进程内睡眠等待半小时。〔N135、N124〕", size: 9.5pt)
+  #text("答案  延迟任务可用数据库定期扫描，简单且易恢复但会增加轮询和延迟；进程内 DelayQueue 或时间轮开销低、精度好，却需处理进程崩溃后任务丢失和重建。Redis ZSet 可按到期时间拉取并通过租约领取，但要有持久化、续租、重试和扫表恢复；Key 过期通知不可靠，不能作为唯一触发源。MQ 延迟消息便于异步扩展，TTL+死信队列可组成补偿链路，但同队列混放不同 TTL 可能造成队头阻塞。无论选哪种，延迟消息只负责在目标时间附近触发检查，消费者须验证订单状态与截止时间并用条件更新原子迁移，支付回调和关单共享状态机，库存释放按订单键幂等；同时保留数据库扫描对账。RocketMQ 不同大版本的定时能力、精度与范围不同，不能视作硬实时定时器。〔N138、N127〕", size: 9.5pt)
 ]
 
 #heading(level: 2, outlined: true)[#text("10.8 RocketMQ、Kafka 与 RabbitMQ", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("035  RocketMQ 的半消息与事务回查如何连接本地事务和消息可见性？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  生产者先发送暂不向消费者投递的半消息，Broker 保存成功后执行业务本地事务，再按本地结果通知提交或回滚；提交才使消息具备投递条件。若结果通知丢失或状态未知，Broker 可回查生产者，生产者须根据可靠保存的业务事务状态回答，而不是凭内存变量猜测。这个协议帮助源端本地事务与发消息最终达成一致，不把消费者数据库自动纳入同一个原子事务。事务状态记录、回查服务可用性、重试及超时限制必须设计完整，消费者仍需幂等和失败恢复；不能把半消息机制宣传为任意多服务的强隔离事务。〔N136〕", size: 9.5pt)
+  #text("答案  生产者先发送暂不向消费者投递的半消息，Broker 保存成功后执行业务本地事务，再按本地结果通知提交或回滚；提交才使消息具备投递条件。若结果通知丢失或状态未知，Broker 可回查生产者，生产者须根据可靠保存的业务事务状态回答，而不是凭内存变量猜测。这个协议帮助源端本地事务与发消息最终达成一致，不把消费者数据库自动纳入同一个原子事务。事务状态记录、回查服务可用性、重试及超时限制必须设计完整，消费者仍需幂等和失败恢复；不能把半消息机制宣传为任意多服务的强隔离事务。〔N139〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("036  RocketMQ 的 CommitLog、ConsumeQueue 和索引各承担什么角色？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  以经典 RocketMQ 存储为例，CommitLog 顺序保存完整消息，多个主题与队列可共享该日志；ConsumeQueue 为逻辑队列建立紧凑条目，指向 CommitLog 位置并包含必要的长度、过滤等信息，便于按消费位点读取；IndexFile 支持按消息键等条件定位，不是普通顺序消费的唯一入口。Kafka 则围绕各分区的日志段及相关索引组织数据，两者不能只按“都有 Broker”就认为布局相同。消费索引的重建、文件清理和复制模式会影响恢复及可用性，应按部署版本检查；RocketMQ 5.x 的代理与 Controller 等组件也不能完全套用旧版主从图。〔N137、N128、N130〕", size: 9.5pt)
+  #text("答案  以经典 RocketMQ 存储为例，CommitLog 顺序保存完整消息，多个主题与队列可共享该日志；ConsumeQueue 为逻辑队列建立紧凑条目，指向 CommitLog 位置并包含必要的长度、过滤等信息，便于按消费位点读取；IndexFile 支持按消息键等条件定位，不是普通顺序消费的唯一入口。Kafka 则围绕各分区的日志段及相关索引组织数据，两者不能只按“都有 Broker”就认为布局相同。消费索引的重建、文件清理和复制模式会影响恢复及可用性，应按部署版本检查；RocketMQ 5.x 的代理与 Controller 等组件也不能完全套用旧版主从图。〔N140、N131、N133〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("037  RocketMQ NameServer 故障后，现有连接与新路由分别会怎样？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  NameServer 提供 Broker 注册与主题路由发现，客户端据此定位消息队列和 Broker，实际消息传输不必逐条经过 NameServer。经典架构可部署多个相对独立的 NameServer，Broker 向它们注册，客户端配置多个地址并缓存路由。短时全部不可用时，已有缓存且 Broker 未变化的请求可能继续工作，但新客户端启动、路由刷新、Broker 变化后的访问会受影响，所以“挂了完全没事”与“所有消息立刻中断”都过于绝对。应分别监控注册、路由获取和真实发送消费，设计客户端重试及 Broker 故障策略，并按版本区分 NameServer、Controller 与 Proxy 的职责。〔N137、N128〕", size: 9.5pt)
+  #text("答案  NameServer 提供 Broker 注册与主题路由发现，客户端据此定位消息队列和 Broker，实际消息传输不必逐条经过 NameServer。经典架构可部署多个相对独立的 NameServer，Broker 向它们注册，客户端配置多个地址并缓存路由。短时全部不可用时，已有缓存且 Broker 未变化的请求可能继续工作，但新客户端启动、路由刷新、Broker 变化后的访问会受影响，所以“挂了完全没事”与“所有消息立刻中断”都过于绝对。应分别监控注册、路由获取和真实发送消费，设计客户端重试及 Broker 故障策略，并按版本区分 NameServer、Controller 与 Proxy 的职责。〔N140、N131〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("038  消费组如何决定消息分工，增加消费者何时不再提高吞吐？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  在经典 Kafka 消费组的分区分配模型中，一个分区同一时刻分配给组内一个消费者，不同组分别维护消费进度；十个分区的主题，即使组内有更多消费者，多余实例也可能空闲。一个消费者可以处理多个分区，但把分区内任务任意并行会破坏完成顺序及位点提交安全。RocketMQ 的集群消费同样强调组内分工，经典客户端的广播消费则让每个实例接收各自副本，其 API 支持须按客户端版本确认。增加实例前要判断分区、热键和下游容量限制，不能把消费线程数、客户端实例数和独立业务订阅组数混为一谈。〔N130、N128〕", size: 9.5pt)
+  #text("答案  在经典 Kafka 消费组的分区分配模型中，一个分区同一时刻分配给组内一个消费者，不同组分别维护消费进度；十个分区的主题，即使组内有更多消费者，多余实例也可能空闲。一个消费者可以处理多个分区，但把分区内任务任意并行会破坏完成顺序及位点提交安全。RocketMQ 的集群消费同样强调组内分工，经典客户端的广播消费则让每个实例接收各自副本，其 API 支持须按客户端版本确认。增加实例前要判断分区、热键和下游容量限制，不能把消费线程数、客户端实例数和独立业务订阅组数混为一谈。〔N133、N131〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("039  Kafka 怎样通过分区日志、批处理和拉取消费提高吞吐？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  主题由多个分区构成，分区内按 offset 追加日志，消费者主动拉取并管理读取位置；已消费的数据可按保留策略继续存在，便于其他组和重放使用，而不是 ACK 后立刻从所有存储删除。顺序追加、批量请求、压缩、页缓存及合适路径下的零拷贝减少了每条消息的磁盘寻道、网络往返和用户态复制成本，但仍依赖硬件及负载。分区可并行扩展，也带来顺序范围、文件数量与重平衡成本。高吞吐不等于每条消息都低延迟，批量积累会引入等待，随机历史读取、大消息和副本同步也可能改变性能，应按目标场景测量。〔N130〕", size: 9.5pt)
+  #text("答案  主题由多个分区构成，分区内按 offset 追加日志，消费者主动拉取并管理读取位置；已消费的数据可按保留策略继续存在，便于其他组和重放使用，而不是 ACK 后立刻从所有存储删除。顺序追加、批量请求、压缩、页缓存及合适路径下的零拷贝减少每条消息的磁盘寻道、网络往返和用户态复制成本。Kafka 可分为存储/协调一侧的 Broker 与控制器，以及生产、消费和计算集成一侧；Kafka Connect 连接外部数据源，Kafka Streams 处理流与 KStream/KTable 状态。控制面由 ZooKeeper 迁移到 KRaft，实际可用模式取决于 Kafka 部署版本，升级时应按版本文档核对。分区可并行扩展，也带来顺序范围、文件数量与重平衡成本。高吞吐不等于每条消息都低延迟，批量积累会引入等待，随机历史读取、大消息和副本同步也可能改变性能，应按目标场景测量。〔N133〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("040  Kafka 位点为什么应在业务成功后推进，异步处理怎样避免跳过消息？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  提交位点通常表示下一条应读取的位置，提前提交后若进程崩溃，尚未完成的业务可能在重启后被跳过；业务成功后再提交则可能重复投递，需要幂等处理。自动提交依据客户端拉取和周期策略，不能自然证明异步任务已完成。对同一分区并行处理时，应维护连续完成水位：后面的记录完成也不能越过前面尚未成功的记录提交，否则重启会遗漏前项。暂停分区、限制在途数量并处理重平衡交接，防止内存与任务无界增长。若要把消费位点与 Kafka 输出原子提交，可使用其事务能力；外部数据库副作用仍须独立协调。〔N138、N130〕", size: 9.5pt)
+  #text("答案  提交位点通常表示下一条应读取的位置，提前提交后若进程崩溃，尚未完成的业务可能在重启后被跳过；业务成功后再提交则可能重复投递，需要幂等处理。自动提交依据客户端拉取和周期策略，不能自然证明异步任务已完成。对同一分区并行处理时，应维护连续完成水位：后面的记录完成也不能越过前面尚未成功的记录提交，否则重启会遗漏前项。暂停分区、限制在途数量并处理重平衡交接，防止内存与任务无界增长。若要把消费位点与 Kafka 输出原子提交，可使用其事务能力；外部数据库副作用仍须独立协调。〔N141、N133〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("041  acks=all 和 ISR 怎样影响 Kafka 写入安全与可用性？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  ISR 是满足同步要求的副本集合，分区 leader 根据复制进度维护它。acks=all 要求达到相应 ISR 的确认条件，但 ISR 可能已经缩小，不能仅看到 all 就推断至少有多个安全副本；应配合足够副本因子、min.insync.replicas、合理的 leader 选举和持久化运维策略。ISR 不足时拒绝写入会牺牲部分可用性以保住约定的副本要求。还要区分生产者超时与真正未写入：超时可能发生在 Broker 已接受后，重试须使用幂等生产者及业务去重。某些版本的副本选举机制持续演进，安全结论应依据实际版本、配置及允许的故障模型，而非口号。〔N130〕", size: 9.5pt)
+  #text("答案  ISR 是满足同步要求的副本集合，分区 leader 根据复制进度维护它。acks=all 要求达到相应 ISR 的确认条件，但 ISR 可能已经缩小，不能仅看到 all 就推断至少有多个安全副本；应配合足够副本因子、min.insync.replicas、合理的 leader 选举和持久化运维策略。ISR 不足时拒绝写入会牺牲部分可用性以保住约定的副本要求。还要区分生产者超时与真正未写入：超时可能发生在 Broker 已接受后，重试须使用幂等生产者及业务去重。某些版本的副本选举机制持续演进，安全结论应依据实际版本、配置及允许的故障模型，而非口号。〔N133〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("042  Kafka 重平衡为什么会引起延迟和重复，怎样减少无效重分配？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  组成员加入、离开或订阅分区变化时，协调流程会重新安排分区所有权；不同协议与分配策略影响暂停范围，不能把所有版本都等同于全组长期停顿。消费者必须在交接时处理在途任务和已完成位点，提交尚未完成的记录会漏处理，未提交则可能重复。处理过慢、长时间不调用 poll、频繁重启和不稳定网络都可能反复触发重平衡。应限制每批及在途处理量，正确设置存活、轮询和会话参数，按支持情况使用稳定成员身份及更平滑的协议。优化目标是有界交接和正确恢复，不能只把超时设得极大来隐藏失联消费者。〔N130、N138〕", size: 9.5pt)
+  #text("答案  组成员加入、离开或订阅分区变化时，协调流程会重新安排分区所有权；不同协议与分配策略影响暂停范围，不能把所有版本都等同于全组长期停顿。消费者必须在交接时处理在途任务和已完成位点，提交尚未完成的记录会漏处理，未提交则可能重复。处理过慢、长时间不调用 poll、频繁重启和不稳定网络都可能反复触发重平衡。应限制每批及在途处理量，正确设置存活、轮询和会话参数，按支持情况使用稳定成员身份及更平滑的协议。优化目标是有界交接和正确恢复，不能只把超时设得极大来隐藏失联消费者。〔N133、N141〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("043  RabbitMQ 如何通过交换机、绑定和队列决定消息去向？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  AMQP 是协议家族，RabbitMQ 是实现相关协议及扩展的消息服务器；一个连接可承载多个 channel，vhost 提供逻辑命名与权限边界。生产者通常把消息发给 exchange，交换机依据绑定和 routing key 路由到队列，再由消费者获取。direct 按绑定键精确匹配，topic 按层次模式匹配，fanout 向所有绑定队列广播，headers 按头部条件匹配；一个队列上的多个消费者通常竞争分工，而复制到多个队列才形成多个独立订阅。路由成功不等于业务处理成功，拓扑、持久化、确认和权限需分别设计；未匹配任何队列的消息也需要显式处理策略。〔N129〕", size: 9.5pt)
+  #text("答案  AMQP 是协议家族，RabbitMQ 是实现相关协议及扩展的消息服务器；一个连接可承载多个 channel，vhost 提供逻辑命名与权限边界。生产者通常把消息发给 exchange，交换机依据绑定和 routing key 路由到队列，再由消费者获取。direct 按绑定键精确匹配，topic 按层次模式匹配，fanout 向所有绑定队列广播，headers 按头部条件匹配；一个队列上的多个消费者通常竞争分工，而复制到多个队列才形成多个独立订阅。路由成功不等于业务处理成功，拓扑、持久化、确认和权限需分别设计；未匹配任何队列的消息也需要显式处理策略。〔N132〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("044  RabbitMQ 的 Confirm、Return 和消费者 ACK 分别确认哪一步？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  Publisher Confirm 告诉生产者 Broker 对发布动作的接受结果，其安全范围受队列类型、持久化和复制配置影响；它不表示消费者已经完成业务。mandatory 发布无法路由到队列时可触发 basic.return，让生产者知道路由失败，消息也可能在交换机处理后获得 confirm，因此必须分别处理。消费者 ACK 表示应用已完成这次投递，Broker 才能释放相应未确认状态；业务提交前 ACK 可能导致漏处理，提交后 ACK 丢失则可能重投。Confirm 与消费者 delivery tag 属于不同方向和 channel 的状态，不能混用。可靠发送应记录待确认结果并幂等重试，而不是仅在 TCP 写入成功时认定消息已落地。〔N139〕", size: 9.5pt)
+  #text("答案  Publisher Confirm 告诉生产者 Broker 对发布动作的接受结果，其安全范围受队列类型、持久化和复制配置影响；它不表示消费者已经完成业务。mandatory 发布无法路由到队列时可触发 basic.return，让生产者知道路由失败，消息也可能在交换机处理后获得 confirm，因此必须分别处理。消费者 ACK 表示应用已完成这次投递，Broker 才能释放相应未确认状态；业务提交前 ACK 可能导致漏处理，提交后 ACK 丢失则可能重投。Confirm 与消费者 delivery tag 属于不同方向和 channel 的状态，不能混用。可靠发送应记录待确认结果并幂等重试，而不是仅在 TCP 写入成功时认定消息已落地。〔N142〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("045  RabbitMQ prefetch 怎样限制在途消息，为什么太大会恶化公平性？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  在手动确认场景中，prefetch 限制消费者或 channel 可保留的未确认投递数，具体作用范围要按 basic.qos 设置和 RabbitMQ 扩展理解。它相当于消费端在途窗口：过小可能让工作线程等网络，过大则把大量消息集中到慢消费者，占用内存、拖长故障恢复和重投时间，也可能让其他消费者缺少工作。数值为零通常表示不设此限制，而不是完全不取消息。设置应结合并发处理数、单条耗时、大小和下游容量，并用吞吐与尾延迟逐步调整。确认必须对应已完成业务，不能为了腾窗口提前 ACK，把背压变成无法恢复的应用内积压。〔N140、N139〕", size: 9.5pt)
+  #text("答案  在手动确认场景中，prefetch 限制消费者或 channel 可保留的未确认投递数，具体作用范围要按 basic.qos 设置和 RabbitMQ 扩展理解。它相当于消费端在途窗口：过小可能让工作线程等网络，过大则把大量消息集中到慢消费者，占用内存、拖长故障恢复和重投时间，也可能让其他消费者缺少工作。数值为零通常表示不设此限制，而不是完全不取消息。设置应结合并发处理数、单条耗时、大小和下游容量，并用吞吐与尾延迟逐步调整。确认必须对应已完成业务，不能为了腾窗口提前 ACK，把背压变成无法恢复的应用内积压。〔N143、N142〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("046  RabbitMQ 加入集群为何不等于每个队列都具备多副本？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  集群解决节点间协作及部分元数据共享，队列消息是否复制取决于具体队列类型；不能只看到多个节点就假设任意单节点损坏后所有消息仍存在。Quorum Queue 使用 Raft 为一个队列建立复制组，通过多数派协调日志与领导者，适合需要明确复制耐久性的任务队列。失去多数派时会限制可用性，队列数、副本数和跨节点网络都会影响成本。应按当前支持的队列类型规划副本分布、确认和恢复演练，不把旧版镜像经典队列的方案当成所有新版本的默认实践。多副本也不替代业务 ACK、幂等和备份，它们保护的是不同故障环节。〔N141〕", size: 9.5pt)
+  #text("答案  集群解决节点间协作及部分元数据共享，队列消息是否复制取决于具体队列类型；不能只看到多个节点就假设任意单节点损坏后所有消息仍存在。Quorum Queue 使用 Raft 为一个队列建立复制组，通过多数派协调日志与领导者，适合需要明确复制耐久性的任务队列。失去多数派时会限制可用性，队列数、副本数和跨节点网络都会影响成本。应按当前支持的队列类型规划副本分布、确认和恢复演练，不把旧版镜像经典队列的方案当成所有新版本的默认实践。多副本也不替代业务 ACK、幂等和备份，它们保护的是不同故障环节。〔N144〕", size: 9.5pt)
 ]
 
 #heading(level: 2, outlined: true)[#text("10.9 分布式理论与一致性", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("047  强一致、最终一致和读写一致性分别承诺什么？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  “一致性”必须说明观察者和操作语义。线性一致性要求每个操作看起来在调用与返回之间某一时刻生效，并尊重真实时间顺序；顺序一致性只要求所有操作存在一个符合各线程程序顺序的全局顺序；最终一致性允许暂时读到旧值，但在停止更新且网络恢复后副本趋于同一状态。读己之写、单调读和会话一致性是较弱但有用的应用保证，不能仅用“最终”掩盖用户体验。复制数据库、缓存或消息系统可能在不同对象上提供不同强度；应把延迟、冲突合并与故障时可用性写进接口契约，别把数据库事务 ACID 中的 C 直接等同于分布式线性一致性。〔N142〕", size: 9.5pt)
+  #text("答案  “一致性”必须说明观察者和操作语义。线性一致性要求每个操作看起来在调用与返回之间某一时刻生效，并尊重真实时间顺序；顺序一致性只要求所有操作存在一个符合各线程程序顺序的全局顺序；最终一致性允许暂时读到旧值，但在停止更新且网络恢复后副本趋于同一状态。BASE 概括另一种分布式取舍：Basically Available（基本可用）、Soft State（软状态，复制期间状态可能变化）和 Eventually Consistent（最终一致，系统恢复并停止更新后副本收敛）。BASE 不等于业务可以随意出错；中间状态应可观测，失败应有可靠重试、冲突处理或补偿。读己之写、单调读和会话一致性是较弱但有用的应用保证；应把延迟、冲突合并与故障时可用性写进接口契约，别把数据库事务 ACID 中的 C 直接等同于分布式线性一致性。〔N145〕", size: 9.5pt)
 ]
 
 #heading(level: 2, outlined: true)[#text("10.10 分布式组件与服务治理", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("048  RPC 调用链至少应设计哪些协议和失败语义？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  RPC 把远程调用封装成接口，但网络会引入超时、重复、连接中断、版本不兼容和部分成功。设计时需定义序列化及兼容规则、认证、截止时间、取消、错误码、重试资格和幂等键；连接池、负载均衡与服务发现属于运行时配套，不是调用“像本地函数”就自动获得的性质。gRPC 的 deadline 会向下游传播并在超时后结束调用，服务端应及时停止无用工作；重试只能针对明确的瞬时错误并设有预算与退避，否则一个请求的多层重试会形成放大。客户端遇到超时不能直接断言服务端未执行，写请求应通过业务状态查询或幂等键收敛结果。〔N59、N143〕", size: 9.5pt)
+  #text("答案  RPC 把远程调用封装成接口，但网络会引入超时、重复、连接中断、版本不兼容和部分成功。客户端可由动态代理把方法调用编码为请求；协议帧应包含版本、类型、请求 ID 和长度，并限制最大帧长。I/O 线程负责收发与解帧，再把业务工作交给有界线程池，队列满时按策略拒绝或背压，不能无限堆积；响应携带请求 ID，由客户端映射回等待中的 Future。还需定义序列化兼容、认证、截止时间、取消、错误码、重试资格和幂等键，并通过 SPI 等机制扩展序列化或负载策略。gRPC 的 deadline 会向下游传播；重试只能针对明确的瞬时错误并设有预算与退避。客户端超时不能断言服务端未执行，写请求应通过业务状态查询或幂等键收敛结果。〔N62、N146〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("049  ZooKeeper 的 ZAB、临时节点和 Watch 怎样支持协调？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  ZooKeeper 通过集群中的领导者和多数派协议对写请求排序并复制日志，ZAB 的核心目标是让已提交更新按一致顺序传播；写入成功需要满足相应多数派条件，失去多数派时宁可停止写入也不应伪造进度。临时节点绑定会话，客户端断开并在会话超时后节点消失，常用于服务注册或锁；watch 是一次性变更通知，收到后需重新读取状态并重新注册，不能把通知当成永不丢失的队列。用它做选主、注册发现或锁时要处理会话抖动、羊群效应、重复回调和旧客户端恢复；业务资源仍应验证 fencing/版本，不能只相信本地持有锁标志。〔N144、N126〕", size: 9.5pt)
+  #text("答案  ZooKeeper 通过集群中的领导者和多数派协议对写请求排序并复制日志，ZAB 的核心目标是让已提交更新按一致顺序传播；写入成功需要满足相应多数派条件，失去多数派时宁可停止写入也不应伪造进度。临时节点绑定会话，客户端断开并在会话超时后节点消失，常用于服务注册或锁；watch 是一次性变更通知，收到后需重新读取状态并重新注册，不能把通知当成永不丢失的队列。用它做选主、注册发现或锁时要处理会话抖动、羊群效应、重复回调和旧客户端恢复；业务资源仍应验证 fencing/版本，不能只相信本地持有锁标志。〔N147、N129〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("050  服务注册发现怎样面对注册中心不可用和过期实例？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  实例启动后注册地址、版本、能力和健康租约，客户端通过订阅或轮询获得可用实例列表；心跳或会话过期清理失联实例。注册中心短暂不可用时，客户端可使用带时间戳的缓存路由继续调用，但必须设置最大陈旧时间和失败降级，不能无限信任已经下线的地址。路由选取还要结合负载、区域、熔断状态和连接复用；发布期间旧版本与新版本要共存并可回滚。健康检查只能证明探针时刻可达，不能保证业务依赖正常，调用端仍要有超时和错误隔离。采用 ZooKeeper、DNS、控制面或服务网格时，分别核对一致性、传播延迟、权限、证书与数据面断联行为。〔N144、N145〕", size: 9.5pt)
+  #text("答案  实例启动后注册地址、版本、能力和健康租约，客户端通过订阅或轮询获得可用实例列表；心跳或会话过期清理失联实例。注册中心短暂不可用时，客户端可使用带时间戳的缓存路由继续调用，但必须设置最大陈旧时间和失败降级，不能无限信任已经下线的地址。路由选取还要结合负载、区域、熔断状态和连接复用；发布期间旧版本与新版本要共存并可回滚。健康检查只能证明探针时刻可达，不能保证业务依赖正常，调用端仍要有超时和错误隔离。采用 ZooKeeper、DNS、控制面或服务网格时，分别核对一致性、传播延迟、权限、证书与数据面断联行为。〔N147、N148〕", size: 9.5pt)
 ]
 
 #heading(level: 2, outlined: true)[#text("10.11 分布式事务与一致性", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("051  Seata AT 和 TCC、Saga 的补偿边界如何比较？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  Seata AT 通过代理本地事务、记录回滚日志与全局锁协调常见关系库操作，回滚阶段依据镜像恢复数据；它要求参与者支持事务和合适的 SQL，锁冲突、DDL、长事务及外部副作用并不会自动变成可回滚。TCC 把预留、确认、取消显式交给业务，需处理幂等、空回滚、悬挂和超时；Saga 通过补偿动作串联长流程，补偿可能被观察到且不一定精确逆转。分布式事务框架不能替代本地约束、Outbox、幂等和对账，选择要按隔离级别、业务可补偿性、延迟及参与者类型评估。〔N146〕", size: 9.5pt)
+  #text("答案  Seata AT 通过代理本地事务、记录回滚日志与全局锁协调常见关系库操作，回滚阶段依据镜像恢复数据；它要求参与者支持事务和合适的 SQL，锁冲突、DDL、长事务及外部副作用并不会自动变成可回滚。TCC 把预留、确认、取消显式交给业务，需处理幂等、空回滚、悬挂和超时；Saga 通过补偿动作串联长流程，补偿可能被观察到且不一定精确逆转。分布式事务框架不能替代本地约束、Outbox、幂等和对账，选择要按隔离级别、业务可补偿性、延迟及参与者类型评估。〔N149〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("052  Snowflake 类 ID 的位段设计怎样处理时钟回拨与序列耗尽？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  通常把时间戳、节点标识和同一时间片内的序列号拼成整数，以获得近似按生成时间排序的唯一 ID。节点标识必须由可靠分配机制保证不冲突；同一毫秒生成数超过序列容量时，可等待下一时间片或返回限流错误。检测到时钟回拨时不能继续盲增时间戳，否则可能与已发 ID 冲突；可等待时钟追平、切换逻辑纪元或暂时拒绝，策略要和业务可用性取舍。时间回拨、节点重启、数据中心漂移和位宽升级都应在测试中验证。它不保证跨节点严格全局顺序，也不自动隐藏业务规模，若 ID 暴露给外部还需考虑可枚举性。〔N95〕", size: 9.5pt)
+  #text("答案  通常把时间戳、节点标识和同一时间片内的序列号拼成整数，以获得近似按生成时间排序的唯一 ID。节点标识必须由可靠分配机制保证不冲突；同一毫秒生成数超过序列容量时，可等待下一时间片或返回限流错误。检测到时钟回拨时不能继续盲增时间戳，否则可能与已发 ID 冲突；可等待时钟追平、切换逻辑纪元或暂时拒绝，策略要和业务可用性取舍。时间回拨、节点重启、数据中心漂移和位宽升级都应在测试中验证。它不保证跨节点严格全局顺序，也不自动隐藏业务规模，若 ID 暴露给外部还需考虑可枚举性。〔N98〕", size: 9.5pt)
 ]
 
 #heading(level: 2, outlined: true)[#text("10.12 高并发业务系统设计", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("053  短链服务怎样生成唯一编码并支撑高频跳转？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  写入时先验证目标 URL、权限、过期策略和自定义别名，再分配短码。可用数据库序列或分布式 ID 编码为 Base62；随机码则必须有唯一约束并在冲突时有限重试，不能仅靠概率假设唯一。按短码建立索引并把映射写入可靠存储，读请求先查缓存再回源；热点短码可缓存，未命中负缓存须设短 TTL 以避免误挡刚创建的链接。跳转可用 302 便于统计、撤销和变更目标；301 可能被客户端或代理长期缓存，适用前应定义不可变语义。点击统计通过异步事件与跳转解耦，需考虑重复、丢弃、隐私和积压。规模增长后可按短码路由分片，监控碰撞、缓存命中、热点、滥用和过期清理。〔N107、N95、N121〕", size: 9.5pt)
+  #text("答案  写入时先验证目标 URL、权限、过期策略和自定义别名，再分配短码；是否去重必须按租户、活动和有效期定义，不能无条件全局合并相同长链，创建重试可用固定 request ID 保证幂等。可用数据库序列或分布式 ID 编码为 Base62；随机码必须有唯一约束并在冲突时有限重试。按短码建立索引并把映射写入可靠存储，读请求先查缓存再回源；缓存 TTL 不应超过业务过期时间，禁用或修改目标后要失效缓存。过期短码通常不回收，复用可能让旧链接或长期缓存的 301 指向新目标；只有能证明所有旧链接、客户端缓存和业务生命周期都已失效时才考虑回收。点击统计需过滤爬虫和短信预览，短码应避免可枚举并只允许 HTTP(S) 等受控协议，配合恶意链接审核、下架和滥用监控。规模增长后可按短码路由分片。〔N110、N98、N124〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("054  点赞系统怎样保证用户状态幂等并承受热点写入？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  把“设置为已点赞/取消点赞”建模为显式状态接口，并用用户 ID 与内容 ID 的唯一约束保证一个用户最多一条关系；相同请求重试返回同一结果，避免用不可幂等的 toggle 让网络重试反转状态。关系表是可恢复的事实数据，点赞总数可作为派生计数；高频场景可用 Redis 原子操作或分片计数器吸收热点，再经可靠事件异步汇总，但必须防止重复事件重复加数，并提供周期性对账与修复。单个热门内容会造成热点键，可拆分计数桶后汇总；写入顺序、取消点赞和事件延迟都要明确。读侧分别定义本人点赞状态与总数允许的陈旧时间，不能让展示计数替代关系校验。还需限速、反作弊、权限校验和数据保留策略。〔N107、N121、N130〕", size: 9.5pt)
+  #text("答案  把“设置为已点赞/取消点赞”建模为显式状态接口，并用用户 ID 与内容 ID 的唯一约束保证一个用户最多一条关系；相同请求重试返回同一结果，避免用不可幂等的 toggle 让网络重试反转状态。关系表是可恢复的事实数据，点赞总数可作为派生计数。Redis 状态更新与发送 MQ 之间存在崩溃窗口，不能简单地先写 Redis 再发消息；可在同一 Lua 脚本中原子更新状态并写入 Redis Stream，或用 MySQL 事务 Outbox 产生可重放事件。每个用户-内容状态带递增版本，乱序事件只应用更高版本，消费端在事务里仅当状态真实变化时调整计数。热点键可拆分计数桶后汇总，并提供周期性对账与修复；读侧分别定义本人状态与总数允许的陈旧时间。〔N110、N124、N133〕", size: 9.5pt)
 ]
 
 #heading(level: 1, outlined: true)[#text("第11章 自动驾驶与实时数据", size: 15pt, weight: "bold", fill: rgb("#000000"))]
@@ -2636,46 +2642,46 @@
 #heading(level: 2, outlined: true)[#text("13.10 标准算法与容器适配器", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("100  std::priority_queue 怎样维护堆序？常见操作是什么复杂度？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  std::priority_queue 是容器适配器，默认在 std::vector 上维护堆序，要求底层支持随机访问和尾端插删。top 只访问堆顶，通常 O(1)；push 通过上浮恢复堆序，pop 把堆顶与尾部交换再下沉，比较次数为 O(log n)，底层扩容仍可能增加单次成本。默认 std::less 让最大的元素位于顶部，std::greater 则常用于最小堆。它不提供任意位置高效删改；需要 decrease-key 的任务可换带索引堆或采用懒删除，并考虑过期条目的空间代价。〔N147〕", size: 9.5pt)
+  #text("答案  std::priority_queue 是容器适配器，默认在 std::vector 上维护堆序，要求底层支持随机访问和尾端插删。top 只访问堆顶，通常 O(1)；push 通过上浮恢复堆序，pop 把堆顶与尾部交换再下沉，比较次数为 O(log n)，底层扩容仍可能增加单次成本。默认 std::less 让最大的元素位于顶部，std::greater 则常用于最小堆。它不提供任意位置高效删改；需要 decrease-key 的任务可换带索引堆或采用懒删除，并考虑过期条目的空间代价。〔N150〕", size: 9.5pt)
   #raw("std::priority_queue<int, std::vector<int>, std::greater<int>> pending;\npending.push(7); pending.push(2);\nint smallest = pending.top(); // 2，查看不删除\npending.pop(); // 删除堆顶，不返回原值", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("101  std::sort 的复杂度保证与常见内省排序实现是什么关系？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  标准要求 std::sort 在通常非并行重载下进行 O(N log N) 次比较，并要求随机访问迭代器和满足严格弱序的比较关系，不强制某一种算法。常见标准库采用内省排序：以快速排序分区获得平均效率，递归深度过大时切换堆排序防止最坏退化，小区间使用插入排序降低常数。它不保证相等元素的原有顺序，需稳定性时选 std::stable_sort。链表迭代器不满足随机访问要求，应使用 list::sort；比较器不一致或含不恰当的浮点 NaN 关系也会破坏排序前提。〔N148、N149〕", size: 9.5pt)
+  #text("答案  标准要求 std::sort 在通常非并行重载下进行 O(N log N) 次比较，并要求随机访问迭代器和满足严格弱序的比较关系，不强制某一种算法。常见标准库采用内省排序：以快速排序分区获得平均效率，递归深度过大时切换堆排序防止最坏退化，小区间使用插入排序降低常数。它不保证相等元素的原有顺序，需稳定性时选 std::stable_sort。链表迭代器不满足随机访问要求，应使用 list::sort；比较器不一致或含不恰当的浮点 NaN 关系也会破坏排序前提。〔N151、N152〕", size: 9.5pt)
 ]
 
 #heading(level: 2, outlined: true)[#text("13.11 索引结构与算法选择", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("102  AVL 与红黑树如何限制高度，读写性能能否只凭树名判断？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  AVL 要求每个节点左右子树高度差至多为 1，通过旋转和高度更新保持较严格平衡。红黑树用颜色、红节点不相邻、从节点到空叶路径黑节点数一致等约束间接限制高度，查找、插入、删除均可保持 O(log n)。AVL 通常更紧凑地限制树高，红黑树在更新场景常有较宽松的平衡维护，但实际速度还取决于节点布局、比较成本、缓存和读写比例，不能断言某一种始终更快。有序映射常采用平衡搜索树，具体实现要看库；C++ 标准并不强制 std::map 必须采用红黑树。选型应从范围查询、更新比例及稳定复杂度需求出发。〔N150、N151〕", size: 9.5pt)
+  #text("答案  AVL 要求每个节点左右子树高度差至多为 1，通过旋转和高度更新保持较严格平衡。红黑树用颜色、红节点不相邻、从节点到空叶路径黑节点数一致等约束间接限制高度，查找、插入、删除均可保持 O(log n)。AVL 通常更紧凑地限制树高，红黑树在更新场景常有较宽松的平衡维护，但实际速度还取决于节点布局、比较成本、缓存和读写比例，不能断言某一种始终更快。有序映射常采用平衡搜索树，具体实现要看库；C++ 标准并不强制 std::map 必须采用红黑树。选型应从范围查询、更新比例及稳定复杂度需求出发。〔N153、N154〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("103  跳表怎样利用随机层级加速有序访问，与平衡树有哪些取舍？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  跳表底层是按键有序的链表，再给一部分节点随机建立更高层的前进指针。查找从高层向前跳，到即将越过目标时下降一层，逐步逼近目标；插入先找各层前驱，再按新节点随机高度改链，删除亦需更新相关层。在通常的随机化假设下，查找和更新期望 O(log n)，最坏仍可能 O(n)，并非确定性的平衡树高度保证。它适合有序遍历和范围访问，维护逻辑直观，但多层指针增加空间和指针访问成本。Redis 较大有序集合可组合字典与跳表，跳表节点的跨度还能支持名次查询；小集合可能采用紧凑编码，不是所有 ZSet 始终使用跳表。〔N152〕", size: 9.5pt)
+  #text("答案  跳表底层是按键有序的链表，再给一部分节点随机建立更高层的前进指针。查找从高层向前跳，到即将越过目标时下降一层，逐步逼近目标；插入先找各层前驱，再按新节点随机高度改链，删除亦需更新相关层。在通常的随机化假设下，查找和更新期望 O(log n)，最坏仍可能 O(n)，并非确定性的平衡树高度保证。它适合有序遍历和范围访问，维护逻辑直观，但多层指针增加空间和指针访问成本。Redis 较大有序集合可组合字典与跳表，跳表节点的跨度还能支持名次查询；小集合可能采用紧凑编码，不是所有 ZSet 始终使用跳表。〔N155〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("104  Trie 为什么适合前缀检索，怎样区分完整单词与已有路径？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  Trie 把键按字符或其他符号拆成路径，共同前缀共享节点；插入沿路径创建缺失节点，并在终点记录结束标记或关联值。查询完整词时不仅要走通路径，还要检查终点标记，否则会把某个长词的前缀误判为独立键。设键长 L，在子节点查找成本有界时，精确查找和插入可为 O(L)，前缀枚举还需加上访问和输出结果的成本。固定字母表数组快但可能浪费空间，稀疏映射、压缩 Trie 可减少节点开销。处理中文等文本要先约定按 UTF-8 字节、Unicode 码点还是其他单位建边，复杂度中的长度必须与该单位一致。〔N153〕", size: 9.5pt)
+  #text("答案  Trie 把键按字符或其他符号拆成路径，共同前缀共享节点；插入沿路径创建缺失节点，并在终点记录结束标记或关联值。查询完整词时不仅要走通路径，还要检查终点标记，否则会把某个长词的前缀误判为独立键。设键长 L，在子节点查找成本有界时，精确查找和插入可为 O(L)，前缀枚举还需加上访问和输出结果的成本。固定字母表数组快但可能浪费空间，稀疏映射、压缩 Trie 可减少节点开销。处理中文等文本要先约定按 UTF-8 字节、Unicode 码点还是其他单位建边，复杂度中的长度必须与该单位一致。〔N156〕", size: 9.5pt)
   #raw("node = root\nfor symbol in key:\n    node = node.children.get_or_create(symbol)\nnode.terminal = True  # 路径存在并不意味着完整键存在\n# 查询完整词：走到终点后还要检查 terminal\n# 前缀查询：走通前缀后，再枚举子树中的 terminal 节点", lang: "text", block: true)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("105  待排序数据装不进内存时，怎样实施外部归并排序？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  先按内存预算分块读入，每块在内存中排序后写成有序段；随后为若干有序段分别保留输入缓冲，用最小堆或败者树反复选择最小段首，写入输出缓冲，完成多路归并。若有序段太多，受内存和文件描述符限制，可分多轮合并。主要成本通常是存储 I/O，因此合并路数、块大小和顺序读写比单纯减少比较更重要。若每轮能合并 k 段，段数 R 通常约需 ceil(log_k R) 轮；重复键要定义稳定规则。还须预留临时空间，处理失败清理和原子发布，避免排序过程中损坏唯一原文件。〔N154〕", size: 9.5pt)
+  #text("答案  先按内存预算分块读入，每块在内存中排序后写成有序段；随后为若干有序段分别保留输入缓冲，用最小堆或败者树反复选择最小段首，写入输出缓冲，完成多路归并。若有序段太多，受内存和文件描述符限制，可分多轮合并。主要成本通常是存储 I/O，因此合并路数、块大小和顺序读写比单纯减少比较更重要。若每轮能合并 k 段，段数 R 通常约需 ceil(log_k R) 轮；重复键要定义稳定规则。还须预留临时空间，处理失败清理和原子发布，避免排序过程中损坏唯一原文件。〔N157〕", size: 9.5pt)
   #raw("runs = []\nwhile 仍有输入:\n    chunk = 读取不超过内存预算的一块数据()\n    sort(chunk)\n    runs.append(写入临时有序段(chunk))\nwhile len(runs) > 1:\n    runs = 对 runs 分组并执行有缓冲的多路归并(runs)\n# 只在完整结果验证后发布，归并途中保留可恢复状态。", lang: "text", block: true)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("106  邻接矩阵、邻接表与边列表各适合什么图操作？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  邻接矩阵用 V×V 单元记录边，空间 O(V²)，测试某条边是否存在通常 O(1)，但枚举一个顶点的邻居要扫描一整行，适合稠密图或频繁邻接测试。邻接表为每个顶点保存相邻边，空间 O(V+E)，遍历其邻居与度数相关，适合稀疏图中的 DFS/BFS；若邻接容器无额外索引，判断任意边存在通常要扫描该顶点邻接项。边列表直接保存端点和权重，便于按边排序或逐边松弛，却不直接支持快速枚举邻居。无向图的邻接表往往把边存两次，自环、重边、方向和权重也须在建图前明确约定。〔N155〕", size: 9.5pt)
+  #text("答案  邻接矩阵用 V×V 单元记录边，空间 O(V²)，测试某条边是否存在通常 O(1)，但枚举一个顶点的邻居要扫描一整行，适合稠密图或频繁邻接测试。邻接表为每个顶点保存相邻边，空间 O(V+E)，遍历其邻居与度数相关，适合稀疏图中的 DFS/BFS；若邻接容器无额外索引，判断任意边存在通常要扫描该顶点邻接项。边列表直接保存端点和权重，便于按边排序或逐边松弛，却不直接支持快速枚举邻居。无向图的邻接表往往把边存两次，自环、重边、方向和权重也须在建图前明确约定。〔N158〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("107  贪心算法何时能替代动态规划，怎样证明局部选择不会破坏最优解？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  动态规划把问题拆成状态与转移，复用重叠子问题，并在候选决策间比较；贪心每一步直接做一个局部选择，通常不再回看。二者都可能利用最优子结构，但有最优子结构不代表某个贪心规则就正确，还要证明选择性质，例如用交换论证把某个最优方案变成包含当前选择且不变差的方案。最早结束时间选活动可成立；任意币值下总选最大面额则会失败，如币值 1、3、4 凑 6 时，4+1+1 多于 3+3。无法证明时不要仅凭少量样例采纳贪心，可构造反例或使用合适 DP。性能比较还要依据状态规模和约束。〔N156、N157〕", size: 9.5pt)
+  #text("答案  动态规划把问题拆成状态与转移，复用重叠子问题，并在候选决策间比较；贪心每一步直接做一个局部选择，通常不再回看。二者都可能利用最优子结构，但有最优子结构不代表某个贪心规则就正确，还要证明选择性质，例如用交换论证把某个最优方案变成包含当前选择且不变差的方案。最早结束时间选活动可成立；任意币值下总选最大面额则会失败，如币值 1、3、4 凑 6 时，4+1+1 多于 3+3。无法证明时不要仅凭少量样例采纳贪心，可构造反例或使用合适 DP。性能比较还要依据状态规模和约束。〔N159、N160〕", size: 9.5pt)
 ]
 
 #heading(level: 1, outlined: true)[#text("第14章 Qt", size: 15pt, weight: "bold", fill: rgb("#000000"))]
@@ -4144,302 +4150,302 @@
 #heading(level: 2, outlined: true)[#text("17.1 Python 对象、类型与容器", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("001  Python 的动态类型和强类型分别约束什么？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  动态类型表示名字在运行时可以绑定不同类型的对象，不要求变量具有一个固定的静态类型；强类型通常表示运算不会任意把互不兼容的类型悄悄转换为可运算类型，例如字符串与整数不能直接相加。这两个分类维度并不矛盾。对象本身仍有确定的类型，类型决定支持的协议和操作；需要转换时显式调用 int、str 等接口，并处理转换失败。Python 的数值类型之间存在按规则进行的混合运算，不能把“强类型”理解成完全没有隐式转换。〔N158、N159〕", size: 9.5pt)
+  #text("答案  动态类型表示名字在运行时可以绑定不同类型的对象，不要求变量具有一个固定的静态类型；强类型通常表示运算不会任意把互不兼容的类型悄悄转换为可运算类型，例如字符串与整数不能直接相加。这两个分类维度并不矛盾。对象本身仍有确定的类型，类型决定支持的协议和操作；需要转换时显式调用 int、str 等接口，并处理转换失败。Python 的数值类型之间存在按规则进行的混合运算，不能把“强类型”理解成完全没有隐式转换。〔N161、N162〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
-  #heading(level: 2, outlined: false)[#text("002  Python 名字、对象可变性和函数传参是什么关系？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  名字保存对对象的绑定，赋值通常不会复制对象。调用函数时，形参获得同一对象的引用；重新给形参赋值只改变局部绑定，原地修改可变对象则能被调用者观察到。list、dict、set 通常可变，int、str、tuple 不可变；不可变限制对象本身，不保证它引用的其他对象不可变。+= 会优先尝试原地操作，因此列表可能保留身份并修改内容，而整数通常产生新对象；不能一概视为普通加法再赋值。判断副作用要同时看别名关系与具体类型的协议。〔N158、N159〕", size: 9.5pt)
+  #heading(level: 2, outlined: false)[#text("002  Python 常见类型、对象可变性和函数传参是什么关系？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
+  #text("答案  Python 中常见对象类型包括 int、float、complex、bool、str、list、tuple、dict、set、frozenset、range、bytes、bytearray 和 NoneType。list、dict、set、bytearray 通常可变；数字、str、tuple、frozenset、range、bytes 通常不可变，tuple 内部仍可能引用可变对象。名字保存对对象的绑定，赋值通常不会复制对象。调用函数时，形参获得同一对象的引用；重新给形参赋值只改变局部绑定，原地修改可变对象则能被调用者观察到。+= 会优先尝试原地操作，因此列表可能保留身份并修改内容，而整数通常产生新对象；判断副作用要同时看别名关系与具体类型的协议。〔N161、N162〕", size: 9.5pt)
   #raw("def change(items, number):\n    items.append(1)  # 修改双方共同引用的列表\n    number += 1     # 仅重新绑定局部名字\nxs, n = [], 0\nchange(xs, n)\nassert xs == [1] and n == 0", lang: "python", block: true)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("003  Python 中如何区分对象身份、值相等和真假判断？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  is 判断是否为同一个对象，== 调用类型定义的相等比较；除 None 等约定的单例外，比较业务值通常使用 ==。None 表示没有值，False、0、空容器则是不同的对象或类型，只是在条件判断中可能都为假。判断可选参数用 is None，避免把合法的 0 或空列表当成缺失。CPython 的小整数缓存和字符串驻留会让某些相等值偶然共享身份，但范围、编译方式和实现可能变化，不能依赖 is 比较数字或字符串。对象还可通过 __bool__ 或 __len__ 自定义真假。〔N158、N160〕", size: 9.5pt)
+  #text("答案  is 判断是否为同一个对象，== 调用类型定义的相等比较；除 None 等约定的单例外，比较业务值通常使用 ==。None 表示没有值，False、0、空容器则是不同的对象或类型，只是在条件判断中可能都为假。判断可选参数用 is None，避免把合法的 0 或空列表当成缺失。CPython 的小整数缓存和字符串驻留会让某些相等值偶然共享身份，但范围、编译方式和实现可能变化，不能依赖 is 比较数字或字符串。对象还可通过 __bool__ 或 __len__ 自定义真假。〔N161、N163〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("004  and、or 为什么不一定返回 bool？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  and、or 会短路并返回被选中的操作数本身：x and y 在 x 为假时返回 x，否则求值并返回 y；x or y 在 x 为真时返回 x，否则求值并返回 y。not 才总是产生布尔结果。短路可以避免不必要的访问或计算，但也意味着右侧的函数调用可能根本不发生。用 value or default 提供默认值时，0、空字符串、空容器也会被替换；若只允许 None 触发默认值，应使用显式条件表达式。〔N159、N160〕", size: 9.5pt)
+  #text("答案  and、or 会短路并返回被选中的操作数本身：x and y 在 x 为假时返回 x，否则求值并返回 y；x or y 在 x 为真时返回 x，否则求值并返回 y。not 才总是产生布尔结果。短路可以避免不必要的访问或计算，但也意味着右侧的函数调用可能根本不发生。用 value or default 提供默认值时，0、空字符串、空容器也会被替换；若只允许 None 触发默认值，应使用显式条件表达式。〔N162、N163〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("005  type 与 isinstance 如何处理继承和抽象接口？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  type(obj) 返回对象的实际类型，用 type(obj) is T 判断的是精确类型，派生类不会匹配。isinstance(obj, T) 按实例关系判断，通常接受 T 的子类，也支持抽象基类注册等协议；例如 bool 是 int 的子类，因此 isinstance(True, int) 为真。如果接口只依赖某种能力，优先清楚地调用协议或检查适当的抽象基类，避免大量分支判断具体类型。需要拒绝布尔值等特殊子类时，可以明确检查精确类型或单独排除。〔N161、N158〕", size: 9.5pt)
+  #text("答案  type(obj) 返回对象的实际类型，用 type(obj) is T 判断的是精确类型，派生类不会匹配。isinstance(obj, T) 按实例关系判断，通常接受 T 的子类，也支持抽象基类注册等协议；例如 bool 是 int 的子类，因此 isinstance(True, int) 为真。如果接口只依赖某种能力，优先清楚地调用协议或检查适当的抽象基类，避免大量分支判断具体类型。需要拒绝布尔值等特殊子类时，可以明确检查精确类型或单独排除。〔N164、N161〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("006  Python 的 list、tuple、dict、set 和 deque 如何选择？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  list 适合可变顺序序列和按下标访问；tuple 适合固定位置含义的不可变组合，但其中元素仍可引用可变对象。dict 保存键值关联并保持插入顺序，set 适合成员判断与集合运算；两者的键或元素需要可哈希。需要两端频繁入队出队时，collections.deque 比反复移动列表头部更合适。不要只按“元组更快”选型，应先确定是否可变、是否需要顺序、键查找和两端操作等语义，再结合规模和实际测量。〔N160、N162〕", size: 9.5pt)
+  #text("答案  list 适合可变顺序序列、按下标访问，也可用 append/pop 作为栈；tuple 适合固定位置含义的不可变组合，但其中元素仍可引用可变对象。dict 保存键值关联并保持插入顺序，set 适合成员判断与集合运算；两者的键或元素需要可哈希。collections.deque 适合两端频繁入队出队。优先队列可用 heapq 管理列表形式的最小堆：堆顶读取为 O(1)，push/pop 为 O(log n)；需要线程安全队列可考虑 queue.PriorityQueue。Python 没有内建链表或通用树/图容器，通常用自定义节点类、嵌套对象或 dict/list 邻接表表达。应按操作语义、规模和实际测量选型。〔N163、N165〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("007  CPython 的列表如何保存异构元素，常见操作复杂度是什么？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  CPython 的 list 以可调整容量的对象指针数组保存元素，异构来自指针可引用不同类型的对象，并不是把所有对象本体紧挨着存储。按下标读取通常 O(1)，无索引的值查找 O(n)；中间插入、删除需移动后续引用，通常 O(n)。append 添加一个对象，extend 逐个加入可迭代对象的元素，insert 在指定位置加入对象。扩容预留容量使连续尾部追加具有均摊 O(1) 成本，但单次扩容仍可能 O(n)。具体增长公式属于 CPython 版本实现，不是 Python 语言承诺。〔N163、N160〕", size: 9.5pt)
+  #text("答案  CPython 的 list 以可调整容量的对象指针数组保存元素，异构来自指针可引用不同类型的对象，并不是把所有对象本体紧挨着存储。按下标读取通常 O(1)，无索引的值查找 O(n)；中间插入、删除需移动后续引用，通常 O(n)。append 添加一个对象，extend 逐个加入可迭代对象的元素，insert 在指定位置加入对象。扩容预留容量使连续尾部追加具有均摊 O(1) 成本，但单次扩容仍可能 O(n)。具体增长公式属于 CPython 版本实现，不是 Python 语言承诺。〔N166、N163〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("008  Python 容器复制、切片和重复为什么会产生共享嵌套对象？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  赋值只建立别名；list 切片、list.copy 和 copy.copy 通常创建新外层容器，但内部元素仍引用同一对象。copy.deepcopy 递归复制并借助备忘录处理循环和重复引用，具体行为还能由类型定制，不能理解成复制一切外部资源。[[0] * 3] * 3 重复的是同一个内层列表的引用，修改一个位置会影响多行，应用推导式逐行新建。tuple 不可变仅意味着它保存的元素引用不能被替换，引用的列表仍可修改。〔N164、N160〕", size: 9.5pt)
+  #text("答案  赋值只建立别名；list 切片、list.copy 和 copy.copy 通常创建新外层容器，但内部元素仍引用同一对象。copy.deepcopy 递归复制并借助备忘录处理循环和重复引用，具体行为还能由类型定制，不能理解成复制一切外部资源。[[0] * 3] * 3 重复的是同一个内层列表的引用，修改一个位置会影响多行，应用推导式逐行新建。tuple 不可变仅意味着它保存的元素引用不能被替换，引用的列表仍可修改。〔N167、N163〕", size: 9.5pt)
   #raw("rows = [[0] * 3 for _ in range(3)]  # 每一行单独创建\nrows[0][0] = 1\nassert rows[1][0] == 0\n# rows[:] 仍会共享各行；需要独立嵌套状态时再评估 deepcopy", lang: "python", block: true)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("009  sort 与 sorted 的修改行为及稳定排序规则是什么？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  list.sort 原地修改列表并返回 None，sorted 消费可迭代对象并返回新的列表，适合不改变输入的场景。两者支持 key 与 reverse，并保证稳定：比较键相等的元素维持输入中的相对顺序。多个字段可用元组作为 key，按元组的字典序比较；不同字段需要不同方向时，也可从次要键到主要键依次进行稳定排序。排序前确认键值之间可以比较，不要把来自不同业务语义的 None、数字、字符串混合交给默认比较。〔N160、N161〕", size: 9.5pt)
+  #text("答案  list.sort 原地修改列表并返回 None，sorted 消费可迭代对象并返回新的列表，适合不改变输入的场景。两者支持 key 与 reverse，并保证稳定：比较键相等的元素维持输入中的相对顺序。多个字段可用元组作为 key，按元组的字典序比较；不同字段需要不同方向时，也可从次要键到主要键依次进行稳定排序。排序前确认键值之间可以比较，不要把来自不同业务语义的 None、数字、字符串混合交给默认比较。〔N163、N164〕", size: 9.5pt)
   #raw("ordered = sorted(users, key=lambda u: (u[\"age\"], u[\"name\"]))\n# 原 users 不变；key 只负责提取可比较的业务字段", lang: "python", block: true)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("010  str、bytes 和字符串拼接要注意哪些编码边界？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  str 表示 Unicode 文本，bytes 表示字节序列；通过 encode 把文本编码为字节，通过 decode 按约定编码还原文本。网络和文件边界需要统一编码，遇到错误应确定协议或数据来源，而不是随意忽略解码失败。字符串不可变，循环反复相加可能反复分配和复制；拼接已有片段通常用分隔符.join，流式写文件则避免先组装整个巨串。文本长度计数不必等于屏幕字符数或 UTF-8 字节数，处理截断、协议长度和用户显示时应分清单位。〔N160、N165〕", size: 9.5pt)
+  #text("答案  str 表示 Unicode 文本，bytes 表示字节序列；通过 encode 把文本编码为字节，通过 decode 按约定编码还原文本。网络和文件边界需要统一编码，遇到错误应确定协议或数据来源，而不是随意忽略解码失败。字符串不可变，循环反复相加可能反复分配和复制；拼接已有片段通常用分隔符.join，流式写文件则避免先组装整个巨串。文本长度计数不必等于屏幕字符数或 UTF-8 字节数，处理截断、协议长度和用户显示时应分清单位。〔N163、N168〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("011  推导式与生成器表达式在执行时机和内存上有什么差别？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  列表、集合和字典推导式会立即遍历并构建结果，适合结果要复用或确实需要随机访问的场景；生成器表达式按需产生元素，通常只保留迭代状态，适合流水线和大数据输入。惰性不会自动减少计算总量，也不能保证整条处理链都不缓存。生成器表达式的最左侧可迭代表达式会立即求值，后续迭代与条件通常在消费时执行，因此异常和外部状态变化的观察时机也不同。可读性优先，复杂嵌套或副作用通常改成普通循环更清楚。〔N159、N160〕", size: 9.5pt)
+  #text("答案  列表、集合和字典推导式会立即遍历并构建结果，适合结果要复用或确实需要随机访问的场景；生成器表达式按需产生元素，通常只保留迭代状态，适合流水线和大数据输入。惰性不会自动减少计算总量，也不能保证整条处理链都不缓存。生成器表达式的最左侧可迭代表达式会立即求值，后续迭代与条件通常在消费时执行，因此异常和外部状态变化的观察时机也不同。可读性优先，复杂嵌套或副作用通常改成普通循环更清楚。〔N162、N163〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("012  CPython 字典如何查找、处理冲突并扩容？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  CPython 的 dict 使用哈希表索引键值条目，先计算哈希，再定位槽位并按探测序列处理冲突，必要时比较键是否相等。删除会留下与未用槽不同的标记，避免破坏后续探测链；表容量和可用槽不足时会分配并重建索引。查找、插入通常具有平均 O(1) 成本，冲突、重建或恶意输入可能增加开销。现代实现把索引与条目存储分开，并存在实例属性等专门布局。负载阈值、增长策略和自由线程构建细节属于版本实现，不能直接套用所有哈希表的规则。〔N166、N160〕", size: 9.5pt)
+  #text("答案  CPython 的 dict 使用哈希表索引键值条目，先计算哈希，再定位槽位并按探测序列处理冲突，必要时比较键是否相等。删除会留下与未用槽不同的标记，避免破坏后续探测链；表容量和可用槽不足时会分配并重建索引。查找、插入通常具有平均 O(1) 成本，冲突、重建或恶意输入可能增加开销。现代实现把索引与条目存储分开，并存在实例属性等专门布局。负载阈值、增长策略和自由线程构建细节属于版本实现，不能直接套用所有哈希表的规则。〔N169、N163〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("013  dict 保持的是插入顺序还是键的排序？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  Python 3.7 起，字典保持插入顺序是语言保证；CPython 3.6 已有这一实现行为。它并不按键大小排序，更新已有键的值通常不会改变位置，删除后重新插入则会移到末尾。需要按键或值排序时，应显式使用 sorted 生成所需的迭代顺序。字典相等比较主要按键值映射判断，不能据此判断插入顺序一致；有顺序语义的专门数据结构要按其文档核对。顺序保证也不意味着允许边迭代边任意改变字典大小。〔N160〕", size: 9.5pt)
+  #text("答案  Python 3.7 起，字典保持插入顺序是语言保证；CPython 3.6 已有这一实现行为。它并不按键大小排序，更新已有键的值通常不会改变位置，删除后重新插入则会移到末尾。需要按键或值排序时，应显式使用 sorted 生成所需的迭代顺序。字典相等比较主要按键值映射判断，不能据此判断插入顺序一致；有顺序语义的专门数据结构要按其文档核对。顺序保证也不意味着允许边迭代边任意改变字典大小。〔N163〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("014  可哈希对象需要满足什么约束，为什么 1、True 和 1.0 会共用字典键？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  可哈希对象要在参与哈希集合期间保持哈希值稳定，并满足两个对象相等时哈希值也相等；哈希相同并不要求对象相等。list、dict 通常不可哈希，tuple 只有所有元素也可哈希时才可作键。自定义 __eq__ 时须同步考虑 __hash__，不要用会变化的字段计算在表中对象的哈希，否则可能再也查不到它。1、True、1.0 在数值比较中相等且哈希一致，因此作为 dict 键会对应同一个映射条目；想区分类型时应使用包含显式类型标记的复合键。〔N158、N160〕", size: 9.5pt)
+  #text("答案  可哈希对象要在参与哈希集合期间保持哈希值稳定，并满足两个对象相等时哈希值也相等；哈希相同并不要求对象相等。list、dict 通常不可哈希，tuple 只有所有元素也可哈希时才可作键。自定义 __eq__ 时须同步考虑 __hash__，不要用会变化的字段计算在表中对象的哈希，否则可能再也查不到它。1、True、1.0 在数值比较中相等且哈希一致，因此作为 dict 键会对应同一个映射条目；想区分类型时应使用包含显式类型标记的复合键。〔N161、N163〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("015  为什么遍历 dict 时不应直接增删键？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  dict 的视图和迭代器通常反映底层字典，迭代期间改变大小可能抛出 RuntimeError，也可能破坏期望的遍历结果；不能依赖“这次没有报错”作为正确性依据。只改已有键对应的值，与改变键集合不同，但仍需避免使业务逻辑依赖遍历中的副作用。需要删除一批键时，先生成待删除键列表，或遍历 list(d) 的快照；也可以用字典推导式构建新映射。并发线程修改时，快照与锁的使用应按共享状态协议设计，单个操作安全不能替代整体同步。〔N160〕", size: 9.5pt)
+  #text("答案  dict 的视图和迭代器通常反映底层字典，迭代期间改变大小可能抛出 RuntimeError，也可能破坏期望的遍历结果；不能依赖“这次没有报错”作为正确性依据。只改已有键对应的值，与改变键集合不同，但仍需避免使业务逻辑依赖遍历中的副作用。需要删除一批键时，先生成待删除键列表，或遍历 list(d) 的快照；也可以用字典推导式构建新映射。并发线程修改时，快照与锁的使用应按共享状态协议设计，单个操作安全不能替代整体同步。〔N163〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("016  dict、defaultdict、Counter 及缺失键 API 如何选择？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  d[key] 缺失时抛 KeyError，get 返回默认值但不插入键，setdefault 在缺失时插入并返回默认值；默认表达式在调用前就会求值，并不一定惰性。defaultdict 的工厂主要由下标访问触发，适合分组累积，但 get 不会自动创建默认值。Counter 表达元素计数，缺失计数通常返回 0，适合统计频次。不要为了读操作方便而让容器意外增长；若默认对象昂贵或需要按键计算，显式判断或封装创建逻辑往往更清楚。〔N160、N162〕", size: 9.5pt)
+  #text("答案  d[key] 缺失时抛 KeyError，get 返回默认值但不插入键，setdefault 在缺失时插入并返回默认值；默认表达式在调用前就会求值，并不一定惰性。defaultdict 的工厂主要由下标访问触发，适合分组累积，但 get 不会自动创建默认值。Counter 表达元素计数，缺失计数通常返回 0，适合统计频次。不要为了读操作方便而让容器意外增长；若默认对象昂贵或需要按键计算，显式判断或封装创建逻辑往往更清楚。〔N163、N165〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("017  set 与 frozenset 如何去重，为什么不能承诺元素顺序？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  set 与 frozenset 都按哈希和相等关系判定成员身份，支持交、并、差等集合运算，平均成员查询通常较快。set 可增删元素且不可哈希，frozenset 不可变并可作为字典键或其他集合的元素；其中成员仍须可哈希。集合不承诺插入顺序，也不能把一次运行观察到的遍历结果当作稳定协议。若去重后要保持原输入顺序，可利用字典的插入顺序，例如 list(dict.fromkeys(values))，并确认相等和哈希规则符合业务需求。〔N160〕", size: 9.5pt)
+  #text("答案  set 与 frozenset 都按哈希和相等关系判定成员身份，支持交、并、差等集合运算，平均成员查询通常较快。set 可增删元素且不可哈希，frozenset 不可变并可作为字典键或其他集合的元素；其中成员仍须可哈希。集合不承诺插入顺序，也不能把一次运行观察到的遍历结果当作稳定协议。若去重后要保持原输入顺序，可利用字典的插入顺序，例如 list(dict.fromkeys(values))，并确认相等和哈希规则符合业务需求。〔N163〕", size: 9.5pt)
 ]
 
 #heading(level: 2, outlined: true)[#text("17.2 Python 函数、迭代与对象协议", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("018  Python 的函数对象和 lambda 适合怎样的接口？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  函数是对象，可以赋值、放入容器、作为参数或返回值，这使回调、策略和高阶函数很自然。lambda 只包含一个表达式，隐式返回该表达式的结果，不是独立的闭包机制，也不会让计算自动并行。简单映射和筛选可用 map、filter，它们通常返回惰性迭代器；需要清晰表达元素和过滤条件时，推导式往往更直观。逻辑复杂、需要文档和明确签名或多条语句时，应定义普通函数，避免用层层 lambda 降低调试和追踪能力。〔N158、N159、N161〕", size: 9.5pt)
+  #text("答案  函数是对象，可以赋值、放入容器、作为参数或返回值，这使回调、策略和高阶函数很自然。lambda 只包含一个表达式，隐式返回该表达式的结果，不是独立的闭包机制，也不会让计算自动并行。简单映射和筛选可用 map、filter，它们通常返回惰性迭代器；需要清晰表达元素和过滤条件时，推导式往往更直观。逻辑复杂、需要文档和明确签名或多条语句时，应定义普通函数，避免用层层 lambda 降低调试和追踪能力。〔N161、N162、N164〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("019  Python 参数的 /、*、*args 和 **kwargs 如何约束调用？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  普通形参通常既可按位置也可按名字传递；/ 前是仅限位置参数，裸 * 或 *args 之后是仅限关键字参数。*args 收集多余位置参数形成元组，**kwargs 收集多余关键字参数形成字典；调用侧的 * 与 ** 则把已有容器展开。重复为同一参数赋值或传入不支持的参数会抛 TypeError。设计公共接口时，明确哪些名字属于稳定 API，必要时用仅限位置参数避免绑定内部命名，用仅限关键字参数让易混淆选项的含义更明显。〔N167、N168〕", size: 9.5pt)
+  #text("答案  普通形参通常既可按位置也可按名字传递；/ 前是仅限位置参数，裸 * 或 *args 之后是仅限关键字参数。*args 收集多余位置参数形成元组，**kwargs 收集多余关键字参数形成字典；调用侧的 * 与 ** 则把已有容器展开。重复为同一参数赋值或传入不支持的参数会抛 TypeError。设计公共接口时，明确哪些名字属于稳定 API，必要时用仅限位置参数避免绑定内部命名，用仅限关键字参数让易混淆选项的含义更明显。〔N170、N171〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("020  可变默认参数为什么会被多次函数调用共享？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  默认参数表达式在执行 def 定义函数时求值，结果保存在函数对象中，不会在每次调用时重新创建。因此 def f(items=[]) 中的列表可跨调用累积修改，造成隐蔽状态共享。常见做法用 None 或专门的哨兵对象作为默认值，在函数内部按需创建新容器；如果 None 本身是合法业务值，应使用独立哨兵区分“未传参数”。共享缓存有时是刻意设计，但应明确生命周期、并发保护和清理策略，不要让可变默认值偶然承担这些责任。〔N167〕", size: 9.5pt)
+  #text("答案  默认参数表达式在执行 def 定义函数时求值，结果保存在函数对象中，不会在每次调用时重新创建。因此 def f(items=[]) 中的列表可跨调用累积修改，造成隐蔽状态共享。常见做法用 None 或专门的哨兵对象作为默认值，在函数内部按需创建新容器；如果 None 本身是合法业务值，应使用独立哨兵区分“未传参数”。共享缓存有时是刻意设计，但应明确生命周期、并发保护和清理策略，不要让可变默认值偶然承担这些责任。〔N170〕", size: 9.5pt)
   #raw("def collect(value, items=None):\n    if items is None:\n        items = []  # 每次缺省调用都创建自己的容器\n    items.append(value)\n    return items", lang: "python", block: true)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("021  LEGB、global 和 nonlocal 如何影响名字绑定？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  函数通常按局部、外层函数、模块全局、内置名字的顺序查找名字，即 LEGB，但类体、推导式和注解作用域等存在专门规则。函数内若有赋值，该名字通常在整个函数中被判定为局部，先读后赋可能产生 UnboundLocalError。global 让该作用域的绑定落到模块全局，nonlocal 让绑定指向最近的、已经存在的外层函数变量。两者作用于名字绑定，不是修改可变对象内容的必要条件；能通过参数与返回值表达依赖时，通常比隐藏的共享状态更清晰。〔N169〕", size: 9.5pt)
+  #text("答案  函数通常按局部、外层函数、模块全局、内置名字的顺序查找名字，即 LEGB，但类体、推导式和注解作用域等存在专门规则。函数内若有赋值，该名字通常在整个函数中被判定为局部，先读后赋可能产生 UnboundLocalError。global 让该作用域的绑定落到模块全局，nonlocal 让绑定指向最近的、已经存在的外层函数变量。两者作用于名字绑定，不是修改可变对象内容的必要条件；能通过参数与返回值表达依赖时，通常比隐藏的共享状态更清晰。〔N172〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("022  闭包如何保存外层变量，循环 lambda 的晚绑定问题怎么解决？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  闭包保留对外层函数变量单元的访问，而不是自动保存定义时的值快照。循环中创建的多个 lambda 若读取同一个外层名字，在调用时常会看到循环结束后的同一绑定，这称为晚绑定。可以在每次迭代中用工厂函数建立新的局部单元，或用默认参数固定当前对象引用；后者固定的是引用，若对象之后被原地修改，仍能观察变化。需要修改外层名字的绑定时使用 nonlocal，并留意闭包延长大型对象的存活时间。〔N169、N167〕", size: 9.5pt)
+  #text("答案  闭包保留对外层函数变量单元的访问，而不是自动保存定义时的值快照。循环中创建的多个 lambda 若读取同一个外层名字，在调用时常会看到循环结束后的同一绑定，这称为晚绑定。可以在每次迭代中用工厂函数建立新的局部单元，或用默认参数固定当前对象引用；后者固定的是引用，若对象之后被原地修改，仍能观察变化。需要修改外层名字的绑定时使用 nonlocal，并留意闭包延长大型对象的存活时间。〔N172、N170〕", size: 9.5pt)
   #raw("funcs = [lambda i=i: i for i in range(3)]\nassert [f() for f in funcs] == [0, 1, 2]\n# 默认参数在函数定义时求值，避免所有闭包读同一个循环变量", lang: "python", block: true)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("023  装饰器怎样替换函数，带参装饰器和异步包装有哪些边界？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  @d 定义后相当于把函数对象传给 d，再把返回值绑定回函数名；多个装饰器按从内到外组合，调用时由最外层包装进入。带参数的装饰器通常先由工厂接收配置，再返回实际装饰器。functools.wraps 复制名称、文档等元数据并设置 __wrapped__，便于检查与调试，但不自动保证所有运行时行为一致。包装 async def 时通常也应提供异步包装并 await 原函数，否则计时、异常捕获和资源清理可能只覆盖“创建协程对象”而未覆盖实际执行。〔N168、N170、N171〕", size: 9.5pt)
+  #text("答案  @d 定义后相当于把函数对象传给 d，再把返回值绑定回函数名；多个装饰器按从内到外组合，调用时由最外层包装进入。带参数的装饰器通常先由工厂接收配置，再返回实际装饰器。functools.wraps 复制名称、文档等元数据并设置 __wrapped__，便于检查与调试，但不自动保证所有运行时行为一致。包装 async def 时通常也应提供异步包装并 await 原函数，否则计时、异常捕获和资源清理可能只覆盖“创建协程对象”而未覆盖实际执行。〔N171、N173、N174〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("024  可迭代对象、迭代器与 for 循环的协议是什么？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  iter(obj) 获取迭代器，next(iterator) 推进到下一个元素，结束时抛 StopIteration；for 循环围绕这一协议获取元素并处理正常结束。迭代器自身的 __iter__ 通常返回 self，因此从当前状态继续消费，耗尽后一般不会自动恢复。列表等容器通常每次 iter 都能创建一个新的独立迭代器，生成器本身则是一种一次性的迭代器。接口若需要多次遍历，应接收可重复迭代的容器、传入创建迭代器的工厂，或显式缓存数据，不能盲目把输入迭代器重复使用。〔N158、N161〕", size: 9.5pt)
+  #text("答案  iter(obj) 获取迭代器，next(iterator) 推进到下一个元素，结束时抛 StopIteration；for 循环围绕这一协议获取元素并处理正常结束。迭代器自身的 __iter__ 通常返回 self，因此从当前状态继续消费，耗尽后一般不会自动恢复。列表等容器通常每次 iter 都能创建一个新的独立迭代器，生成器本身则是一种一次性的迭代器。接口若需要多次遍历，应接收可重复迭代的容器、传入创建迭代器的工厂，或显式缓存数据，不能盲目把输入迭代器重复使用。〔N161、N164〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("025  yield、return 和 yield from 怎样控制生成器执行？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  含 yield 的函数被调用时返回生成器，消费时才执行到下一个暂停点，局部变量和执行位置会被保存。yield 交出一个值后可继续恢复，return 则结束生成器，其返回值可成为 StopIteration 的 value。yield from 不只是简写循环，还把发送值、异常和关闭等协议委托给子迭代器，并接收子生成器的返回值。生成器可减少一次性结果的内存，但会保持所引用的局部对象和资源；提前停止消费时，应明确关闭或把资源边界放进可靠的上下文管理。〔N159、N158〕", size: 9.5pt)
+  #text("答案  含 yield 的函数被调用时返回生成器，消费时才执行到下一个暂停点，局部变量和执行位置会被保存。yield 交出一个值后可继续恢复，return 则结束生成器，其返回值可成为 StopIteration 的 value。yield from 不只是简写循环，还把发送值、异常和关闭等协议委托给子迭代器，并接收子生成器的返回值。生成器可减少一次性结果的内存，但会保持所引用的局部对象和资源；提前停止消费时，应明确关闭或把资源边界放进可靠的上下文管理。〔N162、N161〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("026  实例方法、classmethod 和 staticmethod 怎样绑定参数？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  普通函数放入类后具有描述符行为，经实例取出时通常得到绑定方法，调用时自动传入该实例；self 只是约定名字，并非关键字。classmethod 绑定类而非实例，常用于多态工厂方法，继承调用时会收到实际的派生类。staticmethod 不自动传 self 或 cls，适合与类关联但不依赖对象状态的辅助操作。不要仅按“是否写了 self”推断绑定规则，装饰器与描述符共同决定实际行为；需要访问实例状态时应使用普通实例方法。〔N158、N172、N173〕", size: 9.5pt)
+  #text("答案  普通函数放入类后具有描述符行为，经实例取出时通常得到绑定方法，调用时自动传入该实例；self 只是约定名字，并非关键字。classmethod 绑定类而非实例，常用于多态工厂方法，继承调用时会收到实际的派生类。staticmethod 不自动传 self 或 cls，适合与类关联但不依赖对象状态的辅助操作。不要仅按“是否写了 self”推断绑定规则，装饰器与描述符共同决定实际行为；需要访问实例状态时应使用普通实例方法。〔N161、N175、N176〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("027  __new__ 和 __init__ 在对象创建中分别负责什么？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  一般调用类时，先由 __new__ 创建并返回对象，再对符合条件的返回实例调用 __init__ 初始化状态。__new__ 是特殊的静态创建入口，通常调用 super().__new__(cls)，定制不可变类型子类时尤其有用；__init__ 不能返回非 None 的值。若 __new__ 返回的对象不是该类实例，通常不会按这一流程调用该类的 __init__。两者不能简单对应 C++ 的构造与内存分配，元类还可能改变类调用过程。避免在 __init__ 中执行难以回滚的大量外部副作用。〔N158〕", size: 9.5pt)
+  #text("答案  一般调用类时，先由 __new__ 创建并返回对象，再对符合条件的返回实例调用 __init__ 初始化状态。__new__ 是特殊的静态创建入口，通常调用 super().__new__(cls)，定制不可变类型子类时尤其有用；__init__ 不能返回非 None 的值。若 __new__ 返回的对象不是该类实例，通常不会按这一流程调用该类的 __init__。两者不能简单对应 C++ 的构造与内存分配，元类还可能改变类调用过程。避免在 __init__ 中执行难以回滚的大量外部副作用。〔N161〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("028  类属性和实例属性如何查找，可变类属性为什么会共享？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  类体中创建的属性属于类，经实例读取时，在没有更优先的描述符或实例属性时可回退到类属性。若类属性是列表，多个实例可能同时引用同一个列表；调用 append 会修改共享对象，而 self.items = [] 通常是在实例上建立新绑定。需要每个对象独立的状态时，应在 __init__ 中创建；dataclass 可通过 default_factory 表达。访问规则还受数据描述符与 __slots__ 影响，不能把“实例字典总是最优先”当成完整结论。〔N172、N173、N174〕", size: 9.5pt)
+  #text("答案  类体中创建的属性属于类，经实例读取时，在没有更优先的描述符或实例属性时可回退到类属性。若类属性是列表，多个实例可能同时引用同一个列表；调用 append 会修改共享对象，而 self.items = [] 通常是在实例上建立新绑定。需要每个对象独立的状态时，应在 __init__ 中创建；dataclass 可通过 default_factory 表达。访问规则还受数据描述符与 __slots__ 影响，不能把“实例字典总是最优先”当成完整结论。〔N175、N176、N177〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("029  Python 的鸭子类型如何表达多态，何时需要 Protocol 或抽象基类？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  鸭子类型关注对象是否提供所需行为，而非是否继承某个指定基类；只要支持 read、迭代等协议，同一个函数就能处理不同实现。这种多态不依赖 C++ 式虚函数表声明，但仍有明确的调用约定和失败方式。需要静态工具检查结构化接口时可使用 typing.Protocol；需要约定抽象方法或运行时分类时可采用 abc.ABC。运行时 Protocol 检查存在限制，不能代替完整的签名和语义验证。接口应记录返回值、异常、资源所有权和并发约束。〔N158、N175、N172〕", size: 9.5pt)
+  #text("答案  鸭子类型关注对象是否提供所需行为，而非是否继承某个指定基类；只要支持 read、迭代等协议，同一个函数就能处理不同实现。这种多态不依赖 C++ 式虚函数表声明，但仍有明确的调用约定和失败方式。需要静态工具检查结构化接口时可使用 typing.Protocol；需要约定抽象方法或运行时分类时可采用 abc.ABC。运行时 Protocol 检查存在限制，不能代替完整的签名和语义验证。接口应记录返回值、异常、资源所有权和并发约束。〔N161、N178、N175〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("030  Python 多继承的 MRO 与 super 为什么不是“直接调用父类”？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  类的方法解析顺序通常由 C3 线性化确定，保留局部继承顺序和单调性；顺序不一致时，类定义可能直接失败。super 返回一个代理，在当前类之后沿实际对象类型的 MRO 继续查找，因此下一站未必是源码中肉眼看到的某个直接父类。协作式多继承要求各参与类采用兼容签名，并按协议继续调用 super，避免同一初始化被重复执行或被跳过。可以查看 Class.__mro__ 来验证顺序，不应把其他语言的菱形继承布局规则直接套到 Python。〔N172、N158〕", size: 9.5pt)
+  #text("答案  类的方法解析顺序通常由 C3 线性化确定，保留局部继承顺序和单调性；顺序不一致时，类定义可能直接失败。super 返回一个代理，在当前类之后沿实际对象类型的 MRO 继续查找，因此下一站未必是源码中肉眼看到的某个直接父类。协作式多继承要求各参与类采用兼容签名，并按协议继续调用 super，避免同一初始化被重复执行或被跳过。可以查看 Class.__mro__ 来验证顺序，不应把其他语言的菱形继承布局规则直接套到 Python。〔N175、N161〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("031  描述符、property 与属性访问钩子如何协作？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  定义 __get__、__set__ 或 __delete__ 的类可以提供描述符协议，函数绑定、property 等都建立在这一机制上。常规实例查找中，数据描述符优先于实例字典，非数据描述符通常在实例字典之后，再按类的 MRO 查找。__getattribute__ 参与几乎所有常规属性读取，覆盖时应委托给基类实现以免递归；__getattr__ 主要在正常查找以 AttributeError 失败后提供后备行为。property 用方法实现受控读写，可在保持 obj.name 调用形式的同时校验状态。〔N173、N158〕", size: 9.5pt)
+  #text("答案  定义 __get__、__set__ 或 __delete__ 的类可以提供描述符协议，函数绑定、property 等都建立在这一机制上。常规实例查找中，数据描述符优先于实例字典，非数据描述符通常在实例字典之后，再按类的 MRO 查找。__getattribute__ 参与几乎所有常规属性读取，覆盖时应委托给基类实现以免递归；__getattr__ 主要在正常查找以 AttributeError 失败后提供后备行为。property 用方法实现受控读写，可在保持 obj.name 调用形式的同时校验状态。〔N176、N161〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("032  __repr__、__str__ 等特殊方法怎样让对象支持内置操作？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  __repr__ 面向开发和调试，理想情况下尽量准确表达对象；__str__ 面向用户展示，未定义时通常回退到 repr 相关行为。__len__、__iter__、__contains__、算术运算等特殊方法让对象参与 Python 的内置协议。解释器进行隐式特殊方法调用时，通常从类型上查找，而不是简单读取实例同名属性，因此在实例上临时赋 __len__ 不一定改变 len(obj)。实现协议要遵守返回类型和语义，尤其是相等比较与哈希的一致性，避免把调试字符串当成稳定序列化格式。〔N158〕", size: 9.5pt)
+  #text("答案  __repr__ 面向开发和调试，理想情况下尽量准确表达对象；__str__ 面向用户展示，未定义时通常回退到 repr 相关行为。__len__、__iter__、__contains__、算术运算等特殊方法让对象参与 Python 的内置协议。解释器进行隐式特殊方法调用时，通常从类型上查找，而不是简单读取实例同名属性，因此在实例上临时赋 __len__ 不一定改变 len(obj)。实现协议要遵守返回类型和语义，尤其是相等比较与哈希的一致性，避免把调试字符串当成稳定序列化格式。〔N161〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("033  __slots__ 能节省哪些内存，为什么它不是完整的封装工具？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  __slots__ 声明通常让实例以固定槽位保存指定属性，避免每个实例都分配常规 __dict__，适合数量较多、属性集合稳定的对象。未声明的属性通常不能动态新增，但基类或派生类若引入实例字典，这一限制和节省效果会变化。需要弱引用时通常要显式保留 __weakref__ 槽位，继承中应避免重复槽名和不兼容布局。它不保证所有对象都更省内存，也不提供私有访问控制；是否值得使用应通过真实对象规模测量。〔N158〕", size: 9.5pt)
+  #text("答案  __slots__ 声明通常让实例以固定槽位保存指定属性，避免每个实例都分配常规 __dict__，适合数量较多、属性集合稳定的对象。未声明的属性通常不能动态新增，但基类或派生类若引入实例字典，这一限制和节省效果会变化。需要弱引用时通常要显式保留 __weakref__ 槽位，继承中应避免重复槽名和不兼容布局。它不保证所有对象都更省内存，也不提供私有访问控制；是否值得使用应通过真实对象规模测量。〔N161〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("034  下划线命名与双下划线名字改写能提供真正的私有成员吗？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  单下划线常表示内部实现约定，并影响某些星号导入行为，不会禁止外部访问。类体中的双前导下划线名字通常改写为带类名的形式，主要减少继承中的意外命名冲突，仍可通过改写后的名字访问，因此不是安全边界。首尾双下划线名字属于 Python 特殊协议命名空间，不应随意发明。接口的可用范围应通过清晰文档、模块边界和 API 设计表达，不要依赖名字改写阻止恶意代码访问。〔N172、N158〕", size: 9.5pt)
+  #text("答案  单下划线常表示内部实现约定，并影响某些星号导入行为，不会禁止外部访问。类体中的双前导下划线名字通常改写为带类名的形式，主要减少继承中的意外命名冲突，仍可通过改写后的名字访问，因此不是安全边界。首尾双下划线名字属于 Python 特殊协议命名空间，不应随意发明。接口的可用范围应通过清晰文档、模块边界和 API 设计表达，不要依赖名字改写阻止恶意代码访问。〔N175、N161〕", size: 9.5pt)
 ]
 
 #heading(level: 2, outlined: true)[#text("17.3 Python 异常、模块与工程接口", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("035  try、except、else、finally 如何影响异常和返回值？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  try 正常结束时执行 else，发生匹配异常时进入 except；随后 finally 用于清理。返回语句通常先求出待返回值，再执行 finally，但 finally 中新的 return 或异常会覆盖原先待完成的返回或异常，这容易把故障悄悄吞掉。应尽量让 finally 只做清理，不改变控制流，资源可以优先交给 with 管理。仅把真正需要捕获的操作放进 try，避免顺便捕获后续业务代码的无关错误。进程被强制终止等情况下，不能依赖 finally 一定执行。〔N168〕", size: 9.5pt)
+  #text("答案  try 正常结束时执行 else，发生匹配异常时进入 except；随后 finally 用于清理。返回语句通常先求出待返回值，再执行 finally，但 finally 中新的 return 或异常会覆盖原先待完成的返回或异常，这容易把故障悄悄吞掉。应尽量让 finally 只做清理，不改变控制流，资源可以优先交给 with 管理。仅把真正需要捕获的操作放进 try，避免顺便捕获后续业务代码的无关错误。进程被强制终止等情况下，不能依赖 finally 一定执行。〔N171〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("036  Python 应如何选择异常基类、保留回溯并建立异常链？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  普通业务异常通常继承 Exception；BaseException 还包含 KeyboardInterrupt、SystemExit 等控制类异常，宽泛捕获可能阻止取消或退出。except 内裸 raise 重新抛出当前异常并保留原回溯；raise e 会引入当前抛出位置，raise NewError(...) from e 则明确记录原因链。自定义异常应围绕调用者需要区分的失败类型设计，保留必要上下文，避免把敏感数据写入消息。只有本层能恢复、补偿或转换为稳定接口错误时才捕获，否则让异常继续向上传递，通常不要反复记录同一故障。〔N176、N168〕", size: 9.5pt)
+  #text("答案  普通业务异常通常继承 Exception；BaseException 还包含 KeyboardInterrupt、SystemExit 等控制类异常，宽泛捕获可能阻止取消或退出。except 内裸 raise 重新抛出当前异常并保留原回溯；raise e 会引入当前抛出位置，raise NewError(...) from e 则明确记录原因链。自定义异常应围绕调用者需要区分的失败类型设计，保留必要上下文，避免把敏感数据写入消息。只有本层能恢复、补偿或转换为稳定接口错误时才捕获，否则让异常继续向上传递，通常不要反复记录同一故障。〔N179、N171〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("037  with 和 contextmanager 怎样确保资源清理，什么时候会吞掉异常？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  with 先调用上下文管理器的 __enter__，成功后执行语句体，退出时调用 __exit__；后者收到异常信息，返回真值会抑制该异常。如果 __enter__ 自身失败，不能指望本对象的 __exit__ 自动完成回滚。contextlib.contextmanager 允许用只 yield 一次的生成器表达这一协议：yield 前获取资源，finally 中释放。捕获异常后若不重新抛出，生成器包装也可能把异常视为已处理。锁、文件、事务应明确成功提交和失败回滚边界，不依赖垃圾回收决定释放时机。〔N177、N168〕", size: 9.5pt)
+  #text("答案  with 先调用上下文管理器的 __enter__，成功后执行语句体，退出时调用 __exit__；后者收到异常信息，返回真值会抑制该异常。如果 __enter__ 自身失败，不能指望本对象的 __exit__ 自动完成回滚。contextlib.contextmanager 允许用只 yield 一次的生成器表达这一协议：yield 前获取资源，finally 中释放。捕获异常后若不重新抛出，生成器包装也可能把异常视为已处理。锁、文件、事务应明确成功提交和失败回滚边界，不依赖垃圾回收决定释放时机。〔N180、N171〕", size: 9.5pt)
   #raw("from contextlib import contextmanager\n\n@contextmanager\ndef opened(path):\n    file = open(path, encoding=\"utf-8\")\n    try:\n        yield file\n    finally:\n        file.close()  # 正常返回或异常退出都释放文件", lang: "python", block: true)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("038  模块、包与 import 缓存如何影响循环导入和程序入口？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  模块提供独立的名字空间，包用于组织模块，普通包通常带 __init__.py，命名空间包有不同规则。首次导入通常先把模块放入 sys.modules，再执行顶层代码；后续导入主要复用缓存。循环依赖可能读到尚未初始化完整的模块，应拆分公共依赖或延后必要导入，而不是盲目重试。import m 绑定模块，from m import x 绑定当时取出的对象，之后 m.x 重新赋值不会自动重绑本地 x。脚本入口中的 __name__ 为 __main__，可用入口判断隔离启动副作用，方便作为模块导入和进程池加载。〔N178、N179〕", size: 9.5pt)
+  #text("答案  模块提供独立的名字空间，包用于组织模块，普通包通常带 __init__.py，命名空间包有不同规则。首次导入通常先把模块放入 sys.modules，再执行顶层代码；后续导入主要复用缓存。循环依赖可能读到尚未初始化完整的模块，应拆分公共依赖或延后必要导入，而不是盲目重试。import m 绑定模块，from m import x 绑定当时取出的对象，之后 m.x 重新赋值不会自动重绑本地 x。脚本入口中的 __name__ 为 __main__，可用入口判断隔离启动副作用，方便作为模块导入和进程池加载。〔N181、N182〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("039  虚拟环境解决什么隔离问题，怎样让依赖安装可复现？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  venv 为项目提供独立的 Python 包安装位置和解释器入口，降低不同项目的依赖冲突，但不是容器级操作系统隔离，也不自动固定 Python 或系统库版本。安装时可用 python -m pip 确认工具对应当前解释器，记录支持的 Python 版本及依赖版本约束，必要时使用锁定文件和制品校验。环境目录通常不提交仓库，应提交可重建的依赖描述。包含本地扩展时，还要记录平台、编译工具链和外部动态库，不能把“开发机装成功”当作所有机器可复现的证据。〔N180〕", size: 9.5pt)
+  #text("答案  venv 为项目提供独立的 Python 包安装位置和解释器入口，降低不同项目的依赖冲突，但不是容器级操作系统隔离，也不自动固定 Python 或系统库版本。安装时可用 python -m pip 确认工具对应当前解释器，记录支持的 Python 版本及依赖版本约束，必要时使用锁定文件和制品校验。环境目录通常不提交仓库，应提交可重建的依赖描述。包含本地扩展时，还要记录平台、编译工具链和外部动态库，不能把“开发机装成功”当作所有机器可复现的证据。〔N183〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("040  类型注解、TypedDict、dataclass 和校验模型分别提供什么保证？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  Python 类型注解主要供静态检查和工具使用，默认不会让解释器强制检查每次赋值；Any 放宽静态约束，T | None 表示可缺失值类型，不等于参数自动有默认值。TypedDict 描述普通字典的键结构，本身不做运行时数据校验；dataclass 自动生成初始化、比较等方法，也不默认校验所有字段类型。Pydantic 等模型可在运行时校验并按配置转换输入，但必须明确严格模式、额外字段和错误处理。外部工具或 API 参数应在边界做实际校验，不能只写注解就信任输入。〔N175、N174、N181〕", size: 9.5pt)
+  #text("答案  Python 类型注解主要供静态检查和工具使用，默认不会让解释器强制检查每次赋值；Any 放宽静态约束，T | None 表示可缺失值类型，不等于参数自动有默认值。TypedDict 描述普通字典的键结构，本身不做运行时数据校验；dataclass 自动生成初始化、比较等方法，也不默认校验所有字段类型。Pydantic 等模型可在运行时校验并按配置转换输入，但必须明确严格模式、额外字段和错误处理。外部工具或 API 参数应在边界做实际校验，不能只写注解就信任输入。〔N178、N177、N184〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("041  读取大文件怎样避免一次性占满内存，文本流还要注意什么？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  read() 不指定大小时通常读取剩余全部内容，readline() 读取一行，readlines() 通常创建行列表；直接遍历文本文件更适合按行流式处理。行可能本身很大，二进制数据则可按固定大小分块读取，解析器也必须避免把所有块重新累积到内存。通过 with 明确关闭文件，文本模式显式指定编码，并考虑换行转换、解码错误和缓存行为。需要原始字节偏移或协议分块时应使用二进制模式，不能把字符数量直接当成磁盘字节位置。〔N165、N161〕", size: 9.5pt)
+  #text("答案  read() 不指定大小时通常读取剩余全部内容，readline() 读取一行，readlines() 通常创建行列表；直接遍历文本文件更适合按行流式处理。行可能本身很大，二进制数据则可按固定大小分块读取，解析器也必须避免把所有块重新累积到内存。通过 with 明确关闭文件，文本模式显式指定编码，并考虑换行转换、解码错误和缓存行为。需要原始字节偏移或协议分块时应使用二进制模式，不能把字符数量直接当成磁盘字节位置。〔N168、N164〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("042  JSON 的 dump/load 与 dumps/loads 有什么区别和限制？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  dump、load 面向文件类对象，dumps、loads 面向字符串或兼容输入；编码结果是 JSON 文本，不是任意 Python 对象的完整快照。JSON 的对象键是字符串，元组、集合、自定义对象、循环引用和精确数值类型都需要明确转换策略。不要把不可信内容交给 eval，也不要以为多个连续 dump 就自然形成有效的单一 JSON 文档；流式场景可设计 NDJSON 等有边界的协议。对外接口应限制输入体积和嵌套深度、校验结构，并为日期、浮点特殊值和字段兼容性建立约定。〔N182〕", size: 9.5pt)
+  #text("答案  dump、load 面向文件类对象，dumps、loads 面向字符串或兼容输入；编码结果是 JSON 文本，不是任意 Python 对象的完整快照。JSON 的对象键是字符串，元组、集合、自定义对象、循环引用和精确数值类型都需要明确转换策略。不要把不可信内容交给 eval，也不要以为多个连续 dump 就自然形成有效的单一 JSON 文档；流式场景可设计 NDJSON 等有边界的协议。对外接口应限制输入体积和嵌套深度、校验结构，并为日期、浮点特殊值和字段兼容性建立约定。〔N185〕", size: 9.5pt)
 ]
 
 #heading(level: 2, outlined: true)[#text("17.4 Python 并发与 asyncio", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("043  GIL 如何影响 Python 并行，为什么仍然需要业务锁？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  传统启用 GIL 的 CPython 通常同一时刻仅允许一个线程执行 Python 字节码，但阻塞 I/O 和部分扩展会释放它，因此线程仍适合许多 I/O 任务；CPU 密集的纯 Python 计算通常评估多进程、原生扩展或自由线程构建。CPython 3.13 起提供可选自由线程构建，具体依赖和扩展是否兼容、是否重新启用 GIL 要核对运行环境，不能笼统说所有 Python 都只有一个 GIL。GIL 也不是业务事务锁：检查再写入、跨对象不变量以及可能调用外部代码的复合操作都应显式同步；关闭 GIL 后同样需要设计共享状态保护。〔N183、N184、N185〕", size: 9.5pt)
+  #text("答案  传统启用 GIL 的 CPython 通常同一时刻仅允许一个线程执行 Python 字节码。GIL 是 CPython 实现层的全局同步机制，用来保护解释器管理的对象状态并简化引用计数等内部操作；这属于实现取舍，不是 Python 语言要求。阻塞 I/O 和部分扩展会释放它，因此线程仍适合许多 I/O 任务；CPU 密集的纯 Python 计算通常评估多进程、原生扩展或自由线程构建。CPython 3.13 起提供可选自由线程构建，具体依赖和扩展是否兼容、是否重新启用 GIL 要核对运行环境。GIL 也不是业务事务锁：检查再写入、跨对象不变量以及可能调用外部代码的复合操作都应显式同步；关闭 GIL 后同样需要设计共享状态保护。〔N186、N187、N188〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("044  Python 的 Lock 和 RLock 怎样选择，重入锁能消除死锁吗？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  Lock 是普通互斥原语，适合简单的共享临界区；RLock 记录持有线程及递归层数，允许同一线程再次获取，但每次成功获取都必须对应释放。函数相互调用且可能重复进入同一受保护资源时，RLock 可避免本线程自锁，却不能解决不同锁获取顺序不一致造成的环路，也不能修复把慢 I/O 放进锁内的问题。通常用 with 保证异常路径释放，保持统一锁序并缩小临界区。asyncio 协程之间应使用适当的异步同步原语，不要用线程锁阻塞事件循环。〔N184、N186〕", size: 9.5pt)
+  #text("答案  Lock 是普通互斥原语，适合简单的共享临界区；RLock 记录持有线程及递归层数，允许同一线程再次获取，但每次成功获取都必须对应释放。函数相互调用且可能重复进入同一受保护资源时，RLock 可避免本线程自锁，却不能解决不同锁获取顺序不一致造成的环路，也不能修复把慢 I/O 放进锁内的问题。通常用 with 保证异常路径释放，保持统一锁序并缩小临界区。asyncio 协程之间应使用适当的异步同步原语，不要用线程锁阻塞事件循环。〔N187、N189〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("045  queue.Queue 如何协调线程任务，task_done 和 join 表示什么？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  queue.Queue 为线程提供带同步的任务传递，maxsize 可形成背压，put、get 可以阻塞或带超时。每次取出的任务都应在处理结束后对应 task_done，join 等待的是已入队任务的未完成计数归零，而不是某个线程退出。异常路径也要更新完成状态，否则 join 可能永久等待；失败后是否重试则是另外的业务协议。empty 和 qsize 只是观测结果，不能保证下一次 get 不阻塞。停止信号、版本支持的 shutdown 或专门退出协议应与生产者、消费者生命周期统一设计。〔N187〕", size: 9.5pt)
+  #text("答案  queue.Queue 为线程提供带同步的任务传递，maxsize 可形成背压，put、get 可以阻塞或带超时。每次取出的任务都应在处理结束后对应 task_done，join 等待的是已入队任务的未完成计数归零，而不是某个线程退出。异常路径也要更新完成状态，否则 join 可能永久等待；失败后是否重试则是另外的业务协议。empty 和 qsize 只是观测结果，不能保证下一次 get 不阻塞。停止信号、版本支持的 shutdown 或专门退出协议应与生产者、消费者生命周期统一设计。〔N190〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("046  Python 线程池、进程池和 Future 的结果传播有什么区别？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  ThreadPoolExecutor 在同一进程的线程中执行任务，适合共享对象和阻塞 I/O；ProcessPoolExecutor 使用独立进程，适合可并行的 CPU 计算，但跨进程数据传输、启动和序列化成本更高。Future 表示尚未完成的结果，result 可等待并重新抛出任务异常，取消也不意味着可以强制杀死已运行任务。进程池调用对象、参数与返回值通常需可 pickle，局部 lambda 和隐含进程状态常不适用；启动方式随平台和 Python 版本变化，应保护入口并显式管理上下文、超时与关闭。〔N188、N185〕", size: 9.5pt)
+  #text("答案  ThreadPoolExecutor 在同一进程的线程中执行任务，适合共享对象和阻塞 I/O；ProcessPoolExecutor 使用独立进程，适合可并行的 CPU 计算，但跨进程数据传输、启动和序列化成本更高。Future 表示尚未完成的结果，result 可等待并重新抛出任务异常，取消也不意味着可以强制杀死已运行任务。进程间可用 multiprocessing.Queue 或 Pipe 传递消息；Value、Array 与 shared_memory 适合共享数据但需要同步，Manager 提供代理对象、使用方便但有额外通信开销。spawn/forkserver 等启动方式要求入口受 if __name__ == \"__main__\" 保护，任务和参数通常须可 pickle，优先使用模块顶层函数并显式管理上下文、超时与关闭。〔N191、N188〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("047  协程对象、Task、Future 与事件循环怎样完成异步调度？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  调用 async def 通常只创建协程对象，不会立即运行函数体；await 驱动或等待可等待对象，Task 则把协程交给事件循环调度，Future 代表将来可完成的结果。事件循环在一个线程中协作运行多个任务，任务在真正等待未完成操作时才让出执行权，因此每个 await 都切换任务并不成立。连续 await 两个协程通常顺序完成，先创建两个 Task 才能让它们重叠等待。异步擅长隐藏 I/O 等待，不会自动把 CPU 计算分摊到多核；必须持有并等待任务，妥善传播异常和关闭资源。〔N171〕", size: 9.5pt)
+  #text("答案  调用 async def 通常只创建协程对象，不会立即运行函数体；await 驱动或等待可等待对象，Task 则把协程交给事件循环调度，Future 代表将来可完成的结果。事件循环在一个线程中协作运行多个任务，任务在真正等待未完成操作时才让出执行权，因此每个 await 都切换任务并不成立。连续 await 两个协程通常顺序完成，先创建两个 Task 才能让它们重叠等待。异步擅长隐藏 I/O 等待，不会自动把 CPU 计算分摊到多核；必须持有并等待任务，妥善传播异常和关闭资源。〔N174〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("048  asyncio.gather 与 TaskGroup 遇到子任务异常时怎样处理？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  gather 汇集一组结果并保持输入顺序，默认会把遇到的第一个异常传播给等待者，但其他子任务通常不会因此自动全部取消；return_exceptions=True 则把异常作为结果元素，需要调用者逐项处理。TaskGroup 从 Python 3.11 提供结构化并发：离开上下文前等待组内任务，某个任务发生非取消异常时通常取消其余任务，清理后以异常组等规则报告。两者取消传播仍有细节，不能把“一个任务失败”简单理解成所有副作用已回滚，补偿与幂等必须由业务负责。〔N171〕", size: 9.5pt)
+  #text("答案  gather 汇集一组结果并保持输入顺序，默认会把遇到的第一个异常传播给等待者，但其他子任务通常不会因此自动全部取消；return_exceptions=True 则把异常作为结果元素，需要调用者逐项处理。TaskGroup 从 Python 3.11 提供结构化并发：离开上下文前等待组内任务，某个任务发生非取消异常时通常取消其余任务，清理后以异常组等规则报告。两者取消传播仍有细节，不能把“一个任务失败”简单理解成所有副作用已回滚，补偿与幂等必须由业务负责。〔N174〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("049  异步函数里怎样处理同步 I/O 和 CPU 密集工作？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  在事件循环线程中执行 time.sleep、同步网络调用或长时间计算，会让同一循环上的其他任务一并停顿。能用异步库时直接 await；只能调用同步阻塞 I/O 时，可用 asyncio.to_thread 或 run_in_executor 移交线程。传统启用 GIL 的环境中，纯 Python CPU 计算通常应评估进程池或释放 GIL 的扩展，不能期待线程池自动多核加速。卸载任务仍有排队和取消边界，停止 await 通常不代表底层线程函数已终止，资源超时也应传给真正执行 I/O 的库。〔N171、N188〕", size: 9.5pt)
+  #text("答案  在事件循环线程中执行 time.sleep、同步网络调用或长时间计算，会让同一循环上的其他任务一并停顿。能用异步库时直接 await；只能调用同步阻塞 I/O 时，可用 asyncio.to_thread 或 run_in_executor 移交线程。传统启用 GIL 的环境中，纯 Python CPU 计算通常应评估进程池或释放 GIL 的扩展，不能期待线程池自动多核加速。卸载任务仍有排队和取消边界，停止 await 通常不代表底层线程函数已终止，资源超时也应传给真正执行 I/O 的库。〔N174、N191〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("050  asyncio 的超时和任务取消为什么是协作式的？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  Task.cancel 请求在后续合适的暂停点向协程注入 CancelledError，不是立即终止任意指令；被取消代码仍需在 finally 或异步上下文管理器中释放资源。通常完成清理后重新传播取消，随意吞掉会破坏 TaskGroup、超时等上层协议。asyncio.timeout 与 wait_for 提供不同形式的超时边界，取消后的清理可能使总耗时超过标称等待值。对数据库、网络和外部工具调用，还要设置它们自身的超时，并明确请求已提交但本地取消时如何查询结果、补偿或防止重复执行。〔N171〕", size: 9.5pt)
+  #text("答案  Task.cancel 请求在后续合适的暂停点向协程注入 CancelledError，不是立即终止任意指令；被取消代码仍需在 finally 或异步上下文管理器中释放资源。通常完成清理后重新传播取消，随意吞掉会破坏 TaskGroup、超时等上层协议。asyncio.timeout 与 wait_for 提供不同形式的超时边界，取消后的清理可能使总耗时超过标称等待值。对数据库、网络和外部工具调用，还要设置它们自身的超时，并明确请求已提交但本地取消时如何查询结果、补偿或防止重复执行。〔N174〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("051  Semaphore 和有界队列为什么比一次创建海量 Task 更适合限并发？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  Semaphore 限制同时进入某段操作的任务数，适合保护连接池或下游限额；有界 asyncio.Queue 限制等待任务的积压量，生产者 put 在队列满时等待，从而形成背压。仅在每个任务内部加信号量，仍可能先创建几十万个 Task 并占用大量内存，因此大规模输入更适合有限工作协程从有界队列取任务。使用 async with 管理信号量，并在消费者 finally 中完成 task_done，统一处理生产终止、异常和取消，避免令牌泄漏或队列 join 一直等待。〔N186、N171〕", size: 9.5pt)
+  #text("答案  Semaphore 限制同时进入某段操作的任务数，适合保护连接池或下游限额；有界 asyncio.Queue 限制等待任务的积压量，生产者 put 在队列满时等待，从而形成背压。仅在每个任务内部加信号量，仍可能先创建几十万个 Task 并占用大量内存，因此大规模输入更适合有限工作协程从有界队列取任务。使用 async with 管理信号量，并在消费者 finally 中完成 task_done，统一处理生产终止、异常和取消，避免令牌泄漏或队列 join 一直等待。〔N189、N174〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("052  contextvars 如何隔离异步请求上下文，它和线程局部存储有什么不同？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  线程局部状态按线程区分，而多个 asyncio 任务常共享同一线程，直接使用 threading.local 可能把请求信息串在一起。ContextVar 绑定当前上下文，asyncio 会为任务维护相应上下文视图，适合请求 ID、追踪信息等；创建任务时通常继承当前上下文的副本，不能把它当成任意任务之间的共享消息通道。set 返回的 token 可在 finally 中 reset，避免同一执行路径后续代码读到残留状态。上下文复制通常复制绑定，不会深复制其中的可变对象，因此仍应避免把可变共享状态藏进上下文。〔N189、N171〕", size: 9.5pt)
+  #text("答案  线程局部状态按线程区分，而多个 asyncio 任务常共享同一线程，直接使用 threading.local 可能把请求信息串在一起。ContextVar 绑定当前上下文，asyncio 会为任务维护相应上下文视图，适合请求 ID、追踪信息等；创建任务时通常继承当前上下文的副本，不能把它当成任意任务之间的共享消息通道。set 返回的 token 可在 finally 中 reset，避免同一执行路径后续代码读到残留状态。上下文复制通常复制绑定，不会深复制其中的可变对象，因此仍应避免把可变共享状态藏进上下文。〔N192、N174〕", size: 9.5pt)
 ]
 
 #heading(level: 2, outlined: true)[#text("17.5 CPython 内存与执行机制", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("053  CPython 对象为什么比其业务数值占用更多内存？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  CPython 对象通常需要类型信息、引用管理信息以及对象自身的数据，容器还需存储元素引用、容量和索引结构，因此一个整数对象不只是一个机器整数的几字节。小对象分配器、对齐和内存池也会带来额外占用。sys.getsizeof 一般只反映对象自身的直接大小，不会自动把引用到的整个对象图全部加上；同一个对象被多个容器引用时，简单求和又可能重复计算。对象布局、自由线程构建和 Python 实现不同都会改变结果，应结合分配追踪与进程 RSS 观测，而不是硬背一个固定字节数。〔N190、N158〕", size: 9.5pt)
+  #text("答案  CPython 对象通常需要类型信息、引用管理信息以及对象自身的数据，容器还需存储元素引用、容量和索引结构，因此一个整数对象不只是一个机器整数的几字节。小对象分配器、对齐和内存池也会带来额外占用。sys.getsizeof 一般只反映对象自身的直接大小，不会自动把引用到的整个对象图全部加上；同一个对象被多个容器引用时，简单求和又可能重复计算。对象布局、自由线程构建和 Python 实现不同都会改变结果，应结合分配追踪与进程 RSS 观测，而不是硬背一个固定字节数。〔N193、N161〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("054  引用计数、循环垃圾回收和 del 分别改变什么？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  传统 CPython 主要用引用计数管理对象，新增或移除强引用会影响计数，计数归零通常可触发回收，但不能据此给所有构建和对象承诺精确销毁时机。循环中的对象可能彼此持有强引用，即使外部不可达也不能单靠计数发现，因此还有面向容器对象的循环垃圾回收。del name 首先删除名字绑定，并不等于强制销毁对象；其他引用、缓存或环仍可保留它。代际策略和阈值随版本及构建调整，不应死记固定“三代”参数；文件、锁、连接等仍应显式管理生命周期。〔N191、N158、N183〕", size: 9.5pt)
+  #text("答案  传统 CPython 主要用引用计数管理对象，新增或移除强引用会影响计数，计数归零通常可触发回收，但不能据此给所有构建和对象承诺精确销毁时机。循环中的对象可能彼此持有强引用，即使外部不可达也不能单靠计数发现，因此还有面向容器对象的循环垃圾回收。del name 首先删除名字绑定，并不等于强制销毁对象；其他引用、缓存或环仍可保留它。代际策略和阈值随版本及构建调整，不应死记固定“三代”参数；文件、锁、连接等仍应显式管理生命周期。〔N194、N161、N186〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("055  Python 对象删除后 RSS 为什么不降，怎样定位真实内存增长？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  对象释放不等于分配器立即把内存页归还操作系统，空闲池、碎片和本地扩展缓冲都可能让 RSS 保持较高水平；因此不能只看任务管理器就断言泄漏。先观察稳定负载下对象数量、分配趋势和缓存大小，用 tracemalloc 在可疑阶段前后拍快照比较分配调用栈。它主要追踪受支持的 Python 分配，GPU、本地库等外部分配可能需要其他工具。全局容器、无界缓存、闭包和未结束任务若继续持有引用，即使有 GC 也不会释放，应先修复保留链和生命周期，再讨论手动 collect。〔N192、N190、N191〕", size: 9.5pt)
+  #text("答案  对象释放不等于分配器立即把内存页归还操作系统，空闲池、碎片和本地扩展缓冲都可能让 RSS 保持较高水平；因此不能只看任务管理器就断言泄漏。先观察稳定负载下对象数量、分配趋势和缓存大小，用 tracemalloc 在可疑阶段前后拍快照比较分配调用栈。它主要追踪受支持的 Python 分配，GPU、本地库等外部分配可能需要其他工具。全局容器、无界缓存、闭包和未结束任务若继续持有引用，即使有 GC 也不会释放，应先修复保留链和生命周期，再讨论手动 collect。〔N195、N193、N194〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("056  CPython 的字节码、pyc 缓存与 dis 分析分别解决什么问题？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  CPython 通常先解析源文件并编译成代码对象和字节码，再由解释器执行；导入模块时可缓存 pyc，并依据版本与源文件校验信息决定能否复用。缓存主要省去后续导入时的编译成本，并不意味着循环或函数本体天然执行更快，也不是可跨任意 Python 版本运行的稳定机器码。dis 可以显示反汇编结果，帮助理解取值、调用、闭包和控制流，但字节码与专门化优化随版本变化，不能把某个操作码序列当成原子性或语言语义的长期保证。性能优化仍需实际测量。〔N179、N193〕", size: 9.5pt)
+  #text("答案  CPython 通常先解析源文件并编译成代码对象和字节码，再由解释器执行；导入模块时可缓存 pyc，并依据版本与源文件校验信息决定能否复用。缓存主要省去后续导入时的编译成本，并不意味着循环或函数本体天然执行更快，也不是可跨任意 Python 版本运行的稳定机器码。dis 可以显示反汇编结果，帮助理解取值、调用、闭包和控制流，但字节码与专门化优化随版本变化，不能把某个操作码序列当成原子性或语言语义的长期保证。性能优化仍需实际测量。〔N182、N196〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("057  定位 Python 慢请求时如何区分算法、CPU、I/O 和等待？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  先固定输入和负载，记录端到端耗时、吞吐和尾延迟，再拆分计算、外部请求、锁与排队等阶段。cProfile 可统计调用次数和函数累计耗时，timeit 适合隔离的小片段比较，异步服务还应检查事件循环是否被同步操作阻塞。总耗时高但 CPU 不高通常要检查 I/O、下游和等待；CPU 热点则优先审视复杂度、重复计算与数据布局，再评估本地扩展或并行。分析器会引入开销，某些本地函数细节还需专用采样工具；优化后必须在同一工作负载上复测。〔N194、N171〕", size: 9.5pt)
+  #text("答案  先固定输入和负载，记录端到端耗时、吞吐和尾延迟，再拆分计算、外部请求、锁与排队等阶段。cProfile 可统计调用次数和函数累计耗时，timeit 适合隔离的小片段比较，异步服务还应检查事件循环是否被同步操作阻塞。总耗时高但 CPU 不高通常要检查 I/O、下游和等待；CPU 热点则优先审视复杂度、重复计算与数据布局，再评估本地扩展或并行。分析器会引入开销，某些本地函数细节还需专用采样工具；优化后必须在同一工作负载上复测。〔N197、N174〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("058  functools.lru_cache 为什么可能造成内存增长和过期结果？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  lru_cache 按函数调用参数建立缓存，参数需要可哈希，有限 maxsize 按最近使用策略逐出；缓存会持有参数和返回值，包装实例方法时也可能延长 self 的生命周期。它适合输入决定输出、可接受复用的计算，不适合直接缓存依赖时间或外部状态却没有失效设计的结果。线程安全指内部缓存结构保持一致，不保证同一缺失键只计算一次。应使用 cache_info 观测命中和规模，在必要时 cache_clear，注意关键字参数组合以及可变返回值被调用者修改带来的共享副作用。〔N170〕", size: 9.5pt)
+  #text("答案  lru_cache 按函数调用参数建立缓存，参数需要可哈希，有限 maxsize 按最近使用策略逐出；缓存会持有参数和返回值，包装实例方法时也可能延长 self 的生命周期。它适合输入决定输出、可接受复用的计算，不适合直接缓存依赖时间或外部状态却没有失效设计的结果。线程安全指内部缓存结构保持一致，不保证同一缺失键只计算一次。应使用 cache_info 观测命中和规模，在必要时 cache_clear，注意关键字参数组合以及可变返回值被调用者修改带来的共享副作用。〔N173〕", size: 9.5pt)
 ]
 
 #pagebreak()
@@ -4448,208 +4454,209 @@
 #heading(level: 2, outlined: true)[#text("18.1 Linux 命令与现场排查", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("001  ps 的进程快照和 top 的采样信息应怎样解读？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  ps 适合一次性输出和脚本处理，如 -e 查看全部进程、-p 选 PID、-L 查看线程、-o 指定字段；BSD 风格 aux 与 UNIX 风格 -ef 不能逐字混解。top 持续采样，展示系统摘要与进程或线程变化；%CPU 的统计口径不同于 ps 的生命周期平均值，多线程进程在某些显示模式中可超过 100%。VSZ/VIRT 是虚拟地址空间，RSS/RES 是驻留内存，不能直接相减得到泄漏。top 的 1 键常用于切换各 CPU 显示，但容器实际可用 CPU 还受配额与亲和性限制，不能只数界面行数。〔N195、N196〕", size: 9.5pt)
+  #text("答案  ps 适合一次性输出和脚本处理，如 -e 查看全部进程、-p 选 PID、-L 查看线程、-o 指定字段；BSD 风格 aux 与 UNIX 风格 -ef 不能逐字混解。top 持续采样，展示系统摘要与进程或线程变化；%CPU 的统计口径不同于 ps 的生命周期平均值，多线程进程在某些显示模式中可超过 100%。VSZ/VIRT 是虚拟地址空间，RSS/RES 是驻留内存，不能直接相减得到泄漏。top 的 1 键常用于切换各 CPU 显示，但容器实际可用 CPU 还受配额与亲和性限制，不能只数界面行数。〔N198、N199〕", size: 9.5pt)
   #raw("ps -p 1234 -L -o pid,tid,stat,pcpu,pmem,rss,vsz,comm\ntop -H -p 1234  # 查看指定进程的线程采样\n# 文件可用 ls/stat，权限用 chmod/chown，网络用 ip/ss 分别核对", lang: "sh", block: true)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("002  按进程名结束程序时怎样避免匹配错误并保留清理机会？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  先用 pgrep -a 或 ps 确认 PID、命令行和所有者，再向准确目标发送 SIGTERM，让程序处理退出、刷盘和关闭连接。pkill 的名字模式、完整命令行选项和匹配范围必须先核对，不能把宽泛 grep 输出直接批量送给 kill。确实不响应且确认后果时再考虑 SIGKILL；它不能被程序捕获，不能保证业务状态清理，也不会让不可中断等待立即消失。PID 可能被复用，长期自动化应结合进程身份检查或服务管理器操作；僵尸需要父进程回收，向它继续发信号无效。〔N197、N195〕", size: 9.5pt)
+  #text("答案  先用 pgrep -a 或 ps 确认 PID、命令行和所有者，再向准确目标发送 SIGTERM，让程序处理退出、刷盘和关闭连接。pkill 的名字模式、完整命令行选项和匹配范围必须先核对，不能把宽泛 grep 输出直接批量送给 kill。确实不响应且确认后果时再考虑 SIGKILL；它不能被程序捕获，不能保证业务状态清理，也不会让不可中断等待立即消失。PID 可能被复用，长期自动化应结合进程身份检查或服务管理器操作；僵尸需要父进程回收，向它继续发信号无效。〔N200、N198〕", size: 9.5pt)
   #raw("pgrep -a -x worker  # 先核对精确进程名及对应命令行\n# 确认目标后，kill -TERM PID 请求正常终止；不要直接使用宽泛批量匹配", lang: "sh", block: true)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("003  如何用 ss 和进程信息定位监听端口与连接异常？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  ss -lntp 查看 TCP 监听套接字及相关进程，-u 用于 UDP，-a 查看更多套接字，-n 禁止名字解析；按端口或状态过滤比全量输出更容易定位。查看其他用户的进程关联可能需要相应权限。监听地址要分清 127.0.0.1、具体网卡地址和通配地址，还要注意 IPv4/IPv6、网络命名空间以及容器端口发布。连接数量、Recv-Q/Send-Q 的含义随监听或已连接套接字而不同，应结合应用、内核队列与请求量解释。看到 LISTEN 仅说明本机有监听，不能证明客户端端到端可达。〔N198〕", size: 9.5pt)
+  #text("答案  ss -lntp 查看 TCP 监听套接字及相关进程，-u 用于 UDP，-a 查看更多套接字，-n 禁止名字解析；按端口或状态过滤比全量输出更容易定位。查看其他用户的进程关联可能需要相应权限。监听地址要分清 127.0.0.1、具体网卡地址和通配地址，还要注意 IPv4/IPv6、网络命名空间以及容器端口发布。连接数量、Recv-Q/Send-Q 的含义随监听或已连接套接字而不同，应结合应用、内核队列与请求量解释。看到 LISTEN 仅说明本机有监听，不能证明客户端端到端可达。〔N201〕", size: 9.5pt)
   #raw("ss -lntp \"sport = :8080\"  # 查谁在监听 TCP 8080\nss -ant state established\n# 在容器/其他 network namespace 中排查时，应在相应命名空间检查", lang: "sh", block: true)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("004  ping、nc 和 curl 分别能验证哪一层的连通性？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  ping 主要验证 ICMP 回应，失败可能是策略丢弃，成功也不代表业务 TCP 端口开放。nc -vz host port 可尝试 TCP 连接，用于区分拒绝、超时等症状，但并不校验应用协议；UDP 没有同样的握手，不能仅凭探测命令未报错判定服务可用。curl 可继续验证 HTTP 状态、TLS、证书与响应耗时。排查应逐层检查解析结果、路由、监听、防火墙、连接及协议，给探测设置超时；不要用忽略证书校验把 TLS 配置问题掩盖成正常。〔N199、N200、N198〕", size: 9.5pt)
+  #text("答案  ping 主要验证 ICMP 回应，失败可能是策略丢弃，成功也不代表业务 TCP 端口开放。nc -vz host port 可尝试 TCP 连接，用于区分拒绝、超时等症状，但并不校验应用协议；UDP 没有同样的握手，不能仅凭探测命令未报错判定服务可用。curl 可继续验证 HTTP 状态、TLS、证书与响应耗时。排查应逐层检查解析结果、路由、监听、防火墙、连接及协议，给探测设置超时；不要用忽略证书校验把 TLS 配置问题掩盖成正常。〔N202、N203、N201〕", size: 9.5pt)
   #raw("nc -vz -w 3 example.com 443\ncurl --connect-timeout 3 --max-time 10 -I https://example.com/\n# ping 仅是 ICMP 观测，不能替代端口和应用协议检查", lang: "sh", block: true)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("005  free、top 和 vmstat 怎样区分内存不足、缓存与实际换页？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  free 和 top 的内存摘要多来自 /proc/meminfo，系统 free 很低不一定不足，MemAvailable 更接近无需大量换页即可供应用使用的估计值，页缓存有一部分可回收。进程 RSS 不等于独占内存，多个进程简单相加会重复计算共享页；容器还要单独看 cgroup 限制与当前使用量。vmstat 1 的 si/so 反映换入换出速率，第一行通常是自启动以来的统计，后续才是采样区间。应结合持续 available、换页、major fault、PSI 和 OOM 记录判断压力，不能只凭 swap 已用量或一个内存百分比下结论。〔N201、N202、N203〕", size: 9.5pt)
+  #text("答案  free 和 top 的内存摘要多来自 /proc/meminfo，系统 free 很低不一定不足，MemAvailable 更接近无需大量换页即可供应用使用的估计值，页缓存有一部分可回收。进程 RSS 不等于独占内存，多个进程简单相加会重复计算共享页；容器还要单独看 cgroup 限制与当前使用量。vmstat 1 的 si/so 反映换入换出速率，第一行通常是自启动以来的统计，后续才是采样区间；sysstat 的 sar -B 1 可观察页面扫描和回收，pgscank/s 表示后台扫描，pgscand/s 表示直接回收扫描，pgsteal/s 表示扫描中成功回收的页数。应结合持续 available、换页、major fault、PSI 和 OOM 记录判断压力，不能只凭 swap 已用量或一个内存百分比下结论。〔N204、N205、N206〕", size: 9.5pt)
   #raw("free -h\nvmstat 1 5\n# 连续观察 si/so 和可用内存；容器另查自身 memory.current、memory.max", lang: "sh", block: true)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("006  sed、awk、grep 和 sort 如何组合处理日志而不混淆统计口径？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  sed 擅长逐行编辑和替换，awk 擅长按字段解析、条件筛选与累加；替换前先输出或保留备份，注意正则、分隔符与 shell 引号的不同解释。grep -c 统计匹配的行数，不是出现次数，若一行可多次出现，应采用逐匹配输出再计数等明确办法。字段清晰的空白分隔日志，可用 sort -k3,3nr 按第三列数值降序，再取前十；包含带引号字段、空格或跨行记录时，应使用真正的格式解析器。超大日志优先流式处理，别把整个文件装进 shell 变量。〔N204、N205、N206〕", size: 9.5pt)
+  #text("答案  sed 擅长逐行编辑和替换，awk 擅长按字段解析、条件筛选与累加；替换前先输出或保留备份，注意正则、分隔符与 shell 引号的不同解释。grep -c 统计匹配的行数，不是出现次数，若一行可多次出现，应采用逐匹配输出再计数等明确办法。字段清晰的空白分隔日志，可用 sort -k3,3nr 按第三列数值降序，再取前十；包含带引号字段、空格或跨行记录时，应使用真正的格式解析器。超大日志优先流式处理，别把整个文件装进 shell 变量。〔N207、N208、N209〕", size: 9.5pt)
   #raw("sed 's/old/new/g' input.log > replaced.log\nawk '{ print length($0) }' input.log  # 每行长度，字符/字节含义受工具及 locale 影响\ngrep -F -o 'needle' input.log | wc -l  # 固定字符串出现次数\nsort -k3,3nr access.log | head -n 10   # 假设第3列为数值耗时", lang: "sh", block: true)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("007  Linux load average 和 CPU 使用率为什么可能完全不同？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  load average 表示一段时间内处于可运行及不可中断等待等状态的任务数量的平滑平均，通常展示 1、5、15 分钟视窗，不是 CPU 利用率百分比。高 CPU 计算会抬高负载，磁盘或其他不可中断等待也可能造成“CPU 不忙但负载很高”。应对照可用 CPU 数、运行队列、D 态任务、I/O 延迟与 CPU 时间分类分析；容器内看到的全机平均负载未必对应自身配额。不要把 load 除以逻辑核数当成通用精确利用率，更不能只凭一个阈值判断服务健康。〔N207、N196、N203〕", size: 9.5pt)
+  #text("答案  load average 表示一段时间内处于可运行及不可中断等待等状态的任务数量的平滑平均，通常展示 1、5、15 分钟视窗，不是 CPU 利用率百分比。高 CPU 计算会抬高负载，磁盘或其他不可中断等待也可能造成“CPU 不忙但负载很高”。先用 uptime/top 看整体，再用 mpstat -P ALL 1 对照各 CPU 的 %usr、%sys、%iowait、%idle，结合核数、运行队列、D 态任务与 I/O 延迟判断；容器内看到的全机平均负载未必对应自身配额。用 pidstat -u 1 可定位进程 CPU 消耗。不要把 load 除以逻辑核数当成通用精确利用率，更不能只凭一个阈值判断服务健康。〔N210、N199、N206〕", size: 9.5pt)
+  #raw("uptime\nmpstat -P ALL 1\npidstat -u 1", lang: "bash", block: true)
 ]
 
 #heading(level: 2, outlined: true)[#text("18.2 Git 版本控制与协作", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("008  Git 工作区、暂存区和提交对象怎样流转？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  工作区是当前检出的文件，暂存区保存下一次提交的候选快照，提交对象记录树、父提交与元数据；本地仓库的对象和引用与远端仓库分开。git add 把当前内容写入暂存区，不意味着后续继续编辑也会自动进入同一次提交；git commit 主要记录暂存区快照。fetch、push 负责与远端交换对象并更新相应引用，不能把“本地提交成功”理解成已上传。Git 采用按内容寻址的对象与提交关系，分支是可移动引用，审查时应分别检查工作区、暂存区和准备推送的提交。〔N208、N209〕", size: 9.5pt)
+  #text("答案  工作区是当前检出的文件，暂存区保存下一次提交的候选快照，提交对象记录树、父提交与元数据；本地仓库的对象和引用与远端仓库分开。git add 把当前内容写入暂存区，不意味着后续继续编辑也会自动进入同一次提交；git commit 主要记录暂存区快照。fetch、push 负责与远端交换对象并更新相应引用，不能把“本地提交成功”理解成已上传。Git 采用按内容寻址的对象与提交关系，分支是可移动引用，审查时应分别检查工作区、暂存区和准备推送的提交。〔N211、N212〕", size: 9.5pt)
   #raw("git status --short\ngit diff          # 工作区相对暂存区\ngit diff --cached # 暂存区相对 HEAD\n# 提交前确认待记录的快照，而不只查看编辑器里的文件", lang: "sh", block: true)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("009  merge、rebase 与快进合并怎样改变提交历史，冲突如何处理？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  merge 保留既有提交关系，必要时创建有多个父节点的合并提交；目标是当前分支祖先时，可以只移动引用完成 fast-forward。rebase 把一组变更重放到新的基线上，通常生成新的提交 ID，历史更线性但会改写这组提交的身份。冲突时先理解两侧意图，修改文件、检查并暂存，再 continue 或完成合并；无法继续时可用对应 abort 返回操作前状态。共享分支上的历史改写需协调，不能把无条件强推当作冲突解决。pull --rebase 是获取后重放本地提交，不等于普通 merge 型拉取。〔N210、N208〕", size: 9.5pt)
+  #text("答案  merge 保留既有提交关系，必要时创建有多个父节点的合并提交；目标是当前分支祖先时，可以只移动引用完成 fast-forward。rebase 把一组变更重放到新的基线上，通常生成新的提交 ID，历史更线性但会改写这组提交的身份。冲突时先理解两侧意图，修改文件、检查并暂存，再 continue 或完成合并；无法继续时可用对应 abort 返回操作前状态。共享分支上的历史改写需协调，不能把无条件强推当作冲突解决。pull --rebase 是获取后重放本地提交，不等于普通 merge 型拉取。〔N213、N211〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("010  fetch 和 pull 对本地分支有什么不同影响？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  fetch 下载缺少的对象并按配置更新远程跟踪引用，通常不会自动把远端变更合入当前本地分支，因此适合先审查再决定集成。pull 在获取之后还会按选项和配置执行 merge、rebase 或仅允许快进，可能改变当前分支与工作区，并可能遇到冲突。origin/main 是本地保存的远程跟踪引用，不是服务器分支的实时视图。操作前确认当前分支、upstream 和未提交内容，必要时先 fetch，再比较日志与差异，避免以为拉取只是刷新远端信息。〔N211、N208〕", size: 9.5pt)
+  #text("答案  fetch 下载缺少的对象并按配置更新远程跟踪引用，通常不会自动把远端变更合入当前本地分支，因此适合先审查再决定集成。pull 在获取之后还会按选项和配置执行 merge、rebase 或仅允许快进，可能改变当前分支与工作区，并可能遇到冲突。origin/main 是本地保存的远程跟踪引用，不是服务器分支的实时视图。操作前确认当前分支、upstream 和未提交内容，必要时先 fetch，再比较日志与差异，避免以为拉取只是刷新远端信息。〔N214、N211〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("011  git diff 的常见比较对象是什么，A..B 与 A...B 如何理解？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  不带提交参数的 git diff 主要比较工作区与暂存区，--cached 比较暂存区与指定提交，通常默认 HEAD；指定两个提交则比较它们对应的快照。对 diff 来说 A..B 基本等价于直接比较 A 与 B，并不是列出这段历史；A...B 则从 A 与 B 的合并基点比较到 B，常用于查看分支引入的改动。还可按路径限定范围，用 --stat 快速看规模，再看上下文。评审未追踪文件时要另用 status 或显式比较，因为普通 diff 不会自动展示它们。〔N209〕", size: 9.5pt)
+  #text("答案  不带提交参数的 git diff 主要比较工作区与暂存区，--cached 比较暂存区与指定提交，通常默认 HEAD；指定两个提交则比较它们对应的快照。对 diff 来说 A..B 基本等价于直接比较 A 与 B，并不是列出这段历史；A...B 则从 A 与 B 的合并基点比较到 B，常用于查看分支引入的改动。还可按路径限定范围，用 --stat 快速看规模，再看上下文。评审未追踪文件时要另用 status 或显式比较，因为普通 diff 不会自动展示它们。〔N212〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("012  HEAD 和 detached HEAD 分别指向什么，怎样保留临时提交？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  正常情况下 HEAD 是指向当前分支的符号引用，提交后分支引用向前移动；检出某个具体提交时 HEAD 可直接指向该提交，称为 detached HEAD。此时仍能编辑和提交，但切换走后若没有分支或标签保留，新提交可能只在 reflog 中暂时可找。需要继续保存工作时，应在当前提交创建分支再切换，或记录提交 ID 后建立引用；不要把游离状态误认为内容不能修改。reflog 有保留期限，不能代替长期备份和明确命名的分支。〔N212〕", size: 9.5pt)
+  #text("答案  正常情况下 HEAD 是指向当前分支的符号引用，提交后分支引用向前移动；检出某个具体提交时 HEAD 可直接指向该提交，称为 detached HEAD。此时仍能编辑和提交，但切换走后若没有分支或标签保留，新提交可能只在 reflog 中暂时可找。需要继续保存工作时，应在当前提交创建分支再切换，或记录提交 ID 后建立引用；不要把游离状态误认为内容不能修改。reflog 有保留期限，不能代替长期备份和明确命名的分支。〔N215〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("013  reset 的三种模式与 revert 适用于哪些撤销场景？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  reset 移动当前分支或 HEAD 到目标提交；--soft 保留暂存区和工作区，--mixed 通常重置暂存区但保留工作区，--hard 还会重置相关工作区文件并可能覆盖阻碍检出的未追踪内容。它适合整理尚未共享的本地历史。revert 根据旧提交生成反向变更的新提交，保留原历史，更适合共享分支撤销，遇到后续依赖仍可能冲突。两者都不是万能恢复键，操作前确认目标与差异；合并提交的 revert 还需正确选择主线父节点并理解再次合并的后果。〔N213、N214〕", size: 9.5pt)
+  #text("答案  reset 移动当前分支或 HEAD 到目标提交；--soft 保留暂存区和工作区，--mixed 通常重置暂存区但保留工作区，--hard 还会重置相关工作区文件并可能覆盖阻碍检出的未追踪内容。它适合整理尚未共享的本地历史。revert 根据旧提交生成反向变更的新提交，保留原历史，更适合共享分支撤销，遇到后续依赖仍可能冲突。两者都不是万能恢复键，操作前确认目标与差异；合并提交的 revert 还需正确选择主线父节点并理解再次合并的后果。〔N216、N217〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("014  commit --amend 为什么会更换提交 ID？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  --amend 使用当前暂存区及指定元数据替换最近一次提交，通常生成新的提交对象；即使只是改提交说明，提交 ID 也会变化。适合修正尚未共享的小错误，但它不会自动把所有工作区修改都放进去，仍需先审查暂存区。若旧提交已被他人获取，直接替换远端历史会影响他们的基线，应按团队策略采用新的修正提交或协调改写。作者、提交者和签名也可能受影响，不能把 amend 当成原提交不变的原地编辑。〔N208〕", size: 9.5pt)
+  #text("答案  --amend 使用当前暂存区及指定元数据替换最近一次提交，通常生成新的提交对象；即使只是改提交说明，提交 ID 也会变化。适合修正尚未共享的小错误，但它不会自动把所有工作区修改都放进去，仍需先审查暂存区。若旧提交已被他人获取，直接替换远端历史会影响他们的基线，应按团队策略采用新的修正提交或协调改写。作者、提交者和签名也可能受影响，不能把 amend 当成原提交不变的原地编辑。〔N211〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("015  switch、restore 和 checkout 怎样划分切分支与恢复文件的职责？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  checkout 兼有切换分支、检出提交和恢复路径等历史功能，参数形态不同可能产生完全不同的副作用。switch 主要处理分支切换与创建，restore 主要从选定来源恢复工作区或暂存区内容，使意图更明确。restore 默认来源与 --staged 时不同，恢复文件前要确认是从 HEAD、暂存区还是其他提交取内容；它不会自动创建一条保留旧内容的提交。旧版本 Git 可能没有这些独立命令，使用时核对版本，并先用 status、diff 审查可能被覆盖的修改。〔N208、N212〕", size: 9.5pt)
+  #text("答案  checkout 兼有切换分支、检出提交和恢复路径等历史功能，参数形态不同可能产生完全不同的副作用。switch 主要处理分支切换与创建，restore 主要从选定来源恢复工作区或暂存区内容，使意图更明确。restore 默认来源与 --staged 时不同，恢复文件前要确认是从 HEAD、暂存区还是其他提交取内容；它不会自动创建一条保留旧内容的提交。旧版本 Git 可能没有这些独立命令，使用时核对版本，并先用 status、diff 审查可能被覆盖的修改。〔N211、N215〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("016  stash 能暂存哪些修改，apply 和 pop 发生冲突时怎么办？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  stash 通常保存已追踪文件的工作区与暂存区状态，-u 可包含未追踪文件，-a 还会包含忽略文件；它保存在本地仓库，不会随普通 push 自动上传。apply 尝试应用而保留记录，pop 在成功应用后移除相应记录，出现冲突时通常需要手动解决，不能假定已回到完整原状。恢复后若要还原暂存状态需留意 --index 及冲突限制。stash 适合短时切换上下文，重要工作应建立明确分支和提交；带敏感或巨大忽略文件时，不应随意使用 -a。〔N215〕", size: 9.5pt)
+  #text("答案  stash 通常保存已追踪文件的工作区与暂存区状态，-u 可包含未追踪文件，-a 还会包含忽略文件；它保存在本地仓库，不会随普通 push 自动上传。apply 尝试应用而保留记录，pop 在成功应用后移除相应记录，出现冲突时通常需要手动解决，不能假定已回到完整原状。恢复后若要还原暂存状态需留意 --index 及冲突限制。stash 适合短时切换上下文，重要工作应建立明确分支和提交；带敏感或巨大忽略文件时，不应随意使用 -a。〔N218〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("017  密钥进入 Git 历史后，为什么只删除文件或加 gitignore 不够？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  提交中的凭据应先撤销或轮换，因为旧提交、克隆、缓存和日志都可能已有副本；删除当前文件不能让泄露失效。随后界定受影响引用，按平台指南使用专用历史重写工具清除相关内容，并协调协作者、分支保护和重新获取基线。历史改写会改变提交 ID，不能保证收回所有外部副本，也不能把扫描器未命中当成从未泄露。最后分别扫描待上传文件、暂存区及所有相关历史，并配置安全的本地秘密管理与忽略规则。公开反馈只使用脱敏信息，避免在工单中再次传播凭据。〔N216、N217〕", size: 9.5pt)
+  #text("答案  提交中的凭据应先撤销或轮换，因为旧提交、克隆、缓存和日志都可能已有副本；删除当前文件不能让泄露失效。随后界定受影响引用，按平台指南使用专用历史重写工具清除相关内容，并协调协作者、分支保护和重新获取基线。历史改写会改变提交 ID，不能保证收回所有外部副本，也不能把扫描器未命中当成从未泄露。最后分别扫描待上传文件、暂存区及所有相关历史，并配置安全的本地秘密管理与忽略规则。公开反馈只使用脱敏信息，避免在工单中再次传播凭据。〔N219、N220〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("018  cherry-pick 怎样选择单个变更，有哪些重复和依赖风险？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  cherry-pick 把选定提交引入的变更应用到当前分支，并通常生成一个新的提交，适合把修复移植到维护分支。它并不自动搬运整个分支及其上下文；提交若依赖此前重构或其他修改，可能冲突、构建失败或行为不完整。重复挑选以及后续再次合并原分支也会使历史更复杂，应记录来源并检查实际差异。可用 -x 在说明中保留来源 ID，冲突后按流程继续或中止；挑选合并提交需明确主线父节点，不能仅凭提交标题判断影响。〔N208〕", size: 9.5pt)
+  #text("答案  cherry-pick 把选定提交引入的变更应用到当前分支，并通常生成一个新的提交，适合把修复移植到维护分支。它并不自动搬运整个分支及其上下文；提交若依赖此前重构或其他修改，可能冲突、构建失败或行为不完整。重复挑选以及后续再次合并原分支也会使历史更复杂，应记录来源并检查实际差异。可用 -x 在说明中保留来源 ID，冲突后按流程继续或中止；挑选合并提交需明确主线父节点，不能仅凭提交标题判断影响。〔N211〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("019  删除本地和远端分支后，提交是否立即消失？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  git branch -d 在满足合并检查时删除本地引用，-D 强制绕过该检查；删除远端分支通常使用 git push remote --delete name，操作的是服务器引用。远程跟踪引用的过期清理又是另一件事，可按配置执行 fetch --prune。删除引用不等于立即抹去对象，其他分支、标签、reflog 或克隆可能仍保留提交，之后对象才可能被垃圾回收。因此删除前确认分支拥有者、合并状态和备份需要，不能用删分支来处理已经泄露的敏感内容。〔N208、N211〕", size: 9.5pt)
+  #text("答案  git branch -d 在满足合并检查时删除本地引用，-D 强制绕过该检查；删除远端分支通常使用 git push remote --delete name，操作的是服务器引用。远程跟踪引用的过期清理又是另一件事，可按配置执行 fetch --prune。删除引用不等于立即抹去对象，其他分支、标签、reflog 或克隆可能仍保留提交，之后对象才可能被垃圾回收。因此删除前确认分支拥有者、合并状态和备份需要，不能用删分支来处理已经泄露的敏感内容。〔N211、N214〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("020  主干开发、功能分支与 Fork/PR 工作流怎样选择？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  工作流应围绕发布频率、维护版本和协作权限选取：主干开发要求小步集成与可靠自动验证，功能分支配合评审隔离变更，长期发布分支便于维护多个版本但增加移植成本。clone 是获得仓库副本，Fork 是托管平台上的独立仓库副本，Pull Request 是请求评审和集成变更的协作对象，并非 Git 核心命令。无论采用哪种模式，都应明确基线、合入策略、检查和负责人；分支越多并不自然越安全，长期偏离会放大冲突和测试矩阵。〔N218、N208〕", size: 9.5pt)
+  #text("答案  工作流应围绕发布频率、维护版本和协作权限选取。Git Flow 以 develop、release 等分支组织版本发布，适合有明确版本周期但会增加长期分支维护；GitHub Flow 和 GitLab Flow 倾向短期分支与评审合并，主干开发要求小步集成和可靠自动验证。Fork 是托管平台上的独立仓库副本，Pull Request/Merge Request 是请求评审和集成变更的协作对象，并非 Git 核心命令。无论采用哪种模式，都应明确基线、合入策略、检查和负责人；分支越多并不自然越安全，长期偏离会放大冲突和测试矩阵。〔N221、N211〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("021  git log 怎样查看分支关系并限制到相关变更？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  git log 展示提交历史，可用 --oneline 简化摘要、--graph 显示关系、--decorate 显示引用，用 --all 纳入更多引用；这些选项只是展示，不会修改仓库。可按作者、时间、提交消息或路径筛选，并用 -p 查看具体补丁。注意日志中的 A..B 表示可从 B 到达但不能从 A 到达的提交集合，与 diff 的点号语义不同；--follow 的单文件重命名追踪也有启发式限制。定位问题时应结合父子关系和实际改动，不凭日期或最后提交者直接推断原因。〔N219〕", size: 9.5pt)
+  #text("答案  git log 展示提交历史，可用 --oneline 简化摘要、--graph 显示关系、--decorate 显示引用，用 --all 纳入更多引用；这些选项只是展示，不会修改仓库。可按作者、时间、提交消息或路径筛选，并用 -p 查看具体补丁。注意日志中的 A..B 表示可从 B 到达但不能从 A 到达的提交集合，与 diff 的点号语义不同；--follow 的单文件重命名追踪也有启发式限制。定位问题时应结合父子关系和实际改动，不凭日期或最后提交者直接推断原因。〔N222〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("022  轻量标签、附注标签与可验证发布有什么关系？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  轻量标签基本是直接指向对象的引用，附注标签拥有独立标签对象，可记录打标签者、消息和可选签名。两者都可标识版本，但标签名并不自动保证内容可信或永远不变；发布流程应明确签名验证、提交来源和是否允许移动标签。git push 默认行为不一定上传所有标签，应显式选择要发布的引用，避免把本地临时标签一并推出。已有用户依赖的版本标签通常保持不变，修复应发布新版本；签名验证仍需可信公钥和身份管理。〔N220〕", size: 9.5pt)
+  #text("答案  轻量标签基本是直接指向对象的引用，附注标签拥有独立标签对象，可记录打标签者、消息和可选签名。两者都可标识版本，但标签名并不自动保证内容可信或永远不变；发布流程应明确签名验证、提交来源和是否允许移动标签。git push 默认行为不一定上传所有标签，应显式选择要发布的引用，避免把本地临时标签一并推出。已有用户依赖的版本标签通常保持不变，修复应发布新版本；签名验证仍需可信公钥和身份管理。〔N223〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("023  blame 和 bisect 如何帮助定位回归，分别有什么局限？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  blame 按行展示当前内容最近关联的提交，适合找到上下文与设计说明，但重构、格式化和代码搬移会影响结果，不能把它等同于责任归属。bisect 在已知好坏提交之间按提交图缩小范围，配合可重复的验证命令可自动寻找引入回归的提交。验证应区分失败、成功和无法测试的版本，环境不稳定或中间提交不可构建会误导二分。定位到提交后还要阅读补丁、复现并验证因果关系，因为提交可能只是触发潜伏问题，而不是唯一根因。〔N221、N219〕", size: 9.5pt)
+  #text("答案  blame 按行展示当前内容最近关联的提交，适合找到上下文与设计说明，但重构、格式化和代码搬移会影响结果，不能把它等同于责任归属。bisect 在已知好坏提交之间按提交图缩小范围，配合可重复的验证命令可自动寻找引入回归的提交。验证应区分失败、成功和无法测试的版本，环境不稳定或中间提交不可构建会误导二分。定位到提交后还要阅读补丁、复现并验证因果关系，因为提交可能只是触发潜伏问题，而不是唯一根因。〔N224、N222〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("024  gitignore 为什么忽略不了已经追踪的文件？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  忽略规则主要决定哪些未追踪路径不进入常规添加流程，不会把已提交的文件从索引和历史中移除。需要保留本地文件但停止追踪时，可先审查影响，再对指定路径使用 git rm --cached 并提交变更，同时加入适当忽略规则。用 git check-ignore -v 查看是哪条规则生效，留意目录规则、否定规则和路径作用域。不要把配置文件中的秘密寄希望于 ignore：已经存在的旧提交仍需单独处理。团队共享的忽略与个人编辑器、系统缓存规则可按项目策略放在不同配置位置。〔N217〕", size: 9.5pt)
+  #text("答案  忽略规则主要决定哪些未追踪路径不进入常规添加流程，不会把已提交的文件从索引和历史中移除。需要保留本地文件但停止追踪时，可先审查影响，再对指定路径使用 git rm --cached 并提交变更，同时加入适当忽略规则。用 git check-ignore -v 查看是哪条规则生效，留意目录规则、否定规则和路径作用域。不要把配置文件中的秘密寄希望于 ignore：已经存在的旧提交仍需单独处理。团队共享的忽略与个人编辑器、系统缓存规则可按项目策略放在不同配置位置。〔N220〕", size: 9.5pt)
 ]
 
 #heading(level: 2, outlined: true)[#text("18.3 Docker 容器与部署工具", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("025  Linux 容器依靠什么隔离和限额，cgroup v2 与虚拟机有何不同？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  Linux 容器通常通过 namespaces 隔离进程、挂载、网络等可见视图，cgroups 统计并约束资源，配合 capabilities、seccomp 等机制收缩权限。cgroup v2 使用统一层级并按规则启用控制器，CPU、内存等限额不是另起一套客体内核；cpu.max、memory.max 等文件含义与统计需按内核文档核对。虚拟机通常拥有独立客体内核，容器则共享宿主内核，因此隔离和兼容性边界不同，不能认为容器等于轻量虚拟机。Docker Desktop 运行 Linux 容器时通常还位于虚拟机中，性能、启动时间和内存开销取决于实际部署，不能用固定数量级概括。〔N222、N223〕", size: 9.5pt)
+  #text("答案  Linux 容器通常通过 namespaces 隔离进程、挂载、网络等可见视图，cgroups 统计并约束资源，配合 capabilities、seccomp 等机制收缩权限。cgroup v2 使用统一层级并按规则启用控制器，CPU、内存等限额不是另起一套客体内核；cpu.max、memory.max 等文件含义与统计需按内核文档核对。虚拟机通常拥有独立客体内核，容器则共享宿主内核，因此隔离和兼容性边界不同，不能认为容器等于轻量虚拟机。Docker Desktop 运行 Linux 容器时通常还位于虚拟机中，性能、启动时间和内存开销取决于实际部署，不能用固定数量级概括。〔N225、N226〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("026  Docker 客户端、Engine、镜像、容器与 Registry 怎样协作？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  客户端通过 API 向 Docker Engine 的守护进程发出构建、运行和管理请求，Engine 再协调底层容器运行组件。镜像是运行所需文件系统层与配置的不可变模板，容器是基于它创建的运行实例，通常有自己的可写层和隔离配置；同一镜像可创建多个容器。Registry 提供镜像分发，仓库与标签用于组织引用，标签可移动而 digest 对应具体内容。停止容器不等于删除镜像，删除容器也不等于删除其卷。远程管理 API、Registry 权限与镜像来源都是独立边界，不能把客户端所在机器默认当成实际宿主机。〔N222〕", size: 9.5pt)
+  #text("答案  客户端通过 API 向 Docker Engine 的守护进程发出构建、运行和管理请求，Engine 再协调底层容器运行组件。镜像是运行所需文件系统层与配置的不可变模板，容器是基于它创建的运行实例，通常有自己的可写层和隔离配置；同一镜像可创建多个容器。Registry 提供镜像分发，仓库与标签用于组织引用，标签可移动而 digest 对应具体内容。停止容器不等于删除镜像，删除容器也不等于删除其卷。远程管理 API、Registry 权限与镜像来源都是独立边界，不能把客户端所在机器默认当成实际宿主机。〔N225〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("027  镜像分层和容器可写层如何影响缓存与磁盘占用？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  镜像通常由可复用的只读文件系统层和配置组成，容器叠加自己的可写层；修改底层文件时，存储实现可能进行 copy-up 等操作。Dockerfile 的 RUN、COPY 等会改变文件系统，而 CMD、ENV 等主要改变镜像配置，不能说每条指令都新增同样的数据层。后续层删除文件通常不能抹去先前层已保存的内容，因此大文件或秘密即使随后删除仍可能留在镜像中。构建缓存复用受指令、上下文与依赖影响，合理组织稳定依赖和常变源码，并用实际镜像历史和磁盘统计检查效果。〔N224、N225、N226〕", size: 9.5pt)
+  #text("答案  镜像通常由可复用的只读文件系统层和配置组成，容器叠加自己的可写层；修改底层文件时，存储实现可能进行 copy-up 等操作。Dockerfile 的 RUN、COPY 等会改变文件系统，而 CMD、ENV 等主要改变镜像配置，不能说每条指令都新增同样的数据层。后续层删除文件通常不能抹去先前层已保存的内容，因此大文件或秘密即使随后删除仍可能留在镜像中。构建缓存复用受指令、上下文与依赖影响，合理组织稳定依赖和常变源码，并用实际镜像历史和磁盘统计检查效果。〔N227、N228、N229〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("028  Dockerfile 的构建指令与运行配置如何区分，COPY 与 ADD 怎样选择？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  FROM 选择阶段基础，WORKDIR 设工作目录，RUN 在构建时执行，COPY 把上下文或指定阶段的文件加入镜像；USER、ENV、EXPOSE、CMD 等设置后续构建或运行配置。EXPOSE 只是声明，不自动发布宿主端口。ADD 除复制外还支持按条件解包本地归档、远程 URL 或 Git 来源等功能，具体依 Dockerfile 版本而定；普通本地复制优先使用更明确的 COPY。ARG 是构建参数，不等于安全秘密通道，可能出现在元数据或历史中，应使用 BuildKit secrets 等专用机制。构建上下文还应通过 .dockerignore 排除无关文件。〔N224、N225〕", size: 9.5pt)
+  #text("答案  FROM 选择阶段基础，WORKDIR 设工作目录，RUN 在构建时执行，COPY 把上下文或指定阶段的文件加入镜像；USER、ENV、EXPOSE、VOLUME、CMD 等设置后续构建或运行配置。EXPOSE 只是声明，不自动发布宿主端口；VOLUME 声明容器内的挂载点，实际挂接何种卷或主机路径由运行时配置决定。ADD 除复制外还支持按条件解包本地归档、远程 URL 或 Git 来源等功能，具体依 Dockerfile 版本而定；普通本地复制优先使用更明确的 COPY。ARG 是构建参数，不等于安全秘密通道，可能出现在元数据或历史中，应使用 BuildKit secrets 等专用机制。构建上下文还应通过 .dockerignore 排除无关文件。〔N227、N228〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("029  CMD 与 ENTRYPOINT 如何组合，为什么 exec 形式影响退出信号？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  ENTRYPOINT 通常指定容器主程序，CMD 提供缺省命令或默认参数；使用 exec 数组形式的 ENTRYPOINT 时，docker run 后附加的参数通常替代 CMD 并传给主程序，而 --entrypoint 可以显式覆盖入口。shell 形式会经 shell 执行，其参数展开与信号传递不同，包装脚本通常需要 exec 把主进程替换为应用。容器主进程收到停止信号后还要处理清理和子进程回收，exec 形式本身不保证业务优雅退出。面试时应写出准确组合后的 argv，避免笼统说入口永远不能被覆盖。〔N224、N227〕", size: 9.5pt)
+  #text("答案  ENTRYPOINT 通常指定容器主程序，CMD 提供缺省命令或默认参数；使用 exec 数组形式的 ENTRYPOINT 时，docker run 后附加的参数通常替代 CMD 并传给主程序，而 --entrypoint 可以显式覆盖入口。shell 形式会经 shell 执行，其参数展开与信号传递不同，包装脚本通常需要 exec 把主进程替换为应用。容器主进程收到停止信号后还要处理清理和子进程回收，exec 形式本身不保证业务优雅退出。面试时应写出准确组合后的 argv，避免笼统说入口永远不能被覆盖。〔N227、N230〕", size: 9.5pt)
   #raw("ENTRYPOINT [\"/app/server\"]\nCMD [\"--port\", \"8080\"]\n# docker run image --port 9090 将默认参数改为 --port 9090", lang: "text", block: true)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("030  多阶段构建怎样缩小运行镜像，为什么不应盲目选择最小基础镜像？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  在一个 Dockerfile 中使用多个 FROM，可让构建阶段包含编译器和完整依赖，运行阶段只 COPY --from 所需产物；构建也可以用 --target 选择目标阶段，不能说永远只有最后一个阶段有意义。配合小而合适的运行基础、.dockerignore 和在同一层清理临时缓存，可减少体积。精简不能破坏动态库、证书、时区和诊断需求，Alpine 的 musl 与 glibc 兼容性也需核对。可复现还要求固定依赖、基础镜像及下载校验；不要把静态编译假设直接套给所有 C++ 可执行文件。〔N228、N225、N224〕", size: 9.5pt)
+  #text("答案  在一个 Dockerfile 中使用多个 FROM，可让构建阶段包含编译器和完整依赖，运行阶段只 COPY --from 所需产物；构建也可以用 --target 选择目标阶段，不能说永远只有最后一个阶段有意义。配合小而合适的运行基础、.dockerignore 和在同一层清理临时缓存，可减少体积。精简不能破坏动态库、证书、时区和诊断需求，Alpine 的 musl 与 glibc 兼容性也需核对。可复现还要求固定依赖、基础镜像及下载校验；不要把静态编译假设直接套给所有 C++ 可执行文件。〔N231、N228、N227〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("031  volume、bind mount、tmpfs 与容器可写层各适合保存什么？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  容器可写层随容器生命周期管理，不适合把关键持久数据只放在其中。volume 由 Docker 管理，适合跨容器重建保留数据；bind mount 映射宿主路径，便于开发或与宿主共享文件，但更依赖宿主布局且可能覆盖容器目标目录的原有视图。tmpfs 适合临时内存数据，通常随容器停止消失，仍需考虑主机换页等边界。持久化并不等于备份或高可用，数据库卷还需要一致性备份。挂载权限、只读选项、用户 UID/GID 与宿主访问范围必须明确。〔N226〕", size: 9.5pt)
+  #text("答案  容器可写层随容器生命周期管理，不适合把关键持久数据只放在其中。volume 由 Docker 管理，适合跨容器重建保留数据；bind mount 映射宿主路径，便于开发或与宿主共享文件，但更依赖宿主布局且可能覆盖容器目标目录的原有视图。tmpfs 适合临时内存数据，通常随容器停止消失，仍需考虑主机换页等边界。持久化并不等于备份或高可用，数据库卷还需要一致性备份。挂载权限、只读选项、用户 UID/GID 与宿主访问范围必须明确。〔N229〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
-  #heading(level: 2, outlined: false)[#text("032  Docker bridge、host、none 和 overlay 网络怎样影响容器通信？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  用户自定义 bridge 适合单机容器通信，通常提供按容器名解析；默认 bridge 的自动服务发现行为不同。host 模式共享宿主网络命名空间，减少端口隔离，-p 发布端口通常无意义；none 通常只保留回环环境。overlay 用于支持该驱动的多主机容器网络，不等于 Kubernetes 所有网络实现都采用 Docker overlay。容器内 localhost 指向本容器的网络视图，不自动代表其他服务。应使用明确的网络与服务名，区分容器目标端口和宿主发布端口；EXPOSE 不会单独建立访问路径。〔N229、N227〕", size: 9.5pt)
+  #heading(level: 2, outlined: false)[#text("032  Docker bridge、host、none、container 和 overlay 网络怎样影响容器通信？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
+  #text("答案  用户自定义 bridge 适合单机容器通信，通常提供按容器名解析；默认 bridge 的自动服务发现行为不同。host 模式共享宿主网络命名空间，减少端口隔离，-p 发布端口通常无意义；none 通常只保留回环环境。container:<name|id> 模式共享指定容器的网络命名空间，因此两者共享网络接口和 localhost，通常不能再单独发布端口。overlay 用于支持该驱动的多主机容器网络，不等于 Kubernetes 所有网络实现都采用 Docker overlay。应使用明确的网络与服务名，区分容器目标端口和宿主发布端口；EXPOSE 不会单独建立访问路径。〔N232、N230〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("033  Docker Compose 描述了什么，服务依赖为什么不等于业务就绪？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  Compose 用声明式配置组织多个服务及其镜像或构建、网络、卷、变量和运行参数，适合统一启动、更新和销毁一套应用，常用 docker compose up、ps、logs、down 操作。服务名通常可在项目网络中解析。启动顺序本身不保证数据库已经可接受请求，需要 healthcheck、适当依赖条件，以及应用自身的超时和重试。Compose 可用于单机生产场景，但不会自动获得 Kubernetes 式跨节点调度和集群控制能力。down 与 down --volumes 对持久数据的影响不同，配置中也不应明文提交真实凭据。〔N230、N229〕", size: 9.5pt)
+  #text("答案  Compose 用声明式配置组织多个服务及其镜像或构建、网络、卷、变量和运行参数，适合统一启动、更新和销毁一套应用，常用 docker compose up、ps、logs、down 操作。服务名通常可在项目网络中解析。启动顺序本身不保证数据库已经可接受请求，需要 healthcheck、适当依赖条件，以及应用自身的超时和重试。Compose 可用于单机生产场景，但不会自动获得 Kubernetes 式跨节点调度和集群控制能力。down 与 down --volumes 对持久数据的影响不同，配置中也不应明文提交真实凭据。〔N233、N232〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("034  docker run 的参数怎样决定运行实例，日常管理命令如何分工？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  docker run 创建并启动新容器，start 启动已有容器；-d 后台运行，-it 保持交互终端，-p 发布端口，--mount 指定存储，--network 选网络，--memory 与 --cpus 设置相应资源约束。--restart 是重启策略，不等于应用健康检查，--rm 适合一次性容器。ps -a、logs、inspect、stats 分别查看生命周期、输出、详细配置与资源观测，build/pull/push 处理镜像。默认端口发布可能暴露到更多宿主接口，需要时明确绑定地址；环境变量也不天然是保密存储，不要把真实令牌直接写入可共享命令。〔N227、N222〕", size: 9.5pt)
-  #raw("docker run --name demo --rm -p 127.0.0.1:8080:8080 \\\n  --memory 512m --cpus 1 example/app:version\n# 镜像名为示例；真实部署还要明确网络、挂载、用户及配置", lang: "sh", block: true)
+  #text("答案  docker run 创建并启动新容器，start 启动已有容器；-d 后台运行，-it 保持交互终端，-p 发布端口，--mount 指定存储，--network 选网络，--memory 与 --cpus 设置相应资源约束，-e/--env 设置环境变量，-u/--user 指定容器内用户。--restart 是重启策略，不等于应用健康检查，--rm 适合一次性容器。ps -a、logs、inspect、stats 分别查看生命周期、输出、详细配置与资源观测；stop/restart 管理运行状态，rm 删除容器，rmi 删除镜像，build/pull/push 处理镜像。默认端口发布可能暴露到更多宿主接口，需要时明确绑定地址；环境变量也不天然是保密存储，不要把真实令牌直接写入可共享命令。〔N230、N225〕", size: 9.5pt)
+  #raw("docker run --name demo --rm -p 127.0.0.1:8080:8080 \\\n  --memory 512m --cpus 1 --user 1000 -e APP_ENV=prod example/app:version\n# 镜像名为示例；真实部署还要明确网络、挂载、用户及配置", lang: "bash", block: true)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("035  docker exec 与 attach 对容器进程有什么不同影响？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  exec 在运行中的容器里启动一个新进程，可用 -it 运行镜像已有的 shell，也可以直接执行诊断命令；镜像可能没有 bash，极简镜像甚至没有 shell。attach 则连接主进程现有标准流，输入和信号可能直接影响应用，退出方式要按终端设置处理，不能简单当作另开一个会话。exec 需要主容器仍在运行，不是让已退出容器复活。调试应优先读取 logs 与 inspect，避免临时修改运行容器后误以为变更会进入下一次镜像部署。〔N227、N222〕", size: 9.5pt)
+  #text("答案  exec 在运行中的容器里启动一个新进程，可用 -it 运行镜像已有的 shell，也可以直接执行诊断命令；镜像可能没有 bash，极简镜像甚至没有 shell。attach 则连接主进程现有标准流，输入和信号可能直接影响应用，退出方式要按终端设置处理，不能简单当作另开一个会话。exec 需要主容器仍在运行，不是让已退出容器复活。调试应优先读取 logs 与 inspect，避免临时修改运行容器后误以为变更会进入下一次镜像部署。〔N230、N225〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("036  容器启动后立即退出，应从哪些证据判断原因？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  先用 docker ps -a、logs 和 inspect 查看退出码、启动命令、错误字段及 OOMKilled，再确认主进程是否完成正常一次性任务、启动失败或自行后台化。容器主进程退出后实例通常停止，给 docker run 加 -d 不能把已结束的进程维持运行。137 常对应 SIGKILL，但不独占表示 OOM，需要结合 OOM 标记和宿主事件判断；重启策略也不能修复错误配置。核对工作目录、挂载遮挡、权限、动态库、端口和依赖就绪，必要时覆盖入口进行受控复现，并把修复写回可重建配置。〔N227、N222〕", size: 9.5pt)
+  #text("答案  先用 docker ps -a、logs 和 inspect 查看退出码、启动命令、错误字段及 OOMKilled，再确认主进程是否完成正常一次性任务、启动失败或自行后台化。容器主进程退出后实例通常停止，给 docker run 加 -d 不能把已结束的进程维持运行。137 常对应 SIGKILL，但不独占表示 OOM，需要结合 OOM 标记和宿主事件判断；重启策略也不能修复错误配置。核对工作目录、挂载遮挡、权限、动态库、端口和依赖就绪，必要时覆盖入口进行受控复现，并把修复写回可重建配置。〔N230、N225〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("037  docker commit 为什么不能替代可审查的镜像构建流程？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  commit 基于容器当前可写状态和部分配置生成镜像，适合临时保留调查结果，但挂载卷中的数据通常不包含在提交内，运行进程内存状态也不是容器检查点。build 按 Dockerfile、构建上下文和依赖执行，可纳入版本控制与审查，更适合持续集成。两者都可能意外带入秘密；构建过程“写在文件里”也不自动保证完全可复现，还需固定基础、依赖和外部输入。临时容器中验证过的修复应最终落到源码及构建步骤，避免不可说明的手工镜像成为唯一产物。〔N225、N224、N226〕", size: 9.5pt)
+  #text("答案  commit 基于容器当前可写状态和部分配置生成镜像，适合临时保留调查结果，但挂载卷中的数据通常不包含在提交内，运行进程内存状态也不是容器检查点。build 按 Dockerfile、构建上下文和依赖执行，可纳入版本控制与审查，更适合持续集成。两者都可能意外带入秘密；构建过程“写在文件里”也不自动保证完全可复现，还需固定基础、依赖和外部输入。临时容器中验证过的修复应最终落到源码及构建步骤，避免不可说明的手工镜像成为唯一产物。〔N228、N227、N229〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("038  Docker 构建的镜像与 Kubernetes 的容器运行时是什么关系？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  Docker 提供构建、分发和运行容器的一套工具，Kubernetes 主要负责声明式集群编排、调度、扩缩容和恢复。Kubernetes 通过 CRI 与支持的运行时通信，例如 containerd、CRI-O；内置 dockershim 在 Kubernetes 1.24 被移除，不意味着 Docker 构建的标准镜像不能运行。镜像格式、运行时接口和编排能力是不同层次，外部兼容适配也应按部署文档判断。应用迁移时还需匹配 CPU 架构、操作系统、权限、卷和网络配置，不能仅凭镜像能拉取就认定可在任何节点正常执行。〔N231、N222〕", size: 9.5pt)
+  #text("答案  Docker 提供构建、分发和运行容器的一套工具，Kubernetes 主要负责声明式集群编排、调度、扩缩容和恢复。Kubernetes 通过 CRI 与支持的运行时通信，例如 containerd、CRI-O；内置 dockershim 在 Kubernetes 1.24 被移除，不意味着 Docker 构建的标准镜像不能运行。镜像格式、运行时接口和编排能力是不同层次，外部兼容适配也应按部署文档判断。应用迁移时还需匹配 CPU 架构、操作系统、权限、卷和网络配置，不能仅凭镜像能拉取就认定可在任何节点正常执行。〔N234、N225〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("039  Docker prune 的清理范围为什么必须逐项确认？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  先用 docker system df、容器和卷列表确认磁盘占用及引用，再选择 image、container、network、builder 或 volume 对应清理命令。image prune 默认主要清悬空镜像，-a 扩大到未被容器使用的镜像；system prune 会同时影响多类未使用资源，但不默认删除所有卷。当前文档中 volume prune 默认针对未被容器引用的匿名卷，命名卷还需相应选项；版本与参数应核对 --help。停止的容器仍可能关联需要恢复的数据，未使用不代表业务无用，因此不能把 prune -a --volumes 当成无风险的通用维护命令。〔N232、N226〕", size: 9.5pt)
+  #text("答案  先用 docker system df、容器和卷列表确认磁盘占用及引用，再选择 image、container、network、builder 或 volume 对应清理命令。image prune 默认主要清悬空镜像，-a 扩大到未被容器使用的镜像；system prune 会同时影响多类未使用资源，但不默认删除所有卷。当前文档中 volume prune 默认针对未被容器引用的匿名卷，命名卷还需相应选项；版本与参数应核对 --help。停止的容器仍可能关联需要恢复的数据，未使用不代表业务无用，因此不能把 prune -a --volumes 当成无风险的通用维护命令。〔N235、N229〕", size: 9.5pt)
 ]
 
 #pagebreak()
@@ -4658,77 +4665,77 @@
 #heading(level: 2, outlined: true)[#text("19.1 存储选型与代码组织", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("001  MongoDB 的文档模型、副本集与分片分别解决什么问题？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  MongoDB 以 BSON 文档表达聚合数据，嵌入相关字段可减少跨表连接，但文档无边界增长和大量重复字段同样会带来更新与容量问题。副本集用主节点接收写入并复制到其他节点，读写关注级别影响确认与读取语义；分片按分片键把数据分布到多台机器，mongos 负责路由。它支持索引、模式校验与事务，不能等同于“没有结构、没有事务”。选择 MongoDB 或关系数据库要从访问模式、连接查询、约束以及运维能力出发，而非仅因数据量大就更换。〔N233、N234〕", size: 9.5pt)
+  #text("答案  MongoDB 以 BSON 文档表达聚合数据，嵌入相关字段可减少跨表连接，但文档无边界增长和大量重复字段同样会带来更新与容量问题。副本集用主节点接收写入并复制到其他节点，读写关注级别影响确认与读取语义；分片按分片键把数据分布到多台机器，mongos 负责路由。它支持索引、模式校验与事务，不能等同于“没有结构、没有事务”。选择 MongoDB 或关系数据库要从访问模式、连接查询、约束以及运维能力出发，而非仅因数据量大就更换。〔N236、N237〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("002  HDFS 如何把大文件存储和故障恢复分布到集群？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  HDFS 把文件切成较大的块，NameNode 管理命名空间与块位置等元数据，DataNode 保存和提供块内容；客户端通常先询问元数据，再直接与 DataNode 交换数据。通过副本或纠删码等策略容忍节点故障，心跳和块报告支持发现失效及恢复。它偏向大文件的顺序、高吞吐访问，海量小文件会增加元数据压力，低延迟随机改写也不是其主要目标。NameNode 高可用需要独立部署与日志协调设计，副本本身不能代替异地备份、权限控制或误删恢复方案。〔N235〕", size: 9.5pt)
+  #text("答案  HDFS 把文件切成较大的块，NameNode 管理命名空间与块位置等元数据，DataNode 保存和提供块内容。读时客户端先向 NameNode 查询副本位置，再选择 DataNode 直接读块并校验 checksum；写时 NameNode 返回目标节点链路，客户端将数据包送到首个 DataNode，由副本管线逐台转发，确认沿链路返回后才确认写入。NameNode 通过 fsimage 快照和 edit log 记录元数据变化，高可用部署中的 Standby 跟随共享日志并准备接管。心跳和块报告支持发现失效及恢复；副本或纠删码容忍节点故障。它偏向大文件顺序、高吞吐访问，海量小文件会增加元数据压力，低延迟随机改写也不是主要目标；副本不能代替异地备份、权限控制或误删恢复方案。〔N238〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("003  业务分支变多时，怎样运用策略、工厂和观察者模式？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  先区分业务条件本身与可替换的变化点。固定少量条件用清晰的 if 或 switch 即可；当多种算法共享接口时，策略模式把选择与执行分开，工厂集中管理创建与所有权，观察者把事件产生者与多个订阅者解耦。表驱动适合规则能用数据表达的情况，不能把有顺序和副作用的业务机械改成哈希表。模式需要说明解决的变化、额外间接层的成本、生命周期和测试方式，不能只罗列名字，更不能把设计模式数量当成代码质量指标。〔N236〕", size: 9.5pt)
+  #text("答案  先区分业务条件本身与可替换的变化点。固定少量条件用清晰的 if 或 switch 即可；当多种算法共享接口时，策略模式把选择与执行分开，工厂集中管理创建与所有权，观察者把事件产生者与多个订阅者解耦。表驱动适合规则能用数据表达的情况，不能把有顺序和副作用的业务机械改成哈希表。模式需要说明解决的变化、额外间接层的成本、生命周期和测试方式，不能只罗列名字，更不能把设计模式数量当成代码质量指标。〔N239〕", size: 9.5pt)
   #raw("// 示意：创建、选择、执行分别承担明确责任\nauto strategy = factory.create(request.type);\nResult result = strategy->execute(request);\nevents.publish(result); // 订阅者失败策略与资源生命周期另行约定", lang: "cpp", block: true)
 ]
 
 #heading(level: 2, outlined: true)[#text("19.2 订单、认证与接口边界", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("004  订单创建、支付回调与库存释放如何组成一致的状态机？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  先定义待支付、已支付、已取消等状态及合法迁移，以条件更新或版本号原子地竞争迁移权。订单创建与本库库存预留尽量放在同一事务，跨服务则用明确的业务补偿和可恢复消息。支付回调以支付方交易号等唯一约束去重，核对金额、币种与订单绑定；超时任务仅能取消仍待支付的订单。取消与支付并发时须预先规定晚到款的退款或人工处理路径，不能释放了库存又无条件标记支付成功。状态变更后经 Outbox 可靠驱动下游，定期对账修复边界失败。〔N124〕", size: 9.5pt)
+  #text("答案  先定义订单主状态及合法迁移，例如待支付、已支付、待发货、已发货、已完成、已取消；售后可单独建申请中、退款处理中、售后完成等逆向状态，并保存退款流水。以条件更新或版本号原子地竞争迁移权，订单创建与本库库存预留尽量放在同一事务，跨服务则用明确补偿和可恢复消息。支付回调按渠道交易号唯一去重并核对金额、币种与订单绑定；超时任务仅能取消仍待支付的订单。取消与支付并发时须规定晚到款处理。退款请求超时可能是渠道已成功但响应丢失，应先用退款流水号查询渠道状态，再幂等重试并由对账修复，不能直接重复扣款或伪报失败。状态变更后经 Outbox 驱动下游。〔N127〕", size: 9.5pt)
   #raw("BEGIN;\nUPDATE orders SET state = :next\nWHERE id = :id AND state = :expected;\n-- 只有影响一行才写库存变更及 outbox，同库事务一起提交\nCOMMIT;", lang: "sql", block: true)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("005  用户密码应如何保存、校验和渐进升级？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  保存密码专用的慢哈希结果及每条记录的随机盐、算法标识和成本参数，使用成熟库实现 Argon2id、scrypt 或适用的 bcrypt/PBKDF2，成本结合部署资源选择。盐可与摘要一起存库；可选 pepper 必须独立于数据库保管并规划轮换。不能存明文、可逆加密后的密码，或仅用快速 SHA-256/MD5 再加盐。登录时由库验证并在旧参数落后时重新散列，配合在线限速、泄漏密码检查和安全的重置流程。日志、异常和监控也不应记录输入的密码或完整认证凭据。〔N237〕", size: 9.5pt)
+  #text("答案  保存密码专用的慢哈希结果及每条记录的随机盐、算法标识和成本参数，使用成熟库实现 Argon2id、scrypt 或适用的 bcrypt/PBKDF2，成本结合部署资源选择。盐可与摘要一起存库；可选 pepper 必须独立于数据库保管并规划轮换。不能存明文、可逆加密后的密码，或仅用快速 SHA-256/MD5 再加盐。登录时由库验证并在旧参数落后时重新散列，配合在线限速、泄漏密码检查和安全的重置流程。日志、异常和监控也不应记录输入的密码或完整认证凭据。〔N240〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("006  单点登录如何用统一身份提供方建立各业务会话？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  用户在身份提供方完成认证后，各业务系统通过约定协议获得可验证的身份结果，并建立自己的会话；不能让任意不同站点共享一个裸 Cookie。以 OIDC 授权码流程为例，业务方验证重定向 URI、state 及 PKCE，后端交换授权码后校验 ID Token 的签名、issuer、audience、有效期及需要的 nonce。OAuth 主要解决授权，OIDC 在其上增加身份层。退出和撤销需设计中央会话与各业务会话的关系；短期令牌、密钥轮换、跨站 Cookie 规则和登录 CSRF 都应纳入边界。〔N238〕", size: 9.5pt)
+  #text("答案  用户在身份提供方完成认证后，各业务系统通过约定协议获得可验证的身份结果，并建立自己的会话；不能让任意不同站点共享一个裸 Cookie。以 OIDC 授权码流程为例，业务方验证重定向 URI、state 及 PKCE，后端交换授权码后校验 ID Token 的签名、issuer、audience、有效期及需要的 nonce。OAuth 主要解决授权，OIDC 在其上增加身份层。退出和撤销需设计中央会话与各业务会话的关系；短期令牌、密钥轮换、跨站 Cookie 规则和登录 CSRF 都应纳入边界。〔N241〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("007  对外 API 如何同时处理身份、权限、重放和重复请求？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  用 TLS 保护传输，认证确定调用者身份，授权在每次资源操作中校验对象归属和动作权限，不能只依赖前端隐藏按钮。接口约束字段、长度、速率和成本，避免日志泄漏凭据。需要应用层签名时，明确被签名的请求方法、路径、正文摘要及时间窗口，并结合 nonce 或服务端状态拒绝重放；签名本身不会自动证明业务权限。幂等键另用于识别重试业务，需绑定调用者、请求内容与既有结果。统一版本、错误码、审计和密钥轮换，避免客户端与服务端各自猜测规则。〔N239、N240〕", size: 9.5pt)
+  #text("答案  用 TLS 保护传输，认证确定调用者身份，授权在每次资源操作中校验对象归属和动作权限，不能只依赖前端隐藏按钮。接口约束字段、长度、速率和成本，避免日志泄漏凭据。需要应用层签名时，明确被签名的请求方法、路径、正文摘要及时间窗口，并结合 nonce 或服务端状态拒绝重放；签名本身不会自动证明业务权限。幂等键另用于识别重试业务，需绑定调用者、请求内容与既有结果。统一版本、错误码、审计和密钥轮换，避免客户端与服务端各自猜测规则。〔N242、N243〕", size: 9.5pt)
 ]
 
 #heading(level: 2, outlined: true)[#text("19.3 容量、隔离与运维", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("008  如何把“一秒内响应”转成可测量、可执行的延迟目标？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  先用 SLI/SLO 指定成功率、观测窗口和延迟分位数，例如一定比例的成功请求在目标时间内完成，而不是承诺所有请求永远低于一秒。把端到端预算分给排队、网关、应用、数据库和外部调用，沿调用链传播截止时间。为连接池、线程池和请求队列设置上限及背压，重试必须受剩余预算和幂等性限制。用分布式追踪与压测观察尾延迟和饱和点，按瓶颈优化索引、缓存或并行调用；超载时快速拒绝或降级，避免无界等待把整个系统拖垮。〔N241〕", size: 9.5pt)
+  #text("答案  先用 SLI/SLO 指定成功率、观测窗口和延迟分位数，例如一定比例的成功请求在目标时间内完成，而不是承诺所有请求永远低于一秒。把端到端预算分给排队、网关、应用、数据库和外部调用，沿调用链传播截止时间。客户端超时通常不会自动停止服务端已经开始的业务，服务端须检查取消/截止时间并尽早停止无用工作；否则客户端重试可能与仍在执行的原请求重复副作用。为连接池、线程池和请求队列设置上限及背压，重试必须受剩余预算和幂等性限制。用分布式追踪与压测观察尾延迟和饱和点，按瓶颈优化；超载时快速拒绝或降级，避免无界等待。〔N244〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("009  Java、Go 与 CPython 的垃圾回收机制为什么不能混为一谈？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  Java 的具体行为取决于所选收集器，常见设计结合可达性分析、分代、并发标记及整理，不能声称所有收集器都使用同一复制算法。Go 使用并发标记清扫和写屏障等机制，在暂停、GC CPU 与堆空间之间权衡，可通过运行时指标和内存限制调优。CPython 常规构建主要用引用计数回收，同时检测部分容器形成的不可达引用环，细节随版本与构建方式变化。三者都无法回收仍被业务错误引用的数据，也不保证及时释放文件或连接，因此资源仍应通过结构化清理管理。〔N242、N243、N191〕", size: 9.5pt)
+  #text("答案  Java 的具体行为取决于所选收集器，常见设计结合可达性分析、分代、并发标记及整理，不能声称所有收集器都使用同一复制算法。Go 使用并发标记清扫和写屏障等机制，在暂停、GC CPU 与堆空间之间权衡，可通过运行时指标和内存限制调优。CPython 常规构建主要用引用计数回收，同时检测部分容器形成的不可达引用环，细节随版本与构建方式变化。三者都无法回收仍被业务错误引用的数据，也不保证及时释放文件或连接，因此资源仍应通过结构化清理管理。〔N245、N246、N194〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("010  四层与七层负载均衡按什么粒度转发？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  四层负载均衡围绕 IP、端口和传输层连接选择后端，通常不解析业务报文；七层代理终止并理解 HTTP 等应用协议，可按域名、路径、请求头或租户路由，并实施应用级超时和策略。七层有额外解析及连接管理成本，但不能简单断言必然慢于某个四层方案。TLS 在何处终止、长连接复用、源地址传递、健康检查及跨可用区流量费用都会影响选型。层次决定可见信息，轮询、最少连接或一致性哈希则是选择算法，两者不是同一维度。〔N244〕", size: 9.5pt)
+  #text("答案  四层负载均衡围绕 IP、端口和传输层连接选择后端，通常不解析业务报文；七层代理终止并理解 HTTP 等应用协议，可按域名、路径、请求头或租户路由，并实施应用级超时和策略。七层有额外解析及连接管理成本，但不能简单断言必然慢于某个四层方案。TLS 在何处终止、长连接复用、源地址传递、健康检查及跨可用区流量费用都会影响选型。层次决定可见信息，轮询、最少连接或一致性哈希则是选择算法，两者不是同一维度。〔N247〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("011  突发流量或慢依赖出现时，怎样用资源隔离限制故障范围？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  舱壁隔离把有限资源按依赖、租户或关键路径划分，使用独立并发配额、连接池、线程池或进程边界，避免一个慢服务占满所有执行资源。每个隔离区还要配有限队列、超时与拒绝策略，否则只是把无限积压转移到别处。限流约束进入速率，熔断暂时停止访问故障依赖，隔离控制故障影响面，三者可协作但不能互相替代。过细切分会降低空闲资源利用率，应按真实饱和指标分配保底与弹性额度，并通过故障注入验证关键业务仍可服务。〔N245〕", size: 9.5pt)
+  #text("答案  舱壁隔离把有限资源按依赖、租户或关键路径划分，使用独立并发配额、连接池、线程池或进程边界，避免一个慢服务占满所有执行资源。若各业务仍共用同一 Redis、数据库或 MQ 集群，单独隔离线程池仍可能被大键、热点分区或连接耗尽拖垮；核心依赖可按业务和故障域拆分实例或集群。每个隔离区还要配有限队列、超时与拒绝策略，否则只是把无限积压转移到别处。限流约束进入速率，熔断暂时停止访问故障依赖，隔离控制故障影响面，三者可协作但不能互相替代。过细切分会降低空闲资源利用率，应按真实饱和指标分配保底与弹性额度，并通过故障注入验证关键业务仍可服务。〔N248〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("012  监控指标用推还是拉？怎样避免指标系统本身失控？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  拉模式由采集端定期抓取目标，便于统一间隔、超时和 up 健康信号；推模式由应用发送，适合某些短任务或网络边界，但须解决接收端背压、重试和身份鉴别。Prometheus 主要使用拉取，Pushgateway 适用范围较窄，不应当作所有常驻服务的默认中转。指标用低基数标签汇总状态，不能把用户 ID、完整 URL 或请求 ID 无界加入标签。需要事件明细用日志，需要跨服务路径用追踪。告警应围绕用户影响、错误率、尾延迟和资源饱和配置，而非仅展示平均值。〔N246〕", size: 9.5pt)
+  #text("答案  拉模式由采集端定期抓取目标，便于统一间隔、超时和 up 健康信号；推模式由应用发送，适合某些短任务或网络边界，但须解决接收端背压、重试和身份鉴别。Prometheus 主要使用拉取，Pushgateway 适用范围较窄，不应当作所有常驻服务的默认中转。指标用低基数标签汇总状态，不能把用户 ID、完整 URL 或请求 ID 无界加入标签。需要事件明细用日志，需要跨服务路径用追踪。告警应围绕用户影响、错误率、尾延迟和资源饱和配置，而非仅展示平均值。〔N249〕", size: 9.5pt)
 ]
 
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("013  旧库怎样迁到新库，同时保持增量追平和可回滚？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  先定义兼容模式和数据转换规则，取得一致快照并记录与之对应的日志位置，再用 CDC 或等价增量通道重放后续变化；简单全量复制后直接切流会丢失复制期间的更新。增量消费必须可幂等恢复，并处理删除、更新顺序和表结构变化。迁移中按主键范围做行数、校验和及业务约束核对，追平后用写入栅栏、短暂冻结或受控路由切换确定最终边界。分阶段放量并监测延迟与错误，回滚必须考虑新库已接受的写入，不能只把读开关拨回旧库。〔N247〕", size: 9.5pt)
+  #text("答案  先定义兼容模式和数据转换规则，取得一致快照并记录与之对应的日志位置，再用 CDC 或等价增量通道重放后续变化；简单全量复制后直接切流会丢失复制期间的更新。增量消费必须可幂等恢复，并处理删除、更新顺序和表结构变化。迁移中按主键范围做行数、校验和及业务约束核对，追平后用写入栅栏、短暂冻结或受控路由切换确定最终边界。分阶段放量并监测延迟与错误，回滚必须考虑新库已接受的写入，不能只把读开关拨回旧库。〔N250〕", size: 9.5pt)
 ]
 
 #heading(level: 2, outlined: true)[#text("19.4 容器编排与平台边界", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
 #block(width: 100%, breakable: false)[
   #heading(level: 2, outlined: false)[#text("014  容器运行时和 Kubernetes 分别负责什么？", size: 10.5pt, weight: "semibold", fill: rgb("#1E3A50"))]
-  #text("答案  容器运行时负责按镜像创建、运行和隔离进程，Kubernetes 则在集群上以声明式对象协调期望状态。Pod 是调度与共享部分资源的基本单元，Deployment 管理副本和滚动更新，Service 提供稳定访问与后端选择；调度器、控制器和节点组件共同推动实际状态向声明靠拢。Kubernetes 通过 CRI 使用相容运行时，不要求集群节点安装 Docker Engine。它不会自动替应用完成数据一致性、备份或容量规划，仍需资源 requests/limits、探针、持久卷及安全策略配合。〔N248〕", size: 9.5pt)
+  #text("答案  容器运行时负责按镜像创建、运行和隔离进程，Kubernetes 则在集群上以声明式对象协调期望状态。Pod 是调度与共享部分资源的基本单元，Deployment 管理副本和滚动更新，Service 提供稳定访问与后端选择；调度器、控制器和节点组件共同推动实际状态向声明靠拢。Kubernetes 通过 CRI 使用相容运行时，不要求集群节点安装 Docker Engine。它不会自动替应用完成数据一致性、备份或容量规划，仍需资源 requests/limits、探针、持久卷及安全策略配合。〔N251〕", size: 9.5pt)
 ]
 
 #heading(level: 1, outlined: true)[#text("参考文献", size: 15pt, weight: "bold", fill: rgb("#000000"))]
@@ -4778,231 +4785,234 @@
 - [N18] #link("https://man7.org/linux/man-pages/man3/malloc.3.html")[Linux man-pages：malloc 与分配机制]
 - [N19] #link("https://eel.is/c++draft/dcl.fct.def.default")[C++ 工作草案：显式默认化函数]
 - [N20] #link("https://eel.is/c++draft/dcl.fct.def.delete")[C++ 工作草案：删除函数]
-- [N21] #link("https://gcc.gnu.org/onlinedocs/cpp/Include-Syntax.html")[GCC 预处理器：头文件搜索]
-- [N22] #link("https://man7.org/linux/man-pages/man3/dlopen.3.html")[Linux man-pages：dlopen 与动态装载]
-- [N23] #link("https://gitlab.com/x86-psABIs/x86-64-ABI/-/raw/master/abi.pdf")[x86-64 System V ABI 规范]
-- [N24] #link("https://refspecs.linuxfoundation.org/elf/gabi4+/contents.html")[System V ABI：ELF 对象文件格式]
-- [N25] #link("https://www.kernel.org/doc/html/latest/arch/x86/boot.html")[Linux 内核 x86 启动协议]
-- [N26] #link("https://man7.org/linux/man-pages/man2/syscalls.2.html")[Linux man-pages：系统调用与库函数包装]
-- [N27] #link("https://man7.org/linux/man-pages/man7/pthreads.7.html")[Linux man-pages：POSIX 线程共享与独立资源]
-- [N28] #link("https://man7.org/linux/man-pages/man7/sched.7.html")[Linux man-pages：调度策略]
-- [N29] #link("https://docs.kernel.org/mm/page_tables.html")[Linux 内核文档：页表层次和地址转换]
-- [N30] #link("https://man7.org/linux/man-pages/man2/fork.2.html")[Linux man-pages：多线程进程 fork 的约束]
-- [N31] #link("https://man7.org/linux/man-pages/man7/signal.7.html")[Linux man-pages：信号机制]
-- [N32] #link("https://man7.org/linux/man-pages/man7/sem_overview.7.html")[Linux man-pages：POSIX 信号量]
-- [N33] #link("https://docs.kernel.org/scheduler/sched-eevdf.html")[Linux 内核文档：EEVDF 调度]
-- [N34] #link("https://man7.org/linux/man-pages/man3/pthread_spin_lock.3.html")[Linux man-pages：pthread 自旋锁]
-- [N35] #link("https://docs.kernel.org/locking/locktypes.html")[Linux 内核文档：锁类型与 PREEMPT_RT 差异]
-- [N36] #link("https://www.cs.utexas.edu/~EWD/transcriptions/EWD01xx/EWD108.html")[E. W. Dijkstra：银行家算法原稿 EWD108]
-- [N37] #link("https://docs.kernel.org/mm/multigen_lru.html")[Linux 内核文档：多代 LRU 页面回收]
-- [N38] #link("https://man7.org/linux/man-pages/man2/open.2.html")[Linux man-pages：文件描述符与打开文件描述]
-- [N39] #link("https://man7.org/linux/man-pages/man2/unlink.2.html")[Linux man-pages：unlink 后文件存续规则]
-- [N40] #link("https://docs.kernel.org/mm/page_cache.html")[Linux 内核文档：Page Cache]
-- [N41] #link("https://man7.org/linux/man-pages/man2/mmap.2.html")[Linux man-pages：mmap(2)]
-- [N42] #link("https://man7.org/linux/man-pages/man2/fsync.2.html")[Linux man-pages：fsync/fdatasync 的持久化边界]
-- [N43] #link("https://docs.kernel.org/core-api/genericirq.html")[Linux 内核文档：通用 IRQ 处理]
-- [N44] #link("https://docs.kernel.org/core-api/workqueue.html")[Linux 内核文档：工作队列]
-- [N45] #link("https://man7.org/linux/man-pages/man2/read.2.html")[Linux man-pages：read(2) 返回值与错误]
-- [N46] #link("https://man7.org/linux/man-pages/man7/epoll.7.html")[Linux man-pages：epoll(7) 就绪通知]
-- [N47] #link("https://www.rfc-editor.org/rfc/rfc1122.html")[IETF RFC 1122：Internet 主机分层要求]
-- [N48] #link("https://www.rfc-editor.org/rfc/rfc9110.html")[IETF RFC 9110：HTTP 方法、范围请求与代理语义]
-- [N49] #link("https://www.rfc-editor.org/rfc/rfc9112.html")[IETF RFC 9112：HTTP/1.1 报文边界与连接管理]
-- [N50] #link("https://www.rfc-editor.org/rfc/rfc9111.html")[IETF RFC 9111：HTTP 缓存及验证]
-- [N51] #link("https://man7.org/linux/man-pages/man5/hosts.5.html")[Linux man-pages：hosts(5) 与本地名称映射]
-- [N52] #link("https://www.rfc-editor.org/rfc/rfc4033.html")[IETF RFC 4033：DNSSEC 安全性与边界]
-- [N53] #link("https://www.rfc-editor.org/rfc/rfc7766.html")[IETF RFC 7766：DNS over TCP 实施要求]
-- [N54] #link("https://www.rfc-editor.org/rfc/rfc6265.html")[IETF RFC 6265：Cookie 状态管理]
-- [N55] #link("https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Set-Cookie")[Mozilla MDN：浏览器 Set-Cookie 属性]
-- [N56] #link("https://html.spec.whatwg.org/multipage/webstorage.html")[WHATWG HTML：Web Storage]
-- [N57] #link("https://www.rfc-editor.org/rfc/rfc7519.html")[IETF RFC 7519：JWT 结构与声明]
-- [N58] #link("https://www.rfc-editor.org/rfc/rfc8725.html")[IETF RFC 8725：JWT 验证最佳实践]
-- [N59] #link("https://grpc.io/docs/what-is-grpc/core-concepts/")[gRPC 官方文档：RPC 核心概念与调用生命周期]
-- [N60] #link("https://www.rfc-editor.org/rfc/rfc6455.html")[IETF RFC 6455：WebSocket 协议]
-- [N61] #link("https://fetch.spec.whatwg.org/#http-cors-protocol")[WHATWG Fetch：CORS 协议]
-- [N62] #link("https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/HowCloudFrontWorks.html")[Amazon CloudFront：边缘分发工作流程]
-- [N63] #link("https://www.rfc-editor.org/rfc/rfc9293.html")[IETF RFC 9293：TCP 报文和连接状态机]
-- [N64] #link("https://man7.org/linux/man-pages/man2/accept.2.html")[Linux man-pages：accept(2)]
-- [N65] #link("https://www.cisa.gov/sites/default/files/2024-03/understanding-and-responding-to-distributed-denial-of-service-attacks_508c.pdf")[CISA/FBI/MS-ISAC：DDoS 响应指南]
-- [N66] #link("https://docs.kernel.org/networking/ip-sysctl.html")[Linux 内核文档：TCP SYN 队列与 syncookies 参数]
-- [N67] #link("https://man7.org/linux/man-pages/man7/tcp.7.html")[Linux man-pages：tcp(7) 与半关闭状态参数]
-- [N68] #link("https://www.rfc-editor.org/rfc/rfc826.html")[IETF RFC 826：ARP 地址解析]
-- [N69] #link("https://www.rfc-editor.org/rfc/rfc792.html")[IETF RFC 792：ICMP 差错与回显消息]
-- [N70] #link("https://www.rfc-editor.org/rfc/rfc3022.html")[IETF RFC 3022：传统 NAT/NAPT]
-- [N71] #link("https://man7.org/linux/man-pages/man2/send.2.html")[Linux man-pages：send(2) 的返回值与错误]
-- [N72] #link("https://cheatsheetseries.owasp.org/cheatsheets/Cross_Site_Scripting_Prevention_Cheat_Sheet.html")[OWASP：XSS 防护速查]
-- [N73] #link("https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html")[OWASP：CSRF 防护速查]
-- [N74] #link("https://redis.io/docs/latest/operate/")[Redis 官方文档：运行与开发概览]
-- [N75] #link("https://www.mongodb.com/resources/basics/databases/nosql-explained")[MongoDB：关系与非关系数据模型]
-- [N76] #link("https://learn.microsoft.com/en-us/troubleshoot/microsoft-365-apps/access/database-normalization-description")[Microsoft：数据库规范化]
-- [N77] #link("https://dev.mysql.com/doc/refman/8.4/en/join.html")[MySQL JOIN 语法]
-- [N78] #link("https://dev.mysql.com/doc/refman/8.4/en/subquery-optimization.html")[MySQL 子查询优化]
-- [N79] #link("https://dev.mysql.com/doc/refman/8.4/en/char.html")[MySQL CHAR 与 VARCHAR]
-- [N80] #link("https://dev.mysql.com/doc/refman/8.4/en/blob.html")[MySQL BLOB 与 TEXT]
-- [N81] #link("https://dev.mysql.com/doc/refman/8.4/en/integer-types.html")[MySQL 整数类型]
-- [N82] #link("https://dev.mysql.com/doc/refman/8.4/en/precision-math.html")[MySQL 精确定点运算]
-- [N83] #link("https://dev.mysql.com/doc/refman/8.4/en/miscellaneous-functions.html")[MySQL IP 地址转换函数]
-- [N84] #link("https://dev.mysql.com/doc/refman/8.4/en/create-table-foreign-keys.html")[MySQL 外键约束]
-- [N85] #link("https://dev.mysql.com/doc/refman/8.4/en/functions.html")[MySQL 函数与运算符]
-- [N86] #link("https://dev.mysql.com/doc/refman/8.4/en/aggregate-functions.html")[MySQL 聚合函数]
-- [N87] #link("https://dev.mysql.com/doc/refman/8.4/en/truncate-table.html")[MySQL TRUNCATE TABLE]
-- [N88] #link("https://dev.mysql.com/doc/refman/8.4/en/select.html")[MySQL SELECT 语法]
-- [N89] #link("https://dev.mysql.com/doc/refman/8.4/en/window-function-descriptions.html")[MySQL 窗口函数]
-- [N90] #link("https://dev.mysql.com/doc/refman/8.4/en/storage-engines.html")[MySQL 存储引擎]
-- [N91] #link("https://dev.mysql.com/doc/refman/8.4/en/innodb-buffer-pool.html")[MySQL Buffer Pool]
-- [N92] #link("https://dev.mysql.com/doc/refman/8.4/en/binary-log.html")[MySQL Binary Log 与组提交]
-- [N93] #link("https://dev.mysql.com/doc/refman/8.4/en/data-dictionary-file-removal.html")[MySQL 移除基于文件的元数据存储]
-- [N94] #link("https://dev.mysql.com/doc/refman/8.4/en/innodb-file-per-table-tablespaces.html")[MySQL 独立表空间]
-- [N95] #link("https://dev.mysql.com/doc/refman/8.4/en/innodb-auto-increment-handling.html")[MySQL InnoDB AUTO_INCREMENT]
-- [N96] #link("https://dev.mysql.com/doc/refman/8.4/en/index-condition-pushdown-optimization.html")[MySQL 索引条件下推]
-- [N97] #link("https://dev.mysql.com/doc/refman/8.4/en/column-indexes.html")[MySQL 列索引与前缀索引]
-- [N98] #link("https://dev.mysql.com/doc/refman/8.4/en/innodb-deadlocks-handling.html")[MySQL 死锁处理]
-- [N99] #link("https://dev.mysql.com/doc/refman/8.4/en/metadata-locking.html")[MySQL 元数据锁]
-- [N100] #link("https://dev.mysql.com/doc/refman/8.4/en/innodb-parameters.html")[MySQL InnoDB 参数]
-- [N101] #link("https://dev.mysql.com/doc/refman/8.4/en/innodb-checkpoints.html")[MySQL Checkpoint]
-- [N102] #link("https://dev.mysql.com/doc/refman/8.4/en/innodb-doublewrite-buffer.html")[MySQL Doublewrite Buffer]
-- [N103] #link("https://dev.mysql.com/doc/refman/8.4/en/limit-optimization.html")[MySQL LIMIT 优化]
-- [N104] #link("https://dev.mysql.com/doc/refman/8.4/en/replication-implementation.html")[MySQL 复制实现]
-- [N105] #link("https://dev.mysql.com/doc/refman/8.4/en/replication-semisync.html")[MySQL 半同步复制]
-- [N106] #link("https://dev.mysql.com/doc/refman/8.4/en/replication-gtids-concepts.html")[MySQL GTID 概念]
-- [N107] #link("https://learn.microsoft.com/en-us/azure/architecture/patterns/sharding")[Azure：分片模式]
-- [N108] #link("https://github.com/redis/redis/tree/7.2/src")[Redis 7.2 源码：ZSet、渐进 rehash 与 listpack]
-- [N109] #link("https://github.com/redis/redis/blob/7.2.0/src/listpack.c")[Redis 7.2 listpack source]
-- [N110] #link("https://github.com/redis/redis/blob/7.2.0/src/dict.c")[Redis 7.2 dictionary source]
-- [N111] #link("https://github.com/redis/redis/blob/7.2.0/src/sds.h")[Redis 7.2 SDS source]
-- [N112] #link("https://github.com/redis/redis/blob/7.2.0/src/ae.c")[Redis 7.2 event loop source]
-- [N113] #link("https://redis.io/docs/latest/operate/oss_and_stack/management/optimization/latency/")[Redis 延迟排查]
-- [N114] #link("https://redis.io/docs/latest/develop/using-commands/transactions/")[Redis 事务]
-- [N115] #link("https://redis.io/docs/latest/develop/using-commands/pipelining/")[Redis Pipeline]
-- [N116] #link("https://redis.io/docs/latest/commands/expire/")[Redis EXPIRE]
-- [N117] #link("https://redis.io/docs/latest/operate/oss_and_stack/management/replication/")[Redis 复制]
-- [N118] #link("https://redis.io/docs/latest/operate/oss_and_stack/management/sentinel/")[Redis Sentinel]
-- [N119] #link("https://redis.io/docs/latest/operate/oss_and_stack/reference/cluster-spec/")[Redis Cluster 规范]
-- [N120] #link("https://redis.io/docs/latest/develop/reference/client-side-caching/")[Redis 客户端缓存]
-- [N121] #link("https://learn.microsoft.com/en-us/azure/architecture/patterns/cache-aside")[Azure：Cache Aside 模式]
-- [N122] #link("https://redis.io/docs/latest/commands/scan/")[Redis SCAN]
-- [N123] #link("https://redis.io/docs/latest/develop/data-types/streams/")[Redis Streams]
-- [N124] #link("https://dev.mysql.com/doc/refman/8.4/en/innodb-locking-reads.html")[MySQL InnoDB 锁定读]
-- [N125] #link("https://dev.mysql.com/doc/refman/8.4/en/locking-functions.html")[MySQL 命名锁函数]
-- [N126] #link("https://zookeeper.apache.org/doc/current/recipes.html")[ZooKeeper Recipes]
-- [N127] #link("https://sre.google/sre-book/handling-overload/")[Google SRE：处理过载]
-- [N128] #link("https://rocketmq.apache.org/docs/domainModel/01main/")[RocketMQ 5.0 架构]
-- [N129] #link("https://www.rabbitmq.com/docs/exchanges")[RabbitMQ 交换机]
-- [N130] #link("https://kafka.apache.org/41/design/design/")[Kafka 4.1 设计]
-- [N131] #link("https://rocketmq.apache.org/docs/featureBehavior/03fifomessage/")[RocketMQ 5.0 顺序消息]
-- [N132] #link("https://kafka.apache.org/41/operations/monitoring/")[Kafka 4.1 监控]
-- [N133] #link("https://rocketmq.apache.org/docs/featureBehavior/10consumerretrypolicy/")[RocketMQ 5.0 消费重试]
-- [N134] #link("https://www.rabbitmq.com/docs/dlx")[RabbitMQ Dead Letter Exchanges]
-- [N135] #link("https://rocketmq.apache.org/docs/featureBehavior/02delaymessage/")[RocketMQ 5.0 定时消息]
-- [N136] #link("https://rocketmq.apache.org/docs/featureBehavior/04transactionmessage/")[RocketMQ 5.0 事务消息]
-- [N137] #link("https://rocketmq.apache.org/docs/4.x/bestPractice/01bestpractice/")[RocketMQ 4.x 存储架构]
-- [N138] #link("https://kafka.apache.org/41/configuration/consumer-configs/")[Kafka 4.1 Consumer 配置]
-- [N139] #link("https://www.rabbitmq.com/docs/confirms")[RabbitMQ 消息确认]
-- [N140] #link("https://www.rabbitmq.com/docs/consumer-prefetch")[RabbitMQ Consumer Prefetch]
-- [N141] #link("https://www.rabbitmq.com/docs/quorum-queues")[RabbitMQ Quorum Queues]
-- [N142] #link("https://jepsen.io/consistency")[Jepsen：一致性模型]
-- [N143] #link("https://grpc.io/docs/guides/deadlines/")[gRPC Deadlines]
-- [N144] #link("https://zookeeper.apache.org/doc/current/zookeeperInternals.html")[ZooKeeper Internals：ZAB]
-- [N145] #link("https://opentelemetry.io/docs/concepts/signals/traces/")[OpenTelemetry Traces]
-- [N146] #link("https://seata.apache.org/docs/dev/mode/at-mode/")[Apache Seata AT 模式]
-- [N147] #link("https://eel.is/c++draft/priority.queue")[C++ 工作草案：优先队列适配器]
-- [N148] #link("https://eel.is/c++draft/sort")[C++ 工作草案：sort 的要求]
-- [N149] #link("https://raw.githubusercontent.com/gcc-mirror/gcc/master/libstdc%2B%2B-v3/include/bits/stl_algo.h")[GCC libstdc++：排序算法实现]
-- [N150] #link("https://github.com/kevin-wayne/algs4/blob/master/src/main/java/edu/princeton/cs/algs4/RedBlackBST.java")[Sedgewick/Wayne Algorithms：红黑树参考实现]
-- [N151] #link("https://github.com/kevin-wayne/algs4/blob/master/src/main/java/edu/princeton/cs/algs4/AVLTreeST.java")[Sedgewick/Wayne Algorithms：AVL 树参考实现]
-- [N152] #link("https://github.com/redis/redis/blob/8.0/src/t_zset.c")[Redis 8.0 源码：有序集合跳表实现]
-- [N153] #link("https://github.com/kevin-wayne/algs4/blob/master/src/main/java/edu/princeton/cs/algs4/TrieST.java")[Sedgewick/Wayne Algorithms：Trie 参考实现]
-- [N154] #link("https://opendsa-server.cs.vt.edu/ODSA/Books/CS3/html/ExternalSort.html")[OpenDSA 教材：外部排序与多路归并]
-- [N155] #link("https://github.com/kevin-wayne/algs4/blob/master/src/main/java/edu/princeton/cs/algs4/Graph.java")[Sedgewick/Wayne Algorithms：邻接表图实现]
-- [N156] #link("https://jeffe.cs.illinois.edu/teaching/algorithms/book/04-greedy.pdf")[Jeff Erickson Algorithms：Greedy Algorithms]
-- [N157] #link("https://jeffe.cs.illinois.edu/teaching/algorithms/book/03-dynprog.pdf")[Jeff Erickson Algorithms：Dynamic Programming]
-- [N158] #link("https://docs.python.org/3/reference/datamodel.html")[Python 数据模型]
-- [N159] #link("https://docs.python.org/3/reference/expressions.html")[Python 表达式]
-- [N160] #link("https://docs.python.org/3/library/stdtypes.html")[Python 内置类型]
-- [N161] #link("https://docs.python.org/3/library/functions.html")[Python 内置函数]
-- [N162] #link("https://docs.python.org/3/library/collections.html")[Python collections 模块]
-- [N163] #link("https://github.com/python/cpython/blob/3.14/Objects/listobject.c")[CPython listobject.c 实现]
-- [N164] #link("https://docs.python.org/3/library/copy.html")[Python copy 模块]
-- [N165] #link("https://docs.python.org/3/library/io.html")[Python io]
-- [N166] #link("https://github.com/python/cpython/blob/3.14/Objects/dictobject.c")[CPython dictobject.c 实现]
-- [N167] #link("https://docs.python.org/3/tutorial/controlflow.html")[Python 函数与参数]
-- [N168] #link("https://docs.python.org/3/reference/compound_stmts.html")[Python 复合语句]
-- [N169] #link("https://docs.python.org/3/reference/executionmodel.html")[Python 执行模型与名字绑定]
-- [N170] #link("https://docs.python.org/3/library/functools.html")[Python functools 模块]
-- [N171] #link("https://docs.python.org/3/library/asyncio-task.html")[Python asyncio 任务]
-- [N172] #link("https://docs.python.org/3/tutorial/classes.html")[Python 类教程]
-- [N173] #link("https://docs.python.org/3/howto/descriptor.html")[Python 描述符指南]
-- [N174] #link("https://docs.python.org/3/library/dataclasses.html")[Python dataclasses]
-- [N175] #link("https://docs.python.org/3/library/typing.html")[Python typing]
-- [N176] #link("https://docs.python.org/3/library/exceptions.html")[Python 异常]
-- [N177] #link("https://docs.python.org/3/library/contextlib.html")[Python contextlib 模块]
-- [N178] #link("https://docs.python.org/3/reference/import.html")[Python 导入系统]
-- [N179] #link("https://docs.python.org/3/tutorial/modules.html#compiled-python-files")[Python 编译与字节码缓存]
-- [N180] #link("https://docs.python.org/3/library/venv.html")[Python venv]
-- [N181] #link("https://docs.pydantic.dev/latest/concepts/models/")[Pydantic 模型]
-- [N182] #link("https://docs.python.org/3/library/json.html")[Python JSON 编解码]
-- [N183] #link("https://docs.python.org/3/howto/free-threading-python.html")[Python 自由线程指南]
-- [N184] #link("https://docs.python.org/3/library/threading.html")[Python threading]
-- [N185] #link("https://docs.python.org/3/library/multiprocessing.html")[Python multiprocessing]
-- [N186] #link("https://docs.python.org/3/library/asyncio-sync.html")[Python asyncio 同步原语]
-- [N187] #link("https://docs.python.org/3/library/queue.html")[Python queue]
-- [N188] #link("https://docs.python.org/3/library/concurrent.futures.html")[Python concurrent.futures]
-- [N189] #link("https://docs.python.org/3/library/contextvars.html")[Python contextvars]
-- [N190] #link("https://docs.python.org/3/c-api/memory.html")[CPython 内存管理]
-- [N191] #link("https://docs.python.org/3/library/gc.html")[Python gc]
-- [N192] #link("https://docs.python.org/3/library/tracemalloc.html")[Python tracemalloc]
-- [N193] #link("https://docs.python.org/3/library/dis.html")[Python dis]
-- [N194] #link("https://docs.python.org/3/library/profile.html")[Python 性能分析器]
-- [N195] #link("https://man7.org/linux/man-pages/man1/ps.1.html")[procps-ng ps 手册]
-- [N196] #link("https://man7.org/linux/man-pages/man1/top.1.html")[procps-ng ps、top、free 与 vmstat 手册]
-- [N197] #link("https://man7.org/linux/man-pages/man2/kill.2.html")[Linux kill(2) 信号语义]
-- [N198] #link("https://man7.org/linux/man-pages/man8/ss.8.html")[iproute2 ss 手册]
-- [N199] #link("https://man.openbsd.org/nc")[OpenBSD nc 手册]
-- [N200] #link("https://curl.se/docs/manpage.html")[curl 官方手册]
-- [N201] #link("https://man7.org/linux/man-pages/man1/free.1.html")[procps-ng free 手册]
-- [N202] #link("https://man7.org/linux/man-pages/man5/proc_meminfo.5.html")[Linux /proc/loadavg 与 /proc/meminfo]
-- [N203] #link("https://man7.org/linux/man-pages/man8/vmstat.8.html")[procps-ng vmstat 手册]
-- [N204] #link("https://www.gnu.org/software/sed/manual/sed.html")[GNU sed 手册]
-- [N205] #link("https://www.gnu.org/software/gawk/manual/gawk.html")[GNU awk 手册]
-- [N206] #link("https://www.gnu.org/software/coreutils/manual/coreutils.html")[GNU coreutils 手册]
-- [N207] #link("https://man7.org/linux/man-pages/man5/proc_loadavg.5.html")[Linux /proc/loadavg]
-- [N208] #link("https://git-scm.com/docs")[Git 官方命令手册]
-- [N209] #link("https://git-scm.com/docs/git-diff")[Git diff]
-- [N210] #link("https://git-scm.com/docs/git-rebase")[Git rebase]
-- [N211] #link("https://git-scm.com/docs/git-fetch")[Git fetch]
-- [N212] #link("https://git-scm.com/docs/git-checkout")[Git checkout 与 detached HEAD]
-- [N213] #link("https://git-scm.com/docs/git-reset")[Git reset]
-- [N214] #link("https://git-scm.com/docs/git-revert")[Git revert]
-- [N215] #link("https://git-scm.com/docs/git-stash")[Git stash]
-- [N216] #link("https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/removing-sensitive-data-from-a-repository")[GitHub 移除敏感数据指南]
-- [N217] #link("https://git-scm.com/docs/gitignore")[Git gitignore]
-- [N218] #link("https://git-scm.com/book/en/v2/Distributed-Git-Distributed-Workflows")[Pro Git 分布式工作流]
-- [N219] #link("https://git-scm.com/docs/git-log")[Git log]
-- [N220] #link("https://git-scm.com/docs/git-tag")[Git tag]
-- [N221] #link("https://git-scm.com/docs/git-bisect")[Git bisect]
-- [N222] #link("https://docs.docker.com/get-started/docker-overview/")[Docker 架构与对象]
-- [N223] #link("https://docs.kernel.org/admin-guide/cgroup-v2.html")[Linux cgroup v2 文档]
-- [N224] #link("https://docs.docker.com/reference/dockerfile/")[Dockerfile 参考]
-- [N225] #link("https://docs.docker.com/build/building/best-practices/")[Docker 构建最佳实践]
-- [N226] #link("https://docs.docker.com/engine/storage/")[Docker 存储概览]
-- [N227] #link("https://docs.docker.com/engine/containers/run/")[Docker run 参考]
-- [N228] #link("https://docs.docker.com/build/building/multi-stage/")[Docker 多阶段构建]
-- [N229] #link("https://docs.docker.com/engine/network/")[Docker 网络概览]
-- [N230] #link("https://docs.docker.com/compose/")[Docker Compose 文档]
-- [N231] #link("https://kubernetes.io/docs/setup/production-environment/container-runtimes/")[Kubernetes 容器运行时]
-- [N232] #link("https://docs.docker.com/engine/manage-resources/pruning/")[Docker 资源清理]
-- [N233] #link("https://www.mongodb.com/docs/manual/data-modeling/")[MongoDB：文档建模]
-- [N234] #link("https://www.mongodb.com/docs/manual/replication/")[MongoDB：副本集]
-- [N235] #link("https://hadoop.apache.org/docs/stable/hadoop-project-dist/hadoop-hdfs/HdfsDesign.html")[Apache Hadoop：HDFS 架构]
-- [N236] #link("https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines")[C++ Core Guidelines：接口、工厂与类设计]
-- [N237] #link("https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html")[OWASP：密码存储]
-- [N238] #link("https://openid.net/specs/openid-connect-core-1_0.html")[OpenID Connect Core 1.0]
-- [N239] #link("https://cheatsheetseries.owasp.org/cheatsheets/REST_Security_Cheat_Sheet.html")[OWASP：REST 接口安全]
-- [N240] #link("https://www.rfc-editor.org/rfc/rfc9421.html")[RFC 9421：HTTP 消息签名]
-- [N241] #link("https://sre.google/sre-book/service-level-objectives/")[Google SRE：服务级别目标]
-- [N242] #link("https://docs.oracle.com/en/java/javase/25/gctuning/introduction-garbage-collection-tuning.html")[Java 25：垃圾回收调优导论]
-- [N243] #link("https://go.dev/doc/gc-guide")[Go：垃圾回收指南]
-- [N244] #link("https://docs.nginx.com/nginx/admin-guide/load-balancer/tcp-udp-load-balancer/")[NGINX：TCP/UDP 负载均衡]
-- [N245] #link("https://learn.microsoft.com/en-us/azure/architecture/patterns/bulkhead")[Azure Architecture：舱壁隔离模式]
-- [N246] #link("https://prometheus.io/docs/introduction/overview/")[Prometheus：架构与抓取]
-- [N247] #link("https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Task.CDC.html")[AWS DMS：持续变更捕获]
-- [N248] #link("https://kubernetes.io/docs/concepts/overview/")[Kubernetes：声明式编排]
+- [N21] #link("https://eel.is/c++draft/stmt.ranged")[C++ 工作草案：范围 for 语句]
+- [N22] #link("https://eel.is/c++draft/dcl.enum")[C++ 工作草案：枚举声明]
+- [N23] #link("https://eel.is/c++draft/temp.variadic")[C++ 工作草案：变长参数模板]
+- [N24] #link("https://gcc.gnu.org/onlinedocs/cpp/Include-Syntax.html")[GCC 预处理器：头文件搜索]
+- [N25] #link("https://man7.org/linux/man-pages/man3/dlopen.3.html")[Linux man-pages：dlopen 与动态装载]
+- [N26] #link("https://gitlab.com/x86-psABIs/x86-64-ABI/-/raw/master/abi.pdf")[x86-64 System V ABI 规范]
+- [N27] #link("https://refspecs.linuxfoundation.org/elf/gabi4+/contents.html")[System V ABI：ELF 对象文件格式]
+- [N28] #link("https://www.kernel.org/doc/html/latest/arch/x86/boot.html")[Linux 内核 x86 启动协议]
+- [N29] #link("https://man7.org/linux/man-pages/man2/syscalls.2.html")[Linux man-pages：系统调用与库函数包装]
+- [N30] #link("https://man7.org/linux/man-pages/man7/pthreads.7.html")[Linux man-pages：POSIX 线程共享与独立资源]
+- [N31] #link("https://man7.org/linux/man-pages/man7/sched.7.html")[Linux man-pages：调度策略]
+- [N32] #link("https://docs.kernel.org/mm/page_tables.html")[Linux 内核文档：页表层次和地址转换]
+- [N33] #link("https://man7.org/linux/man-pages/man2/fork.2.html")[Linux man-pages：多线程进程 fork 的约束]
+- [N34] #link("https://man7.org/linux/man-pages/man7/signal.7.html")[Linux man-pages：信号机制]
+- [N35] #link("https://man7.org/linux/man-pages/man7/sem_overview.7.html")[Linux man-pages：POSIX 信号量]
+- [N36] #link("https://docs.kernel.org/scheduler/sched-eevdf.html")[Linux 内核文档：EEVDF 调度]
+- [N37] #link("https://man7.org/linux/man-pages/man3/pthread_spin_lock.3.html")[Linux man-pages：pthread 自旋锁]
+- [N38] #link("https://docs.kernel.org/locking/locktypes.html")[Linux 内核文档：锁类型与 PREEMPT_RT 差异]
+- [N39] #link("https://www.cs.utexas.edu/~EWD/transcriptions/EWD01xx/EWD108.html")[E. W. Dijkstra：银行家算法原稿 EWD108]
+- [N40] #link("https://docs.kernel.org/mm/multigen_lru.html")[Linux 内核文档：多代 LRU 页面回收]
+- [N41] #link("https://man7.org/linux/man-pages/man2/open.2.html")[Linux man-pages：文件描述符与打开文件描述]
+- [N42] #link("https://man7.org/linux/man-pages/man2/unlink.2.html")[Linux man-pages：unlink 后文件存续规则]
+- [N43] #link("https://docs.kernel.org/mm/page_cache.html")[Linux 内核文档：Page Cache]
+- [N44] #link("https://man7.org/linux/man-pages/man2/mmap.2.html")[Linux man-pages：mmap(2)]
+- [N45] #link("https://man7.org/linux/man-pages/man2/fsync.2.html")[Linux man-pages：fsync/fdatasync 的持久化边界]
+- [N46] #link("https://docs.kernel.org/core-api/genericirq.html")[Linux 内核文档：通用 IRQ 处理]
+- [N47] #link("https://docs.kernel.org/core-api/workqueue.html")[Linux 内核文档：工作队列]
+- [N48] #link("https://man7.org/linux/man-pages/man2/read.2.html")[Linux man-pages：read(2) 返回值与错误]
+- [N49] #link("https://man7.org/linux/man-pages/man7/epoll.7.html")[Linux man-pages：epoll(7) 就绪通知]
+- [N50] #link("https://www.rfc-editor.org/rfc/rfc1122.html")[IETF RFC 1122：Internet 主机分层要求]
+- [N51] #link("https://www.rfc-editor.org/rfc/rfc9110.html")[IETF RFC 9110：HTTP 方法、范围请求与代理语义]
+- [N52] #link("https://www.rfc-editor.org/rfc/rfc9112.html")[IETF RFC 9112：HTTP/1.1 报文边界与连接管理]
+- [N53] #link("https://www.rfc-editor.org/rfc/rfc9111.html")[IETF RFC 9111：HTTP 缓存及验证]
+- [N54] #link("https://man7.org/linux/man-pages/man5/hosts.5.html")[Linux man-pages：hosts(5) 与本地名称映射]
+- [N55] #link("https://www.rfc-editor.org/rfc/rfc4033.html")[IETF RFC 4033：DNSSEC 安全性与边界]
+- [N56] #link("https://www.rfc-editor.org/rfc/rfc7766.html")[IETF RFC 7766：DNS over TCP 实施要求]
+- [N57] #link("https://www.rfc-editor.org/rfc/rfc6265.html")[IETF RFC 6265：Cookie 状态管理]
+- [N58] #link("https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers/Set-Cookie")[Mozilla MDN：浏览器 Set-Cookie 属性]
+- [N59] #link("https://html.spec.whatwg.org/multipage/webstorage.html")[WHATWG HTML：Web Storage]
+- [N60] #link("https://www.rfc-editor.org/rfc/rfc7519.html")[IETF RFC 7519：JWT 结构与声明]
+- [N61] #link("https://www.rfc-editor.org/rfc/rfc8725.html")[IETF RFC 8725：JWT 验证最佳实践]
+- [N62] #link("https://grpc.io/docs/what-is-grpc/core-concepts/")[gRPC 官方文档：RPC 核心概念与调用生命周期]
+- [N63] #link("https://www.rfc-editor.org/rfc/rfc6455.html")[IETF RFC 6455：WebSocket 协议]
+- [N64] #link("https://fetch.spec.whatwg.org/#http-cors-protocol")[WHATWG Fetch：CORS 协议]
+- [N65] #link("https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/HowCloudFrontWorks.html")[Amazon CloudFront：边缘分发工作流程]
+- [N66] #link("https://www.rfc-editor.org/rfc/rfc9293.html")[IETF RFC 9293：TCP 报文和连接状态机]
+- [N67] #link("https://man7.org/linux/man-pages/man2/accept.2.html")[Linux man-pages：accept(2)]
+- [N68] #link("https://www.cisa.gov/sites/default/files/2024-03/understanding-and-responding-to-distributed-denial-of-service-attacks_508c.pdf")[CISA/FBI/MS-ISAC：DDoS 响应指南]
+- [N69] #link("https://docs.kernel.org/networking/ip-sysctl.html")[Linux 内核文档：TCP SYN 队列与 syncookies 参数]
+- [N70] #link("https://man7.org/linux/man-pages/man7/tcp.7.html")[Linux man-pages：tcp(7) 与半关闭状态参数]
+- [N71] #link("https://www.rfc-editor.org/rfc/rfc826.html")[IETF RFC 826：ARP 地址解析]
+- [N72] #link("https://www.rfc-editor.org/rfc/rfc792.html")[IETF RFC 792：ICMP 差错与回显消息]
+- [N73] #link("https://www.rfc-editor.org/rfc/rfc3022.html")[IETF RFC 3022：传统 NAT/NAPT]
+- [N74] #link("https://man7.org/linux/man-pages/man2/send.2.html")[Linux man-pages：send(2) 的返回值与错误]
+- [N75] #link("https://cheatsheetseries.owasp.org/cheatsheets/Cross_Site_Scripting_Prevention_Cheat_Sheet.html")[OWASP：XSS 防护速查]
+- [N76] #link("https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html")[OWASP：CSRF 防护速查]
+- [N77] #link("https://redis.io/docs/latest/operate/")[Redis 官方文档：运行与开发概览]
+- [N78] #link("https://www.mongodb.com/resources/basics/databases/nosql-explained")[MongoDB：关系与非关系数据模型]
+- [N79] #link("https://learn.microsoft.com/en-us/troubleshoot/microsoft-365-apps/access/database-normalization-description")[Microsoft：数据库规范化]
+- [N80] #link("https://dev.mysql.com/doc/refman/8.4/en/join.html")[MySQL JOIN 语法]
+- [N81] #link("https://dev.mysql.com/doc/refman/8.4/en/subquery-optimization.html")[MySQL 子查询优化]
+- [N82] #link("https://dev.mysql.com/doc/refman/8.4/en/char.html")[MySQL CHAR 与 VARCHAR]
+- [N83] #link("https://dev.mysql.com/doc/refman/8.4/en/blob.html")[MySQL BLOB 与 TEXT]
+- [N84] #link("https://dev.mysql.com/doc/refman/8.4/en/integer-types.html")[MySQL 整数类型]
+- [N85] #link("https://dev.mysql.com/doc/refman/8.4/en/precision-math.html")[MySQL 精确定点运算]
+- [N86] #link("https://dev.mysql.com/doc/refman/8.4/en/miscellaneous-functions.html")[MySQL IP 地址转换函数]
+- [N87] #link("https://dev.mysql.com/doc/refman/8.4/en/create-table-foreign-keys.html")[MySQL 外键约束]
+- [N88] #link("https://dev.mysql.com/doc/refman/8.4/en/functions.html")[MySQL 函数与运算符]
+- [N89] #link("https://dev.mysql.com/doc/refman/8.4/en/aggregate-functions.html")[MySQL 聚合函数]
+- [N90] #link("https://dev.mysql.com/doc/refman/8.4/en/truncate-table.html")[MySQL TRUNCATE TABLE]
+- [N91] #link("https://dev.mysql.com/doc/refman/8.4/en/select.html")[MySQL SELECT 语法]
+- [N92] #link("https://dev.mysql.com/doc/refman/8.4/en/window-function-descriptions.html")[MySQL 窗口函数]
+- [N93] #link("https://dev.mysql.com/doc/refman/8.4/en/storage-engines.html")[MySQL 存储引擎]
+- [N94] #link("https://dev.mysql.com/doc/refman/8.4/en/innodb-buffer-pool.html")[MySQL Buffer Pool]
+- [N95] #link("https://dev.mysql.com/doc/refman/8.4/en/binary-log.html")[MySQL Binary Log 与组提交]
+- [N96] #link("https://dev.mysql.com/doc/refman/8.4/en/data-dictionary-file-removal.html")[MySQL 移除基于文件的元数据存储]
+- [N97] #link("https://dev.mysql.com/doc/refman/8.4/en/innodb-file-per-table-tablespaces.html")[MySQL 独立表空间]
+- [N98] #link("https://dev.mysql.com/doc/refman/8.4/en/innodb-auto-increment-handling.html")[MySQL InnoDB AUTO_INCREMENT]
+- [N99] #link("https://dev.mysql.com/doc/refman/8.4/en/index-condition-pushdown-optimization.html")[MySQL 索引条件下推]
+- [N100] #link("https://dev.mysql.com/doc/refman/8.4/en/column-indexes.html")[MySQL 列索引与前缀索引]
+- [N101] #link("https://dev.mysql.com/doc/refman/8.4/en/innodb-deadlocks-handling.html")[MySQL 死锁处理]
+- [N102] #link("https://dev.mysql.com/doc/refman/8.4/en/metadata-locking.html")[MySQL 元数据锁]
+- [N103] #link("https://dev.mysql.com/doc/refman/8.4/en/innodb-parameters.html")[MySQL InnoDB 参数]
+- [N104] #link("https://dev.mysql.com/doc/refman/8.4/en/innodb-checkpoints.html")[MySQL Checkpoint]
+- [N105] #link("https://dev.mysql.com/doc/refman/8.4/en/innodb-doublewrite-buffer.html")[MySQL Doublewrite Buffer]
+- [N106] #link("https://dev.mysql.com/doc/refman/8.4/en/limit-optimization.html")[MySQL LIMIT 优化]
+- [N107] #link("https://dev.mysql.com/doc/refman/8.4/en/replication-implementation.html")[MySQL 复制实现]
+- [N108] #link("https://dev.mysql.com/doc/refman/8.4/en/replication-semisync.html")[MySQL 半同步复制]
+- [N109] #link("https://dev.mysql.com/doc/refman/8.4/en/replication-gtids-concepts.html")[MySQL GTID 概念]
+- [N110] #link("https://learn.microsoft.com/en-us/azure/architecture/patterns/sharding")[Azure：分片模式]
+- [N111] #link("https://github.com/redis/redis/tree/7.2/src")[Redis 7.2 源码：ZSet、渐进 rehash 与 listpack]
+- [N112] #link("https://github.com/redis/redis/blob/7.2.0/src/listpack.c")[Redis 7.2 listpack source]
+- [N113] #link("https://github.com/redis/redis/blob/7.2.0/src/dict.c")[Redis 7.2 dictionary source]
+- [N114] #link("https://github.com/redis/redis/blob/7.2.0/src/sds.h")[Redis 7.2 SDS source]
+- [N115] #link("https://github.com/redis/redis/blob/7.2.0/src/ae.c")[Redis 7.2 event loop source]
+- [N116] #link("https://redis.io/docs/latest/operate/oss_and_stack/management/optimization/latency/")[Redis 延迟排查]
+- [N117] #link("https://redis.io/docs/latest/develop/using-commands/transactions/")[Redis 事务]
+- [N118] #link("https://redis.io/docs/latest/develop/using-commands/pipelining/")[Redis Pipeline]
+- [N119] #link("https://redis.io/docs/latest/commands/expire/")[Redis EXPIRE]
+- [N120] #link("https://redis.io/docs/latest/operate/oss_and_stack/management/replication/")[Redis 复制]
+- [N121] #link("https://redis.io/docs/latest/operate/oss_and_stack/management/sentinel/")[Redis Sentinel]
+- [N122] #link("https://redis.io/docs/latest/operate/oss_and_stack/reference/cluster-spec/")[Redis Cluster 规范]
+- [N123] #link("https://redis.io/docs/latest/develop/reference/client-side-caching/")[Redis 客户端缓存]
+- [N124] #link("https://learn.microsoft.com/en-us/azure/architecture/patterns/cache-aside")[Azure：Cache Aside 模式]
+- [N125] #link("https://redis.io/docs/latest/commands/scan/")[Redis SCAN]
+- [N126] #link("https://redis.io/docs/latest/develop/data-types/streams/")[Redis Streams]
+- [N127] #link("https://dev.mysql.com/doc/refman/8.4/en/innodb-locking-reads.html")[MySQL InnoDB 锁定读]
+- [N128] #link("https://dev.mysql.com/doc/refman/8.4/en/locking-functions.html")[MySQL 命名锁函数]
+- [N129] #link("https://zookeeper.apache.org/doc/current/recipes.html")[ZooKeeper Recipes]
+- [N130] #link("https://sre.google/sre-book/handling-overload/")[Google SRE：处理过载]
+- [N131] #link("https://rocketmq.apache.org/docs/domainModel/01main/")[RocketMQ 5.0 架构]
+- [N132] #link("https://www.rabbitmq.com/docs/exchanges")[RabbitMQ 交换机]
+- [N133] #link("https://kafka.apache.org/41/design/design/")[Kafka 4.1 设计]
+- [N134] #link("https://rocketmq.apache.org/docs/featureBehavior/03fifomessage/")[RocketMQ 5.0 顺序消息]
+- [N135] #link("https://kafka.apache.org/41/operations/monitoring/")[Kafka 4.1 监控]
+- [N136] #link("https://rocketmq.apache.org/docs/featureBehavior/10consumerretrypolicy/")[RocketMQ 5.0 消费重试]
+- [N137] #link("https://www.rabbitmq.com/docs/dlx")[RabbitMQ Dead Letter Exchanges]
+- [N138] #link("https://rocketmq.apache.org/docs/featureBehavior/02delaymessage/")[RocketMQ 5.0 定时消息]
+- [N139] #link("https://rocketmq.apache.org/docs/featureBehavior/04transactionmessage/")[RocketMQ 5.0 事务消息]
+- [N140] #link("https://rocketmq.apache.org/docs/4.x/bestPractice/01bestpractice/")[RocketMQ 4.x 存储架构]
+- [N141] #link("https://kafka.apache.org/41/configuration/consumer-configs/")[Kafka 4.1 Consumer 配置]
+- [N142] #link("https://www.rabbitmq.com/docs/confirms")[RabbitMQ 消息确认]
+- [N143] #link("https://www.rabbitmq.com/docs/consumer-prefetch")[RabbitMQ Consumer Prefetch]
+- [N144] #link("https://www.rabbitmq.com/docs/quorum-queues")[RabbitMQ Quorum Queues]
+- [N145] #link("https://jepsen.io/consistency")[Jepsen：一致性模型]
+- [N146] #link("https://grpc.io/docs/guides/deadlines/")[gRPC Deadlines]
+- [N147] #link("https://zookeeper.apache.org/doc/current/zookeeperInternals.html")[ZooKeeper Internals：ZAB]
+- [N148] #link("https://opentelemetry.io/docs/concepts/signals/traces/")[OpenTelemetry Traces]
+- [N149] #link("https://seata.apache.org/docs/dev/mode/at-mode/")[Apache Seata AT 模式]
+- [N150] #link("https://eel.is/c++draft/priority.queue")[C++ 工作草案：优先队列适配器]
+- [N151] #link("https://eel.is/c++draft/sort")[C++ 工作草案：sort 的要求]
+- [N152] #link("https://raw.githubusercontent.com/gcc-mirror/gcc/master/libstdc%2B%2B-v3/include/bits/stl_algo.h")[GCC libstdc++：排序算法实现]
+- [N153] #link("https://github.com/kevin-wayne/algs4/blob/master/src/main/java/edu/princeton/cs/algs4/RedBlackBST.java")[Sedgewick/Wayne Algorithms：红黑树参考实现]
+- [N154] #link("https://github.com/kevin-wayne/algs4/blob/master/src/main/java/edu/princeton/cs/algs4/AVLTreeST.java")[Sedgewick/Wayne Algorithms：AVL 树参考实现]
+- [N155] #link("https://github.com/redis/redis/blob/8.0/src/t_zset.c")[Redis 8.0 源码：有序集合跳表实现]
+- [N156] #link("https://github.com/kevin-wayne/algs4/blob/master/src/main/java/edu/princeton/cs/algs4/TrieST.java")[Sedgewick/Wayne Algorithms：Trie 参考实现]
+- [N157] #link("https://opendsa-server.cs.vt.edu/ODSA/Books/CS3/html/ExternalSort.html")[OpenDSA 教材：外部排序与多路归并]
+- [N158] #link("https://github.com/kevin-wayne/algs4/blob/master/src/main/java/edu/princeton/cs/algs4/Graph.java")[Sedgewick/Wayne Algorithms：邻接表图实现]
+- [N159] #link("https://jeffe.cs.illinois.edu/teaching/algorithms/book/04-greedy.pdf")[Jeff Erickson Algorithms：Greedy Algorithms]
+- [N160] #link("https://jeffe.cs.illinois.edu/teaching/algorithms/book/03-dynprog.pdf")[Jeff Erickson Algorithms：Dynamic Programming]
+- [N161] #link("https://docs.python.org/3/reference/datamodel.html")[Python 数据模型]
+- [N162] #link("https://docs.python.org/3/reference/expressions.html")[Python 表达式]
+- [N163] #link("https://docs.python.org/3/library/stdtypes.html")[Python 内置类型]
+- [N164] #link("https://docs.python.org/3/library/functions.html")[Python 内置函数]
+- [N165] #link("https://docs.python.org/3/library/collections.html")[Python collections 模块]
+- [N166] #link("https://github.com/python/cpython/blob/3.14/Objects/listobject.c")[CPython listobject.c 实现]
+- [N167] #link("https://docs.python.org/3/library/copy.html")[Python copy 模块]
+- [N168] #link("https://docs.python.org/3/library/io.html")[Python io]
+- [N169] #link("https://github.com/python/cpython/blob/3.14/Objects/dictobject.c")[CPython dictobject.c 实现]
+- [N170] #link("https://docs.python.org/3/tutorial/controlflow.html")[Python 函数与参数]
+- [N171] #link("https://docs.python.org/3/reference/compound_stmts.html")[Python 复合语句]
+- [N172] #link("https://docs.python.org/3/reference/executionmodel.html")[Python 执行模型与名字绑定]
+- [N173] #link("https://docs.python.org/3/library/functools.html")[Python functools 模块]
+- [N174] #link("https://docs.python.org/3/library/asyncio-task.html")[Python asyncio 任务]
+- [N175] #link("https://docs.python.org/3/tutorial/classes.html")[Python 类教程]
+- [N176] #link("https://docs.python.org/3/howto/descriptor.html")[Python 描述符指南]
+- [N177] #link("https://docs.python.org/3/library/dataclasses.html")[Python dataclasses]
+- [N178] #link("https://docs.python.org/3/library/typing.html")[Python typing]
+- [N179] #link("https://docs.python.org/3/library/exceptions.html")[Python 异常]
+- [N180] #link("https://docs.python.org/3/library/contextlib.html")[Python contextlib 模块]
+- [N181] #link("https://docs.python.org/3/reference/import.html")[Python 导入系统]
+- [N182] #link("https://docs.python.org/3/tutorial/modules.html#compiled-python-files")[Python 编译与字节码缓存]
+- [N183] #link("https://docs.python.org/3/library/venv.html")[Python venv]
+- [N184] #link("https://docs.pydantic.dev/latest/concepts/models/")[Pydantic 模型]
+- [N185] #link("https://docs.python.org/3/library/json.html")[Python JSON 编解码]
+- [N186] #link("https://docs.python.org/3/howto/free-threading-python.html")[Python 自由线程指南]
+- [N187] #link("https://docs.python.org/3/library/threading.html")[Python threading]
+- [N188] #link("https://docs.python.org/3/library/multiprocessing.html")[Python multiprocessing]
+- [N189] #link("https://docs.python.org/3/library/asyncio-sync.html")[Python asyncio 同步原语]
+- [N190] #link("https://docs.python.org/3/library/queue.html")[Python queue]
+- [N191] #link("https://docs.python.org/3/library/concurrent.futures.html")[Python concurrent.futures]
+- [N192] #link("https://docs.python.org/3/library/contextvars.html")[Python contextvars]
+- [N193] #link("https://docs.python.org/3/c-api/memory.html")[CPython 内存管理]
+- [N194] #link("https://docs.python.org/3/library/gc.html")[Python gc]
+- [N195] #link("https://docs.python.org/3/library/tracemalloc.html")[Python tracemalloc]
+- [N196] #link("https://docs.python.org/3/library/dis.html")[Python dis]
+- [N197] #link("https://docs.python.org/3/library/profile.html")[Python 性能分析器]
+- [N198] #link("https://man7.org/linux/man-pages/man1/ps.1.html")[procps-ng ps 手册]
+- [N199] #link("https://man7.org/linux/man-pages/man1/top.1.html")[procps-ng ps、top、free 与 vmstat 手册]
+- [N200] #link("https://man7.org/linux/man-pages/man2/kill.2.html")[Linux kill(2) 信号语义]
+- [N201] #link("https://man7.org/linux/man-pages/man8/ss.8.html")[iproute2 ss 手册]
+- [N202] #link("https://man.openbsd.org/nc")[OpenBSD nc 手册]
+- [N203] #link("https://curl.se/docs/manpage.html")[curl 官方手册]
+- [N204] #link("https://man7.org/linux/man-pages/man1/free.1.html")[procps-ng free 手册]
+- [N205] #link("https://man7.org/linux/man-pages/man5/proc_meminfo.5.html")[Linux /proc/loadavg 与 /proc/meminfo]
+- [N206] #link("https://man7.org/linux/man-pages/man8/vmstat.8.html")[procps-ng vmstat 手册]
+- [N207] #link("https://www.gnu.org/software/sed/manual/sed.html")[GNU sed 手册]
+- [N208] #link("https://www.gnu.org/software/gawk/manual/gawk.html")[GNU awk 手册]
+- [N209] #link("https://www.gnu.org/software/coreutils/manual/coreutils.html")[GNU coreutils 手册]
+- [N210] #link("https://man7.org/linux/man-pages/man5/proc_loadavg.5.html")[Linux /proc/loadavg]
+- [N211] #link("https://git-scm.com/docs")[Git 官方命令手册]
+- [N212] #link("https://git-scm.com/docs/git-diff")[Git diff]
+- [N213] #link("https://git-scm.com/docs/git-rebase")[Git rebase]
+- [N214] #link("https://git-scm.com/docs/git-fetch")[Git fetch]
+- [N215] #link("https://git-scm.com/docs/git-checkout")[Git checkout 与 detached HEAD]
+- [N216] #link("https://git-scm.com/docs/git-reset")[Git reset]
+- [N217] #link("https://git-scm.com/docs/git-revert")[Git revert]
+- [N218] #link("https://git-scm.com/docs/git-stash")[Git stash]
+- [N219] #link("https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/removing-sensitive-data-from-a-repository")[GitHub 移除敏感数据指南]
+- [N220] #link("https://git-scm.com/docs/gitignore")[Git gitignore]
+- [N221] #link("https://git-scm.com/book/en/v2/Distributed-Git-Distributed-Workflows")[Pro Git 分布式工作流]
+- [N222] #link("https://git-scm.com/docs/git-log")[Git log]
+- [N223] #link("https://git-scm.com/docs/git-tag")[Git tag]
+- [N224] #link("https://git-scm.com/docs/git-bisect")[Git bisect]
+- [N225] #link("https://docs.docker.com/get-started/docker-overview/")[Docker 架构与对象]
+- [N226] #link("https://docs.kernel.org/admin-guide/cgroup-v2.html")[Linux cgroup v2 文档]
+- [N227] #link("https://docs.docker.com/reference/dockerfile/")[Dockerfile 参考]
+- [N228] #link("https://docs.docker.com/build/building/best-practices/")[Docker 构建最佳实践]
+- [N229] #link("https://docs.docker.com/engine/storage/")[Docker 存储概览]
+- [N230] #link("https://docs.docker.com/engine/containers/run/")[Docker run 参考]
+- [N231] #link("https://docs.docker.com/build/building/multi-stage/")[Docker 多阶段构建]
+- [N232] #link("https://docs.docker.com/engine/network/")[Docker 网络概览]
+- [N233] #link("https://docs.docker.com/compose/")[Docker Compose 文档]
+- [N234] #link("https://kubernetes.io/docs/setup/production-environment/container-runtimes/")[Kubernetes 容器运行时]
+- [N235] #link("https://docs.docker.com/engine/manage-resources/pruning/")[Docker 资源清理]
+- [N236] #link("https://www.mongodb.com/docs/manual/data-modeling/")[MongoDB：文档建模]
+- [N237] #link("https://www.mongodb.com/docs/manual/replication/")[MongoDB：副本集]
+- [N238] #link("https://hadoop.apache.org/docs/stable/hadoop-project-dist/hadoop-hdfs/HdfsDesign.html")[Apache Hadoop：HDFS 架构]
+- [N239] #link("https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines")[C++ Core Guidelines：接口、工厂与类设计]
+- [N240] #link("https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html")[OWASP：密码存储]
+- [N241] #link("https://openid.net/specs/openid-connect-core-1_0.html")[OpenID Connect Core 1.0]
+- [N242] #link("https://cheatsheetseries.owasp.org/cheatsheets/REST_Security_Cheat_Sheet.html")[OWASP：REST 接口安全]
+- [N243] #link("https://www.rfc-editor.org/rfc/rfc9421.html")[RFC 9421：HTTP 消息签名]
+- [N244] #link("https://sre.google/sre-book/service-level-objectives/")[Google SRE：服务级别目标]
+- [N245] #link("https://docs.oracle.com/en/java/javase/25/gctuning/introduction-garbage-collection-tuning.html")[Java 25：垃圾回收调优导论]
+- [N246] #link("https://go.dev/doc/gc-guide")[Go：垃圾回收指南]
+- [N247] #link("https://docs.nginx.com/nginx/admin-guide/load-balancer/tcp-udp-load-balancer/")[NGINX：TCP/UDP 负载均衡]
+- [N248] #link("https://learn.microsoft.com/en-us/azure/architecture/patterns/bulkhead")[Azure Architecture：舱壁隔离模式]
+- [N249] #link("https://prometheus.io/docs/introduction/overview/")[Prometheus：架构与抓取]
+- [N250] #link("https://docs.aws.amazon.com/dms/latest/userguide/CHAP_Task.CDC.html")[AWS DMS：持续变更捕获]
+- [N251] #link("https://kubernetes.io/docs/concepts/overview/")[Kubernetes：声明式编排]
