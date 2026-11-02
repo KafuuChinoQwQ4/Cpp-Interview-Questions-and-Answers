@@ -38,7 +38,7 @@
   #text("例如输出一个金额对象时，左侧是输出流，右侧才是金额。把输出运算符写成非成员友元，就能保持这种自然的调用顺序，同时读取内部保存的分数。友元应只服务于紧密协作的少数接口；友元关系不会自动传递、继承，也不意味着所有外部代码都能访问私有数据。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("#include <ostream>\nclass Money {\n  friend std::ostream& operator<<(std::ostream&, const Money&); // 类内明确授权\n  int cents_ = 0; // 其余代码不能直接访问\n};\nstd::ostream& operator<<(std::ostream& os, const Money& m) { // 是非成员函数\n  return os << m.cents_; // 左侧流和右侧对象都可自然参与调用\n} // 只授权这个紧密协作接口；不要为方便广泛开放 private", lang: "cpp", block: true)
+  #raw("#include <ostream>\nclass Money\n{\n    friend std::ostream& operator<<(std::ostream&, const Money&); // 类内明确授权\n    int cents_ = 0; // 其余代码不能直接访问\n};\nstd::ostream& operator<<(std::ostream& os, const Money& m)\n{ // 是非成员函数\n    return os << m.cents_; // 左侧流和右侧对象都可自然参与调用\n} // 只授权这个紧密协作接口；不要为方便广泛开放 private", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -49,7 +49,7 @@
   #text("例如绘图代码只接收“形状”，圆形和矩形各自计算面积，调用方无需知道具体类型。若对象可能通过基类指针删除，接口应提供公共虚析构函数，让派生部分也能正确释放。只在编译期要求某个类型具有指定操作时，也可以用模板或 C++20 concept，避免为了约束类型而强行建立继承关系。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("#include <memory>\nstruct Shape { virtual ~Shape() = default; // 经接口删除派生对象时正确析构\n  virtual double area() const = 0; // 接口规定行为，不能直接实例化\n};\nstruct Circle final : Shape { explicit Circle(double r) : r(r) {} double r;\n  double area() const override { return 3.14 * r * r; } };\nstd::unique_ptr<Shape> s = std::make_unique<Circle>(2.0);\nauto a = s->area(); // 若无需运行时异构分派，可用模板/concept 避免虚调用", lang: "cpp", block: true)
+  #raw("#include <memory>\nstruct Shape\n{\n    virtual ~Shape() = default; // 经接口删除派生对象时正确析构\n    virtual double area() const = 0; // 接口规定行为，不能直接实例化\n};\nstruct Circle final : Shape\n{\n    explicit Circle(double r)\n        : r(r)\n    {\n    }\n    double r;\n    double area() const override\n    {\n        return 3.14 * r * r;\n    }\n};\nstd::unique_ptr<Shape> s = std::make_unique<Circle>(2.0);\nauto a = s->area(); // 若无需运行时异构分派，可用模板/concept 避免虚调用", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -60,7 +60,7 @@
   #text("设计时应让符号保留读者熟悉的含义：向量加法产生新向量，+= 修改左边对象。重载不能创造新的符号，也不能改变优先级、结合方式或操作数数量；点号、作用域解析符和条件运算符不能重载。不要为了缩短代码而让加号执行文件删除等出人意料的动作，否则接口会比普通命名函数更难理解。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("struct Vec2 { double x, y; Vec2& operator+=(Vec2 b) { x += b.x; y += b.y; return *this; } };\nVec2 operator+(Vec2 a, Vec2 b) { return a += b; } // 非成员使两个操作数对称\nVec2 p{1, 2}, q{3, 4};\nVec2 sum = p + q; // 保持“加法产生新值”的直觉\n// 不改变运算符优先级或操作数个数；不能重载 ., :: 或 ?:\n// 重载前先确认使用者会把它理解成普通向量加法", lang: "cpp", block: true)
+  #raw("struct Vec2\n{\n    double x, y;\n    Vec2& operator+=(Vec2 b)\n    {\n        x += b.x;\n        y += b.y;\n        return *this;\n    }\n};\nVec2 operator+(Vec2 a, Vec2 b)\n{\n    return a += b;\n} // 非成员使两个操作数对称\nVec2 p{1, 2}, q{3, 4};\nVec2 sum = p + q; // 保持“加法产生新值”的直觉\n// 不改变运算符优先级或操作数个数；不能重载 ., :: 或 ?:\n// 重载前先确认使用者会把它理解成普通向量加法", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -71,7 +71,7 @@
   #text("例如读取接口规定 read，文件读取器和网络读取器分别提供实现，使用者通过接口引用调用即可。抽象类也能拥有数据、构造函数以及普通成员函数，并不是只能放函数声明。如果调用者通过基类指针销毁实现对象，应提供虚析构函数，使整个析构链执行；实际管理对象时通常交给智能指针，减少遗漏释放的机会。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("struct Reader { virtual ~Reader() = default;\n  virtual int read() = 0; // 未实现的纯虚函数令 Reader 抽象\n};\nstruct FileReader : Reader { int read() override { return 1; } };\n// Reader r; // 错误：抽象类不能直接构造\nReader* r = new FileReader;\ndelete r; // 虚析构保证派生析构也执行；实际代码优先用智能指针", lang: "cpp", block: true)
+  #raw("struct Reader\n{\n    virtual ~Reader() = default;\n    virtual int read() = 0; // 未实现的纯虚函数令 Reader 抽象\n};\nstruct FileReader : Reader\n{\n    int read() override\n    {\n        return 1;\n    }\n};\n// Reader r; // 错误：抽象类不能直接构造\nReader* r = new FileReader;\ndelete r; // 虚析构保证派生析构也执行；实际代码优先用智能指针", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -82,7 +82,7 @@
   #text("例如一般类型按值打印，而指针类型还需要判断是否为空，这时类模板偏特化就能表达规则。函数模板不能偏特化，通常用函数重载或约束表达类似选择。特化声明必须在需要选择它的位置可见，也要检查多个候选是否歧义；如果简单重载已经足够清楚，就没有必要建立复杂的特化层次。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("template<class T> struct Kind { static constexpr int value = 0; };\ntemplate<class T> struct Kind<T*> { static constexpr int value = 1; }; // 类模板偏特化\nstatic_assert(Kind<int>::value == 0 && Kind<int*>::value == 1);\nint score(int x) { return x; }\ndouble score(double x) { return x; } // 函数模板“偏特化”用重载表达\n// 特化改变匹配类型的行为；优先用清晰重载/concept，避免歧义与声明不可见", lang: "cpp", block: true)
+  #raw("template <class T> struct Kind\n{\n    static constexpr int value = 0;\n};\ntemplate <class T> struct Kind<T*>\n{\n    static constexpr int value = 1;\n}; // 类模板偏特化\nstatic_assert(Kind<int>::value == 0 && Kind<int*>::value == 1);\nint score(int x)\n{\n    return x;\n}\ndouble score(double x)\n{\n    return x;\n} // 函数模板“偏特化”用重载表达\n// 特化改变匹配类型的行为；优先用清晰重载/concept，避免歧义与声明不可见", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -93,7 +93,7 @@
   #text("常见实现先用模板生成对应类型的包装器，再通过虚函数或函数指针表转发操作。std::any 则用于保存符合要求的不同值，读取时还要检查或指定实际类型。统一接口换来了运行时替换能力，也可能增加间接调用、对象大小或动态分配。小对象是否能直接放进包装器取决于实现，不能假设所有闭包都不分配内存。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("#include <functional>\nstd::function<int(int)> operation;\noperation = [](int x) { return x + 1; }; // 可替换为其他同签名闭包\noperation = [](int x) { return x * 2; };\nint answer = operation(3); // 统一运行时接口隐藏闭包具体类型\n// 类型擦除通常带间接调用；目标过大时可能分配，SBO 由库实现决定", lang: "cpp", block: true)
+  #raw("#include <functional>\nstd::function<int(int)> operation;\noperation = [](int x)\n{\n    return x + 1;\n}; // 可替换为其他同签名闭包\noperation = [](int x)\n{\n    return x * 2;\n};\nint answer = operation(3); // 统一运行时接口隐藏闭包具体类型\n// 类型擦除通常带间接调用；目标过大时可能分配，SBO 由库实现决定", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -104,7 +104,7 @@
   #text("纯虚不等于绝对不能有函数体：普通纯虚函数也可以在类外提供公共实现，派生类通过限定名称调用它，但基类仍然是抽象类。纯虚析构函数尤其必须有定义，因为销毁派生对象时基类析构一定会执行。不要只写纯虚析构声明便认为“无需实现”，否则可能在链接阶段发现析构函数缺少定义。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("struct Interface { virtual ~Interface() = 0; }; // 纯虚析构仍使类抽象\nInterface::~Interface() = default; // 仍必须给析构函数提供定义\nstruct Impl : Interface { /* 可继承析构 */ };\n// Interface x; // 错误：纯虚析构也算纯虚函数\nInterface* p = new Impl;\ndelete p; // 析构链会调用 Interface::~Interface()", lang: "cpp", block: true)
+  #raw("struct Interface\n{\n    virtual ~Interface() = 0;\n}; // 纯虚析构仍使类抽象\nInterface::~Interface() = default; // 仍必须给析构函数提供定义\nstruct Impl : Interface\n{ /* 可继承析构 */\n};\n// Interface x; // 错误：纯虚析构也算纯虚函数\nInterface* p = new Impl;\ndelete p; // 析构链会调用 Interface::~Interface()", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -115,7 +115,7 @@
   #text("公共继承通常表示“派生对象也是一种基类对象”，可以交给接收基类的代码使用，例如文件读取器作为读取器。保护和私有继承更多限制外部转换与可见性。若只是想复用一个工具对象的功能，把它作为成员的组合方式往往更清楚，不必把实现复用误写成可以任意替代的类型关系。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("struct Service { virtual void run() = 0; virtual ~Service() = default; };\nstruct Worker : public Service { void run() override {} }; // public 表示可替代\nstruct Detail {};\nclass Wrapper { Detail detail_; }; // 实现复用常可用组合，避免私有继承耦合\n// protected/private 继承会改变基类 public/protected 成员可见级别\n// 三种继承都不会让派生类直接访问基类 private 成员", lang: "cpp", block: true)
+  #raw("struct Service\n{\n    virtual void run() = 0;\n    virtual ~Service() = default;\n};\nstruct Worker : public Service\n{\n    void run() override\n    {\n    }\n}; // public 表示可替代\nstruct Detail\n{\n};\nclass Wrapper\n{\n    Detail detail_;\n}; // 实现复用常可用组合，避免私有继承耦合\n// protected/private 继承会改变基类 public/protected 成员可见级别\n// 三种继承都不会让派生类直接访问基类 private 成员", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -126,7 +126,7 @@
   #text("保留动态行为需要保留完整派生对象。如果把派生对象按值复制到基类变量，多出的派生部分会被切掉，这叫对象切片，此后调用只面对新的基类对象。编译器常用虚函数表完成分派，但表的具体格式与对象布局由实现和 ABI 决定，语言标准没有规定；因此不要靠猜测表位置编写可移植程序。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("struct Base { virtual int id() const { return 0; } virtual ~Base() = default; };\nstruct Child : Base { int id() const override { return 1; } };\nChild c; Base& ref = c;\nint dynamic_result = ref.id(); // 按动态类型分派到 Child\nBase sliced = c;\nint sliced_result = sliced.id(); // 按值复制发生切片，结果来自 Base\n// override 可检查签名；虚表是常见实现，不是标准规定的对象布局", lang: "cpp", block: true)
+  #raw("struct Base\n{\n    virtual int id() const\n    {\n        return 0;\n    }\n    virtual ~Base() = default;\n};\nstruct Child : Base\n{\n    int id() const override\n    {\n        return 1;\n    }\n};\nChild c;\nBase& ref = c;\nint dynamic_result = ref.id(); // 按动态类型分派到 Child\nBase sliced = c;\nint sliced_result = sliced.id(); // 按值复制发生切片，结果来自 Base\n// override 可检查签名；虚表是常见实现，不是标准规定的对象布局", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -137,7 +137,7 @@
   #text("共享也带来了特殊的构造规则：虚基类由最派生类负责初始化，因此最终类创建对象时，中间分支为根类写的初始化不能代替最终类的选择。虚继承会让对象布局、地址调整和初始化关系更复杂，具体成本取决于 ABI。它和虚函数用途不同，不应仅因类里有虚函数就自动添加虚继承。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("struct Root { explicit Root(int n) : n(n) {} int n; };\nstruct Left : virtual Root { Left() : Root(1) {} };\nstruct Right : virtual Root { Right() : Root(2) {} };\nstruct Join : Left, Right { Join() : Root(7), Left(), Right() {} };\nJoin j; // 只有一个共享 Root 子对象，值由最派生类 Join 初始化\n// 普通继承会有两份 Root，访问成员可能歧义\n// 虚基类布局/偏移依 ABI；虚继承也让构造顺序更复杂", lang: "cpp", block: true)
+  #raw("struct Root\n{\n    explicit Root(int n)\n        : n(n)\n    {\n    }\n    int n;\n};\nstruct Left : virtual Root\n{\n    Left()\n        : Root(1)\n    {\n    }\n};\nstruct Right : virtual Root\n{\n    Right()\n        : Root(2)\n    {\n    }\n};\nstruct Join : Left, Right\n{\n    Join()\n        : Root(7)\n        , Left()\n        , Right()\n    {\n    }\n};\nJoin j; // 只有一个共享 Root 子对象，值由最派生类 Join 初始化\n// 普通继承会有两份 Root，访问成员可能歧义\n// 虚基类布局/偏移依 ABI；虚继承也让构造顺序更复杂", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -148,7 +148,7 @@
   #text("一种可靠做法是先构造完整副本，再用不抛异常的交换操作替换自身状态；临时副本随后销毁旧资源。如果复制失败，原对象保持不变，这就是强异常保证。移动赋值则转移所有权，并让源对象仍能安全析构。只有真实实现不会抛异常时才标注 noexcept；资源已经交给容器时，优先采用编译器生成的赋值操作。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("#include <utility>\nclass Buffer { public:\n  Buffer& operator=(const Buffer& other) {\n    Buffer temp(other); // 先完整构造副本；若分配失败原对象不变\n    swap(*this, temp); return *this; // 按引用返回支持 a = b = c\n  }\n  friend void swap(Buffer& a, Buffer& b) noexcept { a.swap_data(b); }\n  void swap_data(Buffer&) noexcept; // 示意：仅交换资源句柄/状态\n}; // 自赋值也安全；移动赋值另需让源对象可安全析构", lang: "cpp", block: true)
+  #raw("#include <utility>\nclass Buffer\n{\n  public:\n    Buffer& operator=(const Buffer& other)\n    {\n        Buffer temp(other); // 先完整构造副本；若分配失败原对象不变\n        swap(*this, temp);\n        return *this; // 按引用返回支持 a = b = c\n    }\n    friend void swap(Buffer& a, Buffer& b) noexcept\n    {\n        a.swap_data(b);\n    }\n    void swap_data(Buffer&) noexcept; // 示意：仅交换资源句柄/状态\n}; // 自赋值也安全；移动赋值另需让源对象可安全析构", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -159,7 +159,7 @@
   #text("C++ 并不是 C 的严格超集：部分语法、类型转换和语言规则不同，一份能通过 C 编译的源码未必能通过 C++ 编译。两者互相调用时常使用 C 风格接口，并在 C++ 一侧用 extern \"C\" 指定语言链接。接口还要约定资源归谁释放和错误如何返回，避免直接暴露标准库对象或让异常越过未经约定的语言边界。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// C ABI 常用于让 C 与 C++ 模块共享稳定边界\nextern \"C\" int add_numbers(int a, int b) { return a + b; }\n// C++ 调用方可使用类、模板和重载；C 调用方只见 C 风格函数签名\n// C++ 保留许多 C 能力，但不是严格超集，源代码规则并不完全相同\n// 跨语言边界避免直接暴露 std::string、模板类型或编译器特定类布局\n// 资源所有权和错误码也要约定，避免异常穿过 C ABI", lang: "cpp", block: true)
+  #raw("// C ABI 常用于让 C 与 C++ 模块共享稳定边界\nextern \"C\" int add_numbers(int a, int b)\n{\n    return a + b;\n}\n// C++ 调用方可使用类、模板和重载；C 调用方只见 C 风格函数签名\n// C++ 保留许多 C 能力，但不是严格超集，源代码规则并不完全相同\n// 跨语言边界避免直接暴露 std::string、模板类型或编译器特定类布局\n// 资源所有权和错误码也要约定，避免异常穿过 C ABI", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -170,7 +170,7 @@
   #text("例如一个模板函数能对任何支持 area 的类型计算面积，编译器可为每种类型生成并优化代码；一组在运行时装入的形状则适合存放为基类智能指针，并通过虚接口调用。模板常便于内联，但大量实例可能增加代码体积；虚接口便于管理异构集合，却可能带来间接调用。若通过多态基类销毁对象，基类应具备合适的虚析构函数。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("struct Base { virtual int value() const = 0; virtual ~Base() = default; };\nstruct One : Base { int value() const override { return 1; } };\ntemplate<class T> int static_call(const T& x) { return x.value(); } // 编译期绑定\nint dynamic_call(const Base& x) { return x.value(); } // 运行期按动态类型分派\nOne x; int a = static_call(x), b = dynamic_call(x);\n// 模板利于内联但增加实例代码；虚接口支持异构集合但有间接调用成本", lang: "cpp", block: true)
+  #raw("struct Base\n{\n    virtual int value() const = 0;\n    virtual ~Base() = default;\n};\nstruct One : Base\n{\n    int value() const override\n    {\n        return 1;\n    }\n};\ntemplate <class T> int static_call(const T& x)\n{\n    return x.value();\n} // 编译期绑定\nint dynamic_call(const Base& x)\n{\n    return x.value();\n} // 运行期按动态类型分派\nOne x;\nint a = static_call(x), b = dynamic_call(x);\n// 模板利于内联但增加实例代码；虚接口支持异构集合但有间接调用成本", lang: "cpp", block: true)
 ]
 
 #heading(level: 2, outlined: true)[#text("1.2 对象模型、生命周期与类型", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
@@ -182,7 +182,7 @@
   #text("操作系统实现中确实常见代码段、全局数据区、线程栈和动态分配区，但“局部对象一定在物理栈上”“栈一定向某方向增长”都不是语言标准的保证。例如局部 unique_ptr 自身可以是自动对象，它拥有的目标却是动态对象，两个对象的存储期不同。分析悬空引用时，应追踪目标对象是否还活着，而非仅凭地址看起来属于哪一区域。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("#include <memory>\nint global = 0; // 静态存储期：整个程序期间存在\nthread_local int per_thread = 0; // 每个线程各有一份\nvoid f() { int local = 1; // 自动存储期，离开作用域销毁\n  auto dynamic = std::make_unique<int>(2); // 动态对象由所有者托管\n} // 判断生命周期看存储期/所有权；“栈、堆”只是常见实现布局说法\n// 标准不规定对象必须落在哪个物理分区或栈的增长方向", lang: "cpp", block: true)
+  #raw("#include <memory>\nint global = 0; // 静态存储期：整个程序期间存在\nthread_local int per_thread = 0; // 每个线程各有一份\nvoid f()\n{\n    int local = 1; // 自动存储期，离开作用域销毁\n    auto dynamic = std::make_unique<int>(2); // 动态对象由所有者托管\n} // 判断生命周期看存储期/所有权；“栈、堆”只是常见实现布局说法\n// 标准不规定对象必须落在哪个物理分区或栈的增长方向", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -193,7 +193,7 @@
   #text("三法则和五法则是在提醒资源管理的一致性：一旦自己写析构释放资源，就要同时考虑复制是否产生独立资源，以及移动怎样转交所有权。仅复制拥有资源的裸指针会导致重复释放。更常用的零法则是让 string、vector、unique_ptr 等成员承担资源管理，使类无需手写特殊成员；能否复制由成员自然决定，语义更容易检查。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("#include <string>\n#include <vector>\nstruct User { std::string name; std::vector<int> scores; }; // Rule of Zero\n// vector/string 自己处理资源；编译器生成的复制/移动通常就是正确语义\nstruct Raw { int* p; ~Raw() { delete p; } }; // 自管裸资源需审视拷贝和移动\n// Raw 若默认拷贝会双重释放；应禁拷贝并实现移动，或改用 RAII 成员\n// Rule of Three/Five 是检查清单，优先通过 Rule of Zero 避免手写", lang: "cpp", block: true)
+  #raw("#include <string>\n#include <vector>\nstruct User\n{\n    std::string name;\n    std::vector<int> scores;\n}; // Rule of Zero\n// vector/string 自己处理资源；编译器生成的复制/移动通常就是正确语义\nstruct Raw\n{\n    int* p;\n    ~Raw()\n    {\n        delete p;\n    }\n}; // 自管裸资源需审视拷贝和移动\n// Raw 若默认拷贝会双重释放；应禁拷贝并实现移动，或改用 RAII 成员\n// Rule of Three/Five 是检查清单，优先通过 Rule of Zero 避免手写", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -204,7 +204,7 @@
   #text("const 成员函数不能直接修改普通成员，也不能调用要求可修改自身的普通成员函数，适合表达查询操作。mutable 成员可用于缓存或锁等内部状态，但并不自动线程安全。const 对象也可能在运行时才完成初始化；需要参与编译期求值时，应考虑 constexpr，并满足对应的常量表达式规则。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("int x = 1;\nconst int* pointee_readonly = &x; // 不能经此指针修改 x\nint* const fixed_pointer = &x; // 指针不能改指向\nconst int& read_only_ref = x; // 只读别名\nstruct Cache { mutable int hits = 0; int get() const { ++hits; return 1; } };\n// const 不等于编译期常量；constexpr 还要求表达式满足常量求值规则", lang: "cpp", block: true)
+  #raw("int x = 1;\nconst int* pointee_readonly = &x; // 不能经此指针修改 x\nint* const fixed_pointer = &x; // 指针不能改指向\nconst int& read_only_ref = x; // 只读别名\nstruct Cache\n{\n    mutable int hits = 0;\n    int get() const\n    {\n        ++hits;\n        return 1;\n    }\n};\n// const 不等于编译期常量；constexpr 还要求表达式满足常量求值规则", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -215,7 +215,7 @@
   #text("它主要保护接口边界，避免一个看似无关的值意外进入转换链，而不是禁止对象构造。C++11 起，用户定义的转换函数也可以声明 explicit；C++20 允许按条件决定是否显式。给已有接口补上 explicit 可能影响依赖隐式转换的旧调用，需要检查参数传递和初始化方式，并把需要的转换明确写出来。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("struct Port { explicit Port(int n) : value(n) {} int value; };\nPort a{8080}; // 直接初始化可调用 explicit 构造\n// Port b = 8080; // 错误：阻止意外的隐式转换\nvoid connect(Port);\n// connect(8080); // 错误；connect(Port{8080}) 意图清晰\n// C++20 还可写 explicit(condition)；添加 explicit 时检查旧调用点", lang: "cpp", block: true)
+  #raw("struct Port\n{\n    explicit Port(int n)\n        : value(n)\n    {\n    }\n    int value;\n};\nPort a{8080}; // 直接初始化可调用 explicit 构造\n// Port b = 8080; // 错误：阻止意外的隐式转换\nvoid connect(Port);\n// connect(8080); // 错误；connect(Port{8080}) 意图清晰\n// C++20 还可写 explicit(condition)；添加 explicit 时检查旧调用点", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -226,7 +226,7 @@
   #text("这种权限只是绕开成员的常量限制，不会自动提供原子性或线程同步。多个线程同时更新 mutable 缓存或计数器，仍然可能产生数据竞争，需要用同一把锁或合适的原子操作保护。也不要用它修改本应保持不变的业务字段，否则 const 接口所承诺的逻辑只读就失去意义；对象本身还必须处于有效生命周期中。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("#include <mutex>\nclass Memo {\n  mutable std::mutex m_; // const 查询仍可同步缓存\n  mutable bool ready_ = false; mutable int cached_ = 0;\npublic: int value() const { std::lock_guard<std::mutex> lock(m_);\n    if (!ready_) { cached_ = 42; ready_ = true; } return cached_; }\n}; // mutable 适合逻辑上不改变结果的缓存/锁\n// mutable 本身不提供同步；并发访问必须加锁或使用原子类型", lang: "cpp", block: true)
+  #raw("#include <mutex>\nclass Memo\n{\n    mutable std::mutex m_; // const 查询仍可同步缓存\n    mutable bool ready_ = false;\n    mutable int cached_ = 0;\n\n  public:\n    int value() const\n    {\n        std::lock_guard<std::mutex> lock(m_);\n        if (!ready_)\n        {\n            cached_ = 42;\n            ready_ = true;\n        }\n        return cached_;\n    }\n}; // mutable 适合逻辑上不改变结果的缓存/锁\n// mutable 本身不提供同步；并发访问必须加锁或使用原子类型", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -237,7 +237,7 @@
   #text("结构体为满足成员对齐，成员之间和末尾都可能插入空隙，所以结构体大小不一定等于各成员大小之和。调整成员顺序有时可以减少空隙，但具体结果由平台、编译器和 ABI 决定。把本机对象内存直接写入网络或文件会把填充、字节序和布局一起带出去；跨平台格式应明确各字段编码，而不是依赖一次 sizeof 的测量结果。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("#include <iostream>\nstruct Record { char tag; double value; };\nstd::cout << sizeof(Record) << ' ' << alignof(Record); // 实际数值依 ABI\nstd::cout << ' ' << sizeof(char); // 单个成员类型大小\n// 成员间/末尾可能填充以满足对齐；数组大小含所有元素\n// 不要把本机 sizeof/布局直接当网络协议或跨平台文件格式", lang: "cpp", block: true)
+  #raw("#include <iostream>\nstruct Record\n{\n    char tag;\n    double value;\n};\nstd::cout << sizeof(Record) << ' ' << alignof(Record); // 实际数值依 ABI\nstd::cout << ' ' << sizeof(char); // 单个成员类型大小\n// 成员间/末尾可能填充以满足对齐；数组大小含所有元素\n// 不要把本机 sizeof/布局直接当网络协议或跨平台文件格式", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -248,7 +248,7 @@
   #text("静态成员函数没有 this，因而不能直接使用某个实例的普通成员，也不能是 virtual，或带成员函数的 cv/ref 限定。非 inline 静态数据成员通常还需类外定义，C++17 可用 inline static 在类内定义。C++11 保证局部 static 的首次初始化线程安全，但初始化之后的共享读写仍须加锁或采用原子操作，不能把两件事混为一谈。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("struct Registry { static int count; }; // 类级数据，不属于某个实例\nint Registry::count = 0; // 非 inline 成员在一个源文件定义一次\nint& shared_state() { static int state = 0; return state; }\n// 首次经过时初始化由 C++11 保证线程安全\n++shared_state(); // 初始化安全不代表之后的并发写安全\n// 命名空间 static 通常内部链接；局部 static 生命周期贯穿程序", lang: "cpp", block: true)
+  #raw("struct Registry\n{\n    static int count;\n}; // 类级数据，不属于某个实例\nint Registry::count = 0; // 非 inline 成员在一个源文件定义一次\nint& shared_state()\n{\n    static int state = 0;\n    return state;\n}\n// 首次经过时初始化由 C++11 保证线程安全\n++shared_state(); // 初始化安全不代表之后的并发写安全\n// 命名空间 static 通常内部链接；局部 static 生命周期贯穿程序", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -259,7 +259,7 @@
   #text("using 还能直接定义别名模板，例如 Vec<T> 表示 vector<T>，这点 typedef 不能直接做到。面对复杂函数指针时，using 也更容易读出别名名称和完整类型。选择写法主要看可读性和工程风格；如果需要真正区分不同业务含义，并限制错误转换，应定义包装类，而不是期待类型别名带来额外的类型安全。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("#include <vector>\ntypedef unsigned long LegacyId;\nusing Id = unsigned long; // 现代别名写法更易读\ntemplate<class T> using Vec = std::vector<T>; // 别名模板\nVec<int> values{1, 2};\n// typedef 也能命名普通类型，但不能直接声明 template alias\n// 两者都只是别名，不会创建新类型或阻止隐式转换", lang: "cpp", block: true)
+  #raw("#include <vector>\ntypedef unsigned long LegacyId;\nusing Id = unsigned long; // 现代别名写法更易读\ntemplate <class T> using Vec = std::vector<T>; // 别名模板\nVec<int> values{1, 2};\n// typedef 也能命名普通类型，但不能直接声明 template alias\n// 两者都只是别名，不会创建新类型或阻止隐式转换", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -270,7 +270,7 @@
   #text("如果业务上确实只有一份共同祖先，两条中间路径可以使用虚继承，让最终对象共享同一份虚基类。共享虚基类由最派生类负责初始化，布局和地址调整也更复杂。设计时先区分“实现多个接口”和“复用多份状态”；若只是需要工具功能，组合通常更容易维护，不必通过不断增加虚继承修补不必要的继承关系。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("struct A { int id = 0; };\nstruct B : virtual A {};\nstruct C : virtual A {};\nstruct D : B, C {}; // 虚继承使最底层 D 共享一个 A\nD d; d.id = 1;\n// 普通继承会有 B::A 和 C::A 两个子对象，d.id 有歧义\n// 若只为复用实现，组合通常比多重/虚继承更易维护", lang: "cpp", block: true)
+  #raw("struct A\n{\n    int id = 0;\n};\nstruct B : virtual A\n{\n};\nstruct C : virtual A\n{\n};\nstruct D : B, C\n{\n}; // 虚继承使最底层 D 共享一个 A\nD d;\nd.id = 1;\n// 普通继承会有 B::A 和 C::A 两个子对象，d.id 有歧义\n// 若只为复用实现，组合通常比多重/虚继承更易维护", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -281,7 +281,7 @@
   #text("因此，头文件中需要提供的小函数常用 inline，类定义内部定义的成员函数通常也隐含这一属性。各处定义仍须满足一致性要求，不能让不同源文件看到相互冲突的实现。性能上，大量展开可能增大机器码并损害指令缓存；应通过实际基准或生成代码判断收益，同时考虑头文件中的实现给所有包含者带来的编译成本。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// 适合放在头文件供多个翻译单元包含\ninline int clamp_low(int value) { return value < 0 ? 0 : value; }\nint result = clamp_low(-1); // inline 不保证机器码展开\n// inline 的语言作用包括允许符合 ODR 的相同定义跨翻译单元出现\n// 编译器仍会根据优化和调用上下文决定是否内联；过度展开增大代码\n// 大函数放头文件也会扩大每个包含者的编译工作", lang: "cpp", block: true)
+  #raw("// 适合放在头文件供多个翻译单元包含\ninline int clamp_low(int value)\n{\n    return value < 0 ? 0 : value;\n}\nint result = clamp_low(-1); // inline 不保证机器码展开\n// inline 的语言作用包括允许符合 ODR 的相同定义跨翻译单元出现\n// 编译器仍会根据优化和调用上下文决定是否内联；过度展开增大代码\n// 大函数放头文件也会扩大每个包含者的编译工作", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -292,7 +292,7 @@
   #text("需要多态时，接口参数应使用基类引用或指针，容器可保存基类智能指针，让完整派生对象继续存在。引用和裸指针只是借用，仍要保证目标寿命足够长；智能指针则明确管理所有权。如果业务要求复制出独立的多态对象，可设计虚拟 clone，由每个派生类复制自身，而不是依赖按基类值复制。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("struct Shape { virtual double area() const { return 0; } virtual ~Shape() = default; };\nstruct Circle : Shape { double area() const override { return 12; } };\nCircle c;\nShape copy = c; // 按值复制切掉 Circle 部分\nShape& view = c; // 引用保留动态对象\n// API 用引用/指针传多态对象；需要多态复制时定义 clone() 明确语义\n// 异构容器可保存 std::unique_ptr<Shape>", lang: "cpp", block: true)
+  #raw("struct Shape\n{\n    virtual double area() const\n    {\n        return 0;\n    }\n    virtual ~Shape() = default;\n};\nstruct Circle : Shape\n{\n    double area() const override\n    {\n        return 12;\n    }\n};\nCircle c;\nShape copy = c; // 按值复制切掉 Circle 部分\nShape& view = c; // 引用保留动态对象\n// API 用引用/指针传多态对象；需要多态复制时定义 clone() 明确语义\n// 异构容器可保存 std::unique_ptr<Shape>", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -303,7 +303,7 @@
   #text("正常析构按构造完成的反方向执行：先运行当前类析构函数体，再逆序销毁成员和基类。作用域内的局部对象也按相反顺序清理，动态对象则在对应删除操作中销毁。若使用基类指针删除派生对象，基类应有虚析构函数，保证从派生部分开始完整清理；否则这种普通删除场景会产生未定义行为。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("#include <string>\nstruct Part { Part(const char* n) : name(n) { log(name); } ~Part() { log(\"~\" + name); } std::string name; };\nstruct Base { Base() { log(\"Base\"); } virtual ~Base() { log(\"~Base\"); } };\nstruct Child : Base { Part first{\"first\"}, second{\"second\"};\n  Child() : second(\"second\"), first(\"first\") {} // 实际仍按声明顺序\n  ~Child() { log(\"~Child\"); }\n}; // 构造基类→成员声明序；析构反向；虚基类先于直接基类构造", lang: "cpp", block: true)
+  #raw("#include <string>\nstruct Part\n{\n    Part(const char* n)\n        : name(n)\n    {\n        log(name);\n    }\n    ~Part()\n    {\n        log(\"~\" + name);\n    }\n    std::string name;\n};\nstruct Base\n{\n    Base()\n    {\n        log(\"Base\");\n    }\n    virtual ~Base()\n    {\n        log(\"~Base\");\n    }\n};\nstruct Child : Base\n{\n    Part first{\"first\"}, second{\"second\"};\n    Child()\n        : second(\"second\")\n        , first(\"first\")\n    {\n    } // 实际仍按声明顺序\n    ~Child()\n    {\n        log(\"~Child\");\n    }\n}; // 构造基类→成员声明序；析构反向；虚基类先于直接基类构造", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -314,7 +314,7 @@
   #text("公共头文件中不要随意写 using namespace，因为头文件会被文本包含，这个指令的影响也会传给所有包含者，甚至让原来正常的代码产生重载歧义。实现文件中可使用匿名命名空间，隐藏仅本文件使用的辅助函数和变量。命名空间是组织名称的工具，不是类的访问控制，不能用它代替对私有数据的封装。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("namespace graphics { struct Color {}; }\nvoid draw() {\n  using graphics::Color; // 仅在本函数引入这个名字\n  Color c;\n}\n// 头文件里不要写 using namespace graphics; 会污染所有包含者\n// 直接使用 graphics::Color 最明确；匿名 namespace 可隐藏 .cpp 私有名字", lang: "cpp", block: true)
+  #raw("namespace graphics\n{\nstruct Color\n{\n};\n} // namespace graphics\nvoid draw()\n{\n    using graphics::Color; // 仅在本函数引入这个名字\n    Color c;\n}\n// 头文件里不要写 using namespace graphics; 会污染所有包含者\n// 直接使用 graphics::Color 最明确；匿名 namespace 可隐藏 .cpp 私有名字", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -325,7 +325,7 @@
   #text("但单例不等于线程安全容器：实例创建好以后，多个线程读写其中数据仍需同步。还要考虑程序退出时其他全局对象是否会继续访问已经析构的实例。单例隐藏了全局依赖，也会让测试难以替换配置或隔离状态；如果生命周期关系复杂，把接口作为参数注入通常更容易控制，不能仅为方便访问就把普通服务都做成单例。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("class Config { Config() = default; public:\n  Config(const Config&) = delete; Config& operator=(const Config&) = delete;\n  static Config& instance() { static Config one; return one; }\n  int read() const { return 1; }\n};\nauto value = Config::instance().read();\n// 局部 static 首次初始化线程安全；后续可变状态仍需同步\n// 测试和析构顺序复杂时，优先依赖注入而非全局单例", lang: "cpp", block: true)
+  #raw("class Config\n{\n    Config() = default;\n\n  public:\n    Config(const Config&) = delete;\n    Config& operator=(const Config&) = delete;\n    static Config& instance()\n    {\n        static Config one;\n        return one;\n    }\n    int read() const\n    {\n        return 1;\n    }\n};\nauto value = Config::instance().read();\n// 局部 static 首次初始化线程安全；后续可变状态仍需同步\n// 测试和析构顺序复杂时，优先依赖注入而非全局单例", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -336,7 +336,7 @@
   #text("接口可以用引用表达必填对象，用指针表达可选对象，但这仍未说明资源归谁管理。裸引用和裸指针通常都是借用，返回它们之前要确认目标不会先销毁，否则两者都会悬空。引用在机器实现中也可能需要保存地址，占不占额外空间由具体场景决定；不能把“语法上是别名”误解成任何情况下都绝对零成本。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("void use_required(int& x) { ++x; } // 引用表达必须存在的对象\nvoid use_optional(int* x) { if (x) ++*x; } // 指针可为空且可改指向\nint value = 0; int& alias = value; int* ptr = &value;\nint other = 1; ptr = &other; // 可重新指向；alias = other 是赋值 value\n// 引用声明时须绑定，通常不能重新绑定；两者都不自动表达所有权\n// 返回借用引用/指针时，调用方必须确保目标仍存活", lang: "cpp", block: true)
+  #raw("void use_required(int& x)\n{\n    ++x;\n} // 引用表达必须存在的对象\nvoid use_optional(int* x)\n{\n    if (x)\n        ++*x;\n} // 指针可为空且可改指向\nint value = 0;\nint& alias = value;\nint* ptr = &value;\nint other = 1;\nptr = &other; // 可重新指向；alias = other 是赋值 value\n// 引用声明时须绑定，通常不能重新绑定；两者都不自动表达所有权\n// 返回借用引用/指针时，调用方必须确保目标仍存活", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -347,7 +347,7 @@
   #text("把资源获取与对象生命周期绑定起来，可以让正常返回和异常退出都走同一条清理路径，这就是 RAII 的核心。析构函数只应释放自己的资源，借来的指针不能随意删除；清理过程通常也不应让异常向外传播。通过基类指针销毁派生对象时需要虚析构函数，才能完整清理派生资源，否则在通常的删除方式下属于未定义行为。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("#include <memory>\n#include <string>\nstruct FileHandle { explicit FileHandle(int fd) : fd(fd) {} ~FileHandle() { close_fd(fd); }\n  int fd; void close_fd(int); };\nvoid process() { auto file = std::make_unique<FileHandle>(open_file());\n  read_data(file->fd); // 正常返回或异常离开时都由析构清理\n}\n// 构造建立对象不变量/取得资源；析构释放自己拥有的资源\n// 经基类指针删除派生对象时基类析构需 virtual", lang: "cpp", block: true)
+  #raw("#include <memory>\n#include <string>\nstruct FileHandle\n{\n    explicit FileHandle(int fd)\n        : fd(fd)\n    {\n    }\n    ~FileHandle()\n    {\n        close_fd(fd);\n    }\n    int fd;\n    void close_fd(int);\n};\nvoid process()\n{\n    auto file = std::make_unique<FileHandle>(open_file());\n    read_data(file->fd); // 正常返回或异常离开时都由析构清理\n}\n// 构造建立对象不变量/取得资源；析构释放自己拥有的资源\n// 经基类指针删除派生对象时基类析构需 virtual", lang: "cpp", block: true)
 ]
 
 #heading(level: 2, outlined: true)[#text("1.3 模板与初始化", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
@@ -359,7 +359,7 @@
   #text("这种选择发生在编译期，所以模板能实现静态多态，并常给优化器提供内联机会。模板也可以进行编译期计算和类型选择，但错误信息、编译时间及大量实例的代码体积都可能更复杂。使用 concept 或其他约束说明参数必须支持哪些操作，可以让接口意图更明确；“模板接受任意类型”并不表示模板体对任意类型都一定合法。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("template<class T> T larger(T a, T b) { return a < b ? b : a; }\nint i = larger(3, 5); double d = larger(1.0, 2.0);\n// 调用时编译器实例化适合 T 的实现，形成静态多态\n// 可用模板复用算法而不用运行期虚调用\n// 用 concept/约束表达所需操作，减少不清楚的模板报错和过度实例化\n// 同一模板参数会生成相应实例，构建体积也要留意", lang: "cpp", block: true)
+  #raw("template <class T> T larger(T a, T b)\n{\n    return a < b ? b : a;\n}\nint i = larger(3, 5);\ndouble d = larger(1.0, 2.0);\n// 调用时编译器实例化适合 T 的实现，形成静态多态\n// 可用模板复用算法而不用运行期虚调用\n// 用 concept/约束表达所需操作，减少不清楚的模板报错和过度实例化\n// 同一模板参数会生成相应实例，构建体积也要留意", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -370,7 +370,7 @@
   #text("共享本身未必有错：如果业务希望多个对象共同延长资源寿命，可以使用 shared_ptr 并明确共享所有权。若资源必须独立，则要定义正确的复制和移动策略。最省心的方式通常是把数据放进 vector、string、unique_ptr 等 RAII 成员，让成员自身管理复制和释放，遵循零法则，而不是手动复制裸指针。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("#include <vector>\nstruct Shallow { int* p; }; // 默认拷贝只复制地址，两对象会别名\nstruct Deep { std::vector<int> values; }; // 容器复制时复制元素\nint external = 1; Shallow a{&external}; Shallow b = a; // 两者指向同一 int\n*b.p = 9; // 通过 b 修改会影响 a 所指的值\n// 裸指针不说明是否拥有资源；不要让两个对象都负责 delete\nDeep x{{1, 2}}, y = x; y.values[0] = 9; // x 不受影响\n// 若资源应共享，明确用 std::shared_ptr；通常优先 Rule of Zero", lang: "cpp", block: true)
+  #raw("#include <vector>\nstruct Shallow\n{\n    int* p;\n}; // 默认拷贝只复制地址，两对象会别名\nstruct Deep\n{\n    std::vector<int> values;\n}; // 容器复制时复制元素\nint external = 1;\nShallow a{&external};\nShallow b = a; // 两者指向同一 int\n*b.p = 9; // 通过 b 修改会影响 a 所指的值\n// 裸指针不说明是否拥有资源；不要让两个对象都负责 delete\nDeep x{{1, 2}}, y = x;\ny.values[0] = 9; // x 不受影响\n// 若资源应共享，明确用 std::shared_ptr；通常优先 Rule of Zero", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -381,7 +381,7 @@
   #text("const_cast 只调整 const/volatile 限定，不改变对象本身是否可修改；如果原对象本来就是 const，去掉限定后再写入会导致未定义行为。reinterpret_cast 用于少数受控的低层表示操作，不会自动完成对象构造，也不保证跨平台解释一致。转换越低层越应靠近边界，并说明对象类型、对齐和生命周期等前提。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("#include <typeinfo>\nstruct Base { virtual ~Base() = default; }; struct Child : Base {};\nBase* b = new Child;\nChild* checked = dynamic_cast<Child*>(b); // 运行时检查；失败得 nullptr\nint n = static_cast<int>(3.8); // 明确数值转换，可能丢信息\nconst Base* cb = b;\nBase* writable = const_cast<Base*>(cb); // 原对象非 const，去限定后可写\n// 若最初对象本来就是 const，经转换修改会是未定义行为\n// reinterpret_cast 只用于受控低层表示；不保证跨平台意义\n// dynamic_cast 引用下转失败会抛 std::bad_cast；用完释放 b", lang: "cpp", block: true)
+  #raw("#include <typeinfo>\nstruct Base\n{\n    virtual ~Base() = default;\n};\nstruct Child : Base\n{\n};\nBase* b = new Child;\nChild* checked = dynamic_cast<Child*>(b); // 运行时检查；失败得 nullptr\nint n = static_cast<int>(3.8); // 明确数值转换，可能丢信息\nconst Base* cb = b;\nBase* writable = const_cast<Base*>(cb); // 原对象非 const，去限定后可写\n// 若最初对象本来就是 const，经转换修改会是未定义行为\n// reinterpret_cast 只用于受控低层表示；不保证跨平台意义\n// dynamic_cast 引用下转失败会抛 std::bad_cast；用完释放 b", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -392,7 +392,7 @@
   #text("例如 Item b(a) 和 Item c = a 都是在创建新对象，调用拷贝构造；已有对象 c = b 才是赋值。编译器生成哪些特殊成员函数取决于其他构造、拷贝或移动操作的声明，以及成员能否被相应操作。自定义了带参数构造函数后，默认构造不一定还存在；若确实需要，可明确 default，并检查其成员是否也能默认构造。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("struct Item { Item() = default; Item(const Item&) = default; int value = 0; };\nItem first; Item second(first); // 默认构造 vs 新对象拷贝构造\nItem third = first; // 这里仍是拷贝构造，不是赋值\nthird = second; // 这是拷贝赋值，对象已存在\nstruct NeedsArg { explicit NeedsArg(int) {} };\n// 编译器不一定生成默认构造；用户声明构造后通常需显式 default", lang: "cpp", block: true)
+  #raw("struct Item\n{\n    Item() = default;\n    Item(const Item&) = default;\n    int value = 0;\n};\nItem first;\nItem second(first); // 默认构造 vs 新对象拷贝构造\nItem third = first; // 这里仍是拷贝构造，不是赋值\nthird = second; // 这是拷贝赋值，对象已存在\nstruct NeedsArg\n{\n    explicit NeedsArg(int)\n    {\n    }\n};\n// 编译器不一定生成默认构造；用户声明构造后通常需显式 default", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -403,7 +403,7 @@
   #text("例如 vector<int>{3, 4} 表示两个元素，而 vector<int>(3, 4) 表示三个值为 4 的元素。聚合类型也可以按成员声明顺序用花括号填入字段值。不要只凭“花括号更安全”就忽略构造函数选择：设计和调用类时都应查看 initializer_list 重载，并在容易混淆的地方使用清晰的命名工厂或直接展示预期语义。〔S2〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("#include <vector>\nstd::vector<int> items{3, 4}; // initializer_list 构造：两个元素\nstd::vector<int> fill(3, 4); // 圆括号：三个值为 4 的元素\n// 花括号还检查窄化，int x{3.5}; 会编译失败\nstruct Pair { int left; int right; };\nPair p{1, 2}; // 聚合按成员顺序初始化\n// 类有 initializer_list 重载时，花括号会优先匹配它，可能改变重载选择", lang: "cpp", block: true)
+  #raw("#include <vector>\nstd::vector<int> items{3, 4}; // initializer_list 构造：两个元素\nstd::vector<int> fill(3, 4); // 圆括号：三个值为 4 的元素\n// 花括号还检查窄化，int x{3.5}; 会编译失败\nstruct Pair\n{\n    int left;\n    int right;\n};\nPair p{1, 2}; // 聚合按成员顺序初始化\n// 类有 initializer_list 重载时，花括号会优先匹配它，可能改变重载选择", lang: "cpp", block: true)
 ]
 
 
@@ -416,7 +416,7 @@
   #text("成员指针表示“某个类的哪一个成员”，单独拿到它还不能访问数据或调用成员函数，必须结合一个该类对象，通过 .* 或 ->* 使用。成员函数中的 this 指向当前对象，静态成员函数则没有 this。普通对象指针、成员数据指针和成员函数指针可能有不同表示与大小；64 位机器上普通指针常见为八字节也只是 ABI 现象，不是所有指针类型的标准保证。malloc 只给原始存储，转换结果不会自动构造任意 C++ 对象。〔N1、N2〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("int value = 3;\nvoid* storage = &value;\nint* p = static_cast<int*>(storage); // 还原真实对象类型\nstruct Item {\n  int score;\n  int read_score() const { return this->score; } // 非静态成员中 this 指向当前对象\n};\nint Item::*member = &Item::score;\nint (Item::*method)() const = &Item::read_score;\nItem item{7};\nint score = item.*member;\nint copy = (item.*method)(); // 成员函数指针须绑定对象", lang: "cpp", block: true)
+  #raw("int value = 3;\nvoid* storage = &value;\nint* p = static_cast<int*>(storage); // 还原真实对象类型\nstruct Item\n{\n    int score;\n    int read_score() const\n    {\n        return this->score;\n    } // 非静态成员中 this 指向当前对象\n};\nint Item::* member = &Item::score;\nint (Item::*method)() const = &Item::read_score;\nItem item{7};\nint score = item.*member;\nint copy = (item.*method)(); // 成员函数指针须绑定对象", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -427,7 +427,7 @@
   #text("函数对象可保存每次调用共用的状态，lambda 也是一种闭包对象；带捕获的 lambda 通常不能转换为普通函数指针。普通函数指针本身不保存独立捕获状态。模板可直接接收多种可调用对象，在编译期针对具体类型调用；若需要运行期替换不同目标，可用 std::function 统一签名，但可能带来间接调用或分配成本。返回指针的函数还必须说明所有权和有效期。〔N1、N3〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("int twice(int x) { return x * 2; }\nint (*function_ptr)(int) = &twice;\nstruct Add { int bias; int operator()(int x) const { return x + bias; } };\nAdd add{3};\nint result = add(function_ptr(2)); // 7，函数对象还保存 bias", lang: "cpp", block: true)
+  #raw("int twice(int x)\n{\n    return x * 2;\n}\nint (*function_ptr)(int) = &twice;\nstruct Add\n{\n    int bias;\n    int operator()(int x) const\n    {\n        return x + bias;\n    }\n};\nAdd add{3};\nint result = add(function_ptr(2)); // 7，函数对象还保存 bias", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -449,7 +449,7 @@
   #text("C 语言里的 struct 不具备 C++ 的成员函数、访问控制和继承机制，变量声明时通常还需写 struct 标签名，除非另用 typedef 定义别名。工程习惯上常用 struct 表达公开数据组合，用 class 表达维护不变量的抽象，但这只是可读性约定。选择 struct 不会自动让对象可安全 memcpy、跨平台序列化或变成固定布局，布局仍需按标准属性和实现条件确认。〔N7〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("struct Record { const char* title; int value; }; // struct 默认 public\nclass Account { int balance_ = 0; public: int balance() const { return balance_; } };\nRecord income{\"收入\", 5}; // class 默认 private；成员函数可封装状态", lang: "cpp", block: true)
+  #raw("struct Record\n{\n    const char* title;\n    int value;\n}; // struct 默认 public\nclass Account\n{\n    int balance_ = 0;\n\n  public:\n    int balance() const\n    {\n        return balance_;\n    }\n};\nRecord income{\"收入\", 5}; // class 默认 private；成员函数可封装状态", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -460,7 +460,7 @@
   #text("如果某种类型可能取整数或字符串等几种值，std::variant 会把当前活动类型和生命周期一同管理，访问时还能检查类型是否匹配。若因低层协议确实要用 union，就需要显式管理非平凡成员的构造和析构，并遵守语言规定的特殊情形。网络协议或文件格式应按字段逐项编码，不能直接发送本机 union 的大小、对齐和布局。〔N8〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("std::variant<int, std::string> value = 12;\nvalue = std::string(\"ready\"); // 自动切换活动类型与生命周期\nif (const auto* s = std::get_if<std::string>(&value)) {\n  use(*s); // 不把同一段字节强行解释为另一种活对象\n}", lang: "cpp", block: true)
+  #raw("std::variant<int, std::string> value = 12;\nvalue = std::string(\"ready\"); // 自动切换活动类型与生命周期\nif (const auto* s = std::get_if<std::string>(&value))\n{\n    use(*s); // 不把同一段字节强行解释为另一种活对象\n}", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -471,7 +471,7 @@
   #text("构造或析构期间调用虚函数，分派会限制在当前正在构造或析构的类范围内，不会调用尚未开始构造或已经析构的更派生部分。因此在基类构造函数中调用一个虚操作，不应期待它执行派生实现；若该操作是纯虚，更不能这样依赖。把问题说成“此时虚表还没分配”不准确，应按语言规定的当前对象动态类型理解。〔N9、N10〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("struct Reader { virtual ~Reader() = default; virtual void start() = 0; };\nstd::unique_ptr<Reader> make_reader(bool use_file) { // 工厂在构造完成后选择具体类型\n  if (use_file) return std::make_unique<FileReader>();\n  return std::make_unique<NetworkReader>();\n}", lang: "cpp", block: true)
+  #raw("struct Reader\n{\n    virtual ~Reader() = default;\n    virtual void start() = 0;\n};\nstd::unique_ptr<Reader> make_reader(bool use_file)\n{ // 工厂在构造完成后选择具体类型\n    if (use_file)\n        return std::make_unique<FileReader>();\n    return std::make_unique<NetworkReader>();\n}", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -482,7 +482,7 @@
   #text("隐藏发生在名称查找阶段：派生类声明了某个名字后，基类中同名的其他参数版本可能不再被正常找到；可以用 using Base::f 把基类重载加入派生类作用域。非虚函数同名声明只是隐藏，不能变成动态覆盖。默认参数还在编译期按静态声明类型选择，不会随着虚函数动态分派一起改变。〔N10〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("struct Base { virtual void f(int); void f(double); };\nstruct Derived : Base {\n  using Base::f; // 保留基类的另一个重载\n  void f(int) override; // 由编译器检查真实覆盖\n};", lang: "cpp", block: true)
+  #raw("struct Base\n{\n    virtual void f(int);\n    void f(double);\n};\nstruct Derived : Base\n{\n    using Base::f; // 保留基类的另一个重载\n    void f(int) override; // 由编译器检查真实覆盖\n};", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -493,7 +493,7 @@
   #text("类的实际尺寸还受成员、基类、对齐填充和实现的多态布局影响。常见 ABI 会为虚函数分派安排指针或表项，多重继承下还可能需要多个视图和 this 调整，但语言标准没有规定统一对象布局。不要推断“空类一定 1 字节”或“有虚函数就固定多八字节”；应在目标平台、编译器和选项下测量，并确认 ABI 工具能说明具体布局。〔N11、N6〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("struct Empty {};\nstruct Poly { virtual ~Poly() = default; };\nstruct Value { int value; };\nstatic_assert(sizeof(Empty) >= 1);\n// sizeof(Poly)、sizeof(Value) 用目标 ABI 实测，不写跨平台固定值", lang: "cpp", block: true)
+  #raw("struct Empty\n{\n};\nstruct Poly\n{\n    virtual ~Poly() = default;\n};\nstruct Value\n{\n    int value;\n};\nstatic_assert(sizeof(Empty) >= 1);\n// sizeof(Poly)、sizeof(Value) 用目标 ABI 实测，不写跨平台固定值", lang: "cpp", block: true)
 ]
 
 #heading(level: 2, outlined: true)[#text("1.5 数值表示与算术边界", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
@@ -506,7 +506,7 @@
   #text("C++ 的无符号算术按模 2^N 回绕；有符号整数结果超出可表示范围仍是未定义行为。混合有符号和无符号数会经过整数提升与通常算术转换，负数可能转为很大的无符号值。进行边界计算时，应先验证输入范围，选择足够宽的类型，或使用有检查的运算；不要先溢出再试图通过比较结果检测。〔I47〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("std::uint8_t wrapped = static_cast<std::uint8_t>(255u + 1u); // 无符号按模 256 回绕\nif (value > std::numeric_limits<int>::max() - increment) return std::nullopt;\nreturn value + increment; // 先检查，再执行有符号加法", lang: "cpp", block: true)
+  #raw("std::uint8_t wrapped = static_cast<std::uint8_t>(255u + 1u); // 无符号按模 256 回绕\nif (value > std::numeric_limits<int>::max() - increment)\n    return std::nullopt;\nreturn value + increment; // 先检查，再执行有符号加法", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -517,7 +517,7 @@
   #text("近似数比较要结合业务可接受误差：绝对容差适合接近零时的判断，相对容差适合不同量级的数值，再把两者按需求组合。比较前还要处理 NaN、无穷等特殊值，不能机械套一个固定 epsilon。金融金额通常应使用整数最小单位或适当的十进制类型，避免把近似浮点累计误差当成精确账目。〔I48、I49、I50〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("double x = 0.1 + 0.2, y = 0.3;\ndouble tolerance = std::max(abs_tol, rel_tol * std::max(std::abs(x), std::abs(y)));\nbool close = std::abs(x - y) <= tolerance; // 容差应来自业务精度要求", lang: "cpp", block: true)
+  #raw("double x = 0.1 + 0.2, y = 0.3;\ndouble tolerance = std::max(abs_tol, rel_tol* std::max(std::abs(x), std::abs(y)));\nbool close = std::abs(x - y) <= tolerance; // 容差应来自业务精度要求", lang: "cpp", block: true)
 ]
 
 
@@ -531,7 +531,7 @@
   #text("用 make_unique 或 make_shared 创建对象，可以减少裸 new 造成的清理遗漏。注意 shared_ptr 解决的是共同生命周期，不自动解决对象内容的并发访问。若两个对象互相用 shared_ptr 指向对方，引用计数永远无法归零，形成泄漏环；对于不拥有对方的一侧改用 weak_ptr，并在使用时调用 lock 临时取得可用的共享所有权。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("#include <memory>\nstruct Node { std::weak_ptr<Node> parent; std::shared_ptr<Node> child; };\nauto root = std::make_shared<Node>(); // 多方确实共享生命周期才用 shared_ptr\nauto child = std::make_shared<Node>(); root->child = child;\nchild->parent = root; // 反向观察用 weak_ptr，避免引用环导致永不释放\nauto sole = std::make_unique<Node>(); // 单一所有者优先用 unique_ptr\n// weak_ptr::lock() 成功时才临时取得共享所有权", lang: "cpp", block: true)
+  #raw("#include <memory>\nstruct Node\n{\n    std::weak_ptr<Node> parent;\n    std::shared_ptr<Node> child;\n};\nauto root = std::make_shared<Node>(); // 多方确实共享生命周期才用 shared_ptr\nauto child = std::make_shared<Node>();\nroot->child = child;\nchild->parent = root; // 反向观察用 weak_ptr，避免引用环导致永不释放\nauto sole = std::make_unique<Node>(); // 单一所有者优先用 unique_ptr\n// weak_ptr::lock() 成功时才临时取得共享所有权", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -542,7 +542,7 @@
   #text("现代 C++ 通常使用 vector、string、unique_ptr 等 RAII 类型，让构造和析构自动配对分配与释放。标准关注对象的存储期和生命周期，不规定它必须位于名为“栈”或“堆”的物理区域。例如 unique_ptr 本身可以是局部变量，它管理的对象具有动态存储期。准确表达所有权，比猜测对象在机器内存的哪块区域更有用。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("#include <memory>\n#include <vector>\nint global = 0; // 静态存储期\nthread_local int scratch = 0; // 每个线程一份\nvoid work() { std::vector<int> local{1, 2}; // 自动对象，离开作用域析构\n  auto heap = std::make_unique<int>(3); // 动态对象由局部所有者托管\n} // 不直接依赖“栈/堆”说法；标准关心存储期与对象生命周期\n// 分配细节由实现决定，确定所有权比猜物理区域更重要", lang: "cpp", block: true)
+  #raw("#include <memory>\n#include <vector>\nint global = 0; // 静态存储期\nthread_local int scratch = 0; // 每个线程一份\nvoid work()\n{\n    std::vector<int> local{1, 2}; // 自动对象，离开作用域析构\n    auto heap = std::make_unique<int>(3); // 动态对象由局部所有者托管\n} // 不直接依赖“栈/堆”说法；标准关心存储期与对象生命周期\n// 分配细节由实现决定，确定所有权比猜物理区域更重要", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -553,7 +553,7 @@
   #text("调整成员声明顺序有时能减少填充，但尺寸与布局由平台、编译器和 ABI 决定。过度对齐的类型在动态分配时还要确保分配方式支持该对齐。不要把本机结构体直接写成文件或网络数据，填充、字节序和成员布局并非通用协议；应按字段定义编码格式，并在需要时显式处理对齐。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("#include <cstddef>\nstruct Plain { char c; double value; }; // 成员间可能出现填充\nstruct PackedOrder { double value; char c; }; // 顺序可能减少填充\nstruct alignas(64) Slot { int value; }; // 请求更严格对齐\nstatic_assert(alignof(Slot) >= 64);\n// 数值/布局仍依实现；过度对齐动态分配需配套正确分配接口\n// 文件和网络协议逐字段编码，不直接写入结构体原始字节", lang: "cpp", block: true)
+  #raw("#include <cstddef>\nstruct Plain\n{\n    char c;\n    double value;\n}; // 成员间可能出现填充\nstruct PackedOrder\n{\n    double value;\n    char c;\n}; // 顺序可能减少填充\nstruct alignas(64) Slot\n{\n    int value;\n}; // 请求更严格对齐\nstatic_assert(alignof(Slot) >= 64);\n// 数值/布局仍依实现；过度对齐动态分配需配套正确分配接口\n// 文件和网络协议逐字段编码，不直接写入结构体原始字节", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -564,7 +564,7 @@
   #text("内存回收不等于及时释放所有资源。即使 GC 管理了文件包装对象，文件句柄、锁和事务仍有各自的释放时机，不能仅靠等待不可达保证及时清理。引用计数也有循环引用的限制。选择时应考虑延迟、吞吐、资源类型和运行环境；C++ 可借助库接入 GC，但 RAII 对生命周期明确的资源仍非常有用。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("#include <fstream>\n#include <fstream>\nvoid process() {\n  std::ifstream file(\"input.txt\"); // RAII 在作用域退出时关闭资源\n  if (!file) return;\n  use_file(file);\n} // 即使异常栈展开，文件仍确定关闭\n// 垃圾回收器管理可达内存不等于及时释放文件、锁或事务\n// 追踪 GC 可能有暂停；资源释放时机应按延迟和资源类型设计", lang: "cpp", block: true)
+  #raw("#include <fstream>\n#include <fstream>\nvoid process()\n{\n    std::ifstream file(\"input.txt\"); // RAII 在作用域退出时关闭资源\n    if (!file)\n        return;\n    use_file(file);\n} // 即使异常栈展开，文件仍确定关闭\n// 垃圾回收器管理可达内存不等于及时释放文件、锁或事务\n// 追踪 GC 可能有暂停；资源释放时机应按延迟和资源类型设计", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -586,7 +586,7 @@
   #text("例如 lock_guard 在构造时加锁，在析构时解锁；文件流在析构时关闭。对象构造过程若失败，已经成功构造的成员会自动析构，因此要让每个资源在自身 RAII 成员中被管理，不要先把未完成的所有权交给外部。析构函数通常应避免抛异常，清理失败应使用错误状态或其他适当方式报告。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("#include <fstream>\n#include <mutex>\nvoid write_log(std::mutex& m) {\n  std::lock_guard<std::mutex> lock(m); // 获锁即建立资源所有权\n  std::ofstream file(\"log.txt\");\n  file << \"entry\\n\";\n} // 异常或提前返回也会逆序析构：先关文件，再解锁\n// 这种 RAII 清理比每条路径手写 unlock/close 更可靠", lang: "cpp", block: true)
+  #raw("#include <fstream>\n#include <mutex>\nvoid write_log(std::mutex& m)\n{\n    std::lock_guard<std::mutex> lock(m); // 获锁即建立资源所有权\n    std::ofstream file(\"log.txt\");\n    file << \"entry\\n\";\n} // 异常或提前返回也会逆序析构：先关文件，再解锁\n// 这种 RAII 清理比每条路径手写 unlock/close 更可靠", lang: "cpp", block: true)
 ]
 
 #heading(level: 2, outlined: true)[#text("2.2 分配策略与内存优化", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
@@ -598,7 +598,7 @@
   #text("分配存储和构造对象是两个步骤：返回一块字节区域，并不代表其中对象已构造；释放池块前也要先结束对应对象生命周期。实现还需满足类型对齐，并定义并发访问规则。标准库的 pmr 池资源可作为工具，但无同步池不能并发共享。内存池会引入保留内存和管理成本，应先用真实的分配大小与生命周期分布做基准。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("#include <vector>\n#include <memory_resource>\nstd::pmr::unsynchronized_pool_resource pool; // 复用大小相近的分配块\n{\n  std::pmr::vector<Node> nodes{&pool}; // 元素仍需正常构造/析构\n  nodes.emplace_back(); nodes.emplace_back();\n} // 容器先销毁元素，再由 pool 回收存储\n// pool 耗尽、对齐与线程安全策略都要定义；并先用真实负载测速度", lang: "cpp", block: true)
+  #raw("#include <vector>\n#include <memory_resource>\nstd::pmr::unsynchronized_pool_resource pool; // 复用大小相近的分配块\n{\n    std::pmr::vector<Node> nodes{&pool}; // 元素仍需正常构造/析构\n    nodes.emplace_back();\n    nodes.emplace_back();\n} // 容器先销毁元素，再由 pool 回收存储\n// pool 耗尽、对齐与线程安全策略都要定义；并先用真实负载测速度", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -609,7 +609,7 @@
   #text("池化和 arena 会让管理更简单或更快，但通常会预留内存，可能提高而非降低常驻占用；arena 中对象仍须在释放原始区块前析构。并发分配还要考虑锁竞争和线程局部池。单凭每次分配时间变快，不能证明整体更省内存；要在代表性工作负载下比较峰值、碎片、RSS 和执行时间，再决定是否值得引入。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("#include <vector>\n#include <memory_resource>\nstd::pmr::monotonic_buffer_resource arena; // 一批临时对象统一分配\n{\n  std::pmr::vector<Node> frame{&arena};\n  build_frame(frame); render(frame);\n} // 容器先结束元素生命周期；arena 再一次性回收区块\n// 同生命周期对象适合 arena；池化会多保留内存，不一定减少总占用\n// 用 profiler 区分碎片、峰值占用和分配开销后再选大小类/池", lang: "cpp", block: true)
+  #raw("#include <vector>\n#include <memory_resource>\nstd::pmr::monotonic_buffer_resource arena; // 一批临时对象统一分配\n{\n    std::pmr::vector<Node> frame{&arena};\n    build_frame(frame);\n    render(frame);\n} // 容器先结束元素生命周期；arena 再一次性回收区块\n// 同生命周期对象适合 arena；池化会多保留内存，不一定减少总占用\n// 用 profiler 区分碎片、峰值占用和分配开销后再选大小类/池", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -620,7 +620,7 @@
   #text("移动后的源对象仍须满足该类型规定的有效状态，并能够安全析构，但它具体保留什么值通常未指定。常见智能指针移动后为空，其他类型不能一概而论；需要继续使用时，应只执行类型保证安全的操作或重新赋值。不要对仍需保留值的对象随意 std::move，也不要认为给 const 对象 std::move 一定能触发移动。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("#include <memory>\n#include <utility>\nauto source = std::make_unique<Buffer>(size);\nauto destination = std::move(source); // 这里只转换值类别，不搬运字节\n// unique_ptr 的移动构造接手句柄；source 现在为空\nif (!source) source = std::make_unique<Buffer>(new_size); // 可重新赋值\n// 普通移动后对象通常只保证有效可析构，具体值未指定", lang: "cpp", block: true)
+  #raw("#include <memory>\n#include <utility>\nauto source = std::make_unique<Buffer>(size);\nauto destination = std::move(source); // 这里只转换值类别，不搬运字节\n// unique_ptr 的移动构造接手句柄；source 现在为空\nif (!source)\n    source = std::make_unique<Buffer>(new_size); // 可重新赋值\n// 普通移动后对象通常只保证有效可析构，具体值未指定", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -631,7 +631,7 @@
   #text("借用资源的一方不能负责释放所有者管理的对象；返回裸指针时也要明确它是借用还是转移所有权。AddressSanitizer、LeakSanitizer 等工具能找到已执行路径中的泄漏、越界或释放后访问，但不能证明所有路径都没有问题。测试应覆盖错误返回和异常分支，所有者边界设计清楚比事后依赖扫描工具更重要。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("#include <memory>\nstd::unique_ptr<Widget> make_widget() { return std::make_unique<Widget>(); }\nvoid run() {\n  auto object = make_widget();\n  if (condition()) return; // 提前返回也自动释放\n  process(*object);\n} // 异常展开也清理；共享所有权仅在确需时用 shared_ptr\n// weak_ptr 可打破所有权环；测试构建可启用 Address/LeakSanitizer", lang: "cpp", block: true)
+  #raw("#include <memory>\nstd::unique_ptr<Widget> make_widget()\n{\n    return std::make_unique<Widget>();\n}\nvoid run()\n{\n    auto object = make_widget();\n    if (condition())\n        return; // 提前返回也自动释放\n    process(*object);\n} // 异常展开也清理；共享所有权仅在确需时用 shared_ptr\n// weak_ptr 可打破所有权环；测试构建可启用 Address/LeakSanitizer", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -655,7 +655,7 @@
   #text("把某个变量置为 nullptr 只清除了这一个指针副本，其他指针和引用不会自动更新。应使用智能指针表达所有者，用普通指针或引用表达短期借用，并避免让借用跨越所有者销毁、容器搬迁或异步任务边界。AddressSanitizer 可帮助发现执行到的释放后使用路径，但需要结合代码中的寿命关系审查。〔N12〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("int* observer = nullptr;\n{\n  auto owner = std::make_unique<int>(42);\n  observer = owner.get(); // 观察者不延长对象生命\n} // owner 释放资源，observer 悬空\nobserver = nullptr; // 仅重置此变量；其他别名仍须单独处理", lang: "cpp", block: true)
+  #raw("int* observer = nullptr;\n{\n    auto owner = std::make_unique<int>(42);\n    observer = owner.get(); // 观察者不延长对象生命\n} // owner 释放资源，observer 悬空\nobserver = nullptr; // 仅重置此变量；其他别名仍须单独处理", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -677,7 +677,7 @@
   #text("memcmp 比较的是每个字节，不是对象的逻辑值。结构体的填充字节可能不一致，即使成员值相同也会比较出不同；浮点正负零、指针和用户定义相等语义也不适合由原始字节推断。用成员比较、默认比较运算符或专门的业务规则表达值相等；跨平台文件和网络数据则应显式序列化字段。〔N15、N16〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("struct Point { int x; int y; bool operator==(const Point&) const = default; };\nPoint a{1, 2}, b{1, 2};\nbool equal = (a == b); // C++20，表达字段的值相等\n// 不用 std::memcmp(&a, &b, sizeof(Point)) 推导一般对象相等", lang: "cpp", block: true)
+  #raw("struct Point\n{\n    int x;\n    int y;\n    bool operator==(const Point&) const = default;\n};\nPoint a{1, 2}, b{1, 2};\nbool equal = (a == b); // C++20，表达字段的值相等\n// 不用 std::memcmp(&a, &b, sizeof(Point)) 推导一般对象相等", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -688,7 +688,7 @@
   #text("分配成功得到非空地址也不代表程序未来触碰所有内存页都必然成功；操作系统可能采用过量承诺。零长度申请、数组长度溢出和极大请求也需要在接口层处理。调用方应根据业务需求选择恢复、减少工作或终止，并在处理失败时避免再进行可能需要大量内存的操作。不要把分配接口的错误方式混为一谈。〔N17、N18〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("try {\n  auto buffer = std::make_unique<std::byte[]>(requested);\n  use(buffer.get());\n} catch (const std::bad_alloc&) {\n  reportAllocationFailure(); // 真实业务中避免继续依赖新的大分配\n}", lang: "cpp", block: true)
+  #raw("try\n{\n    auto buffer = std::make_unique<std::byte[]>(requested);\n    use(buffer.get());\n}\ncatch (const std::bad_alloc&)\n{\n    reportAllocationFailure(); // 真实业务中避免继续依赖新的大分配\n}", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -699,7 +699,7 @@
   #text("free 之后分配器可能保留存储供后续复用，因此 RSS 不立刻下降并不直接证明泄漏。建立映射、提交虚拟地址和操作系统实际提供物理页也不是同一时刻。分配器还为对齐与管理维护元数据，请求字节数不等于实际占用。诊断要结合 glibc 版本、线程和 arena 数量、分配模式与进程指标，避免把某次实验观察到的块头或阈值推广到所有环境。〔N18〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("void* memory = std::malloc(256); // malloc 可能复用缓存块，也可能向系统申请内存\nif (memory != nullptr) { use(memory); std::free(memory); }\n// free 不保证 RSS 立即下降；分配器可能保留页面供后续复用", lang: "cpp", block: true)
+  #raw("void* memory = std::malloc(256); // malloc 可能复用缓存块，也可能向系统申请内存\nif (memory != nullptr)\n{\n    use(memory);\n    std::free(memory);\n}\n// free 不保证 RSS 立即下降；分配器可能保留页面供后续复用", lang: "cpp", block: true)
 ]
 
 #heading(level: 1, outlined: true)[#text("第3章 现代 C++ 与模板", size: 15pt, weight: "bold", fill: rgb("#000000"))]
@@ -712,7 +712,7 @@
   #text("若实现通用标准库 allocator，还要满足分配器类型的传播、相等性等语义，否则容器移动或交换时可能错误释放存储。标准 pmr 内存资源提供可复用的池等选择，但要按同步要求使用。全局重载 new/delete 会影响整个程序、第三方库和运行时，应先用性能分析证明默认分配路径是瓶颈，再选择局部 allocator 或资源。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("#include <vector>\n#include <memory_resource>\nstd::pmr::unsynchronized_pool_resource pool; // 面向相近尺寸的复用池\n{\n  std::pmr::vector<Node> nodes{&pool}; // 容器在原始存储中构造元素\n  for (int i = 0; i < 100; ++i) nodes.emplace_back();\n} // 先析构元素，再让资源池回收存储\n// 通用 allocator 还需满足传播/相等性等要求；unsynchronized_pool_resource 不可并发共享\n// 自定义全局 new 影响全程序；先证明分配器是瓶颈", lang: "cpp", block: true)
+  #raw("#include <vector>\n#include <memory_resource>\nstd::pmr::unsynchronized_pool_resource pool; // 面向相近尺寸的复用池\n{\n    std::pmr::vector<Node> nodes{&pool}; // 容器在原始存储中构造元素\n    for (int i = 0; i < 100; ++i)\n        nodes.emplace_back();\n} // 先析构元素，再让资源池回收存储\n// 通用 allocator 还需满足传播/相等性等要求；unsynchronized_pool_resource 不可并发共享\n// 自定义全局 new 影响全程序；先证明分配器是瓶颈", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -734,7 +734,7 @@
   #text("移动构造或移动赋值只有确实不会抛异常时才应标 noexcept。像 vector 扩容这样的操作可能依赖这个承诺，以决定能否安全移动元素；若移动会抛，容器可能改用复制来保留异常保证。错误地标记 noexcept 会把可恢复异常变成终止程序。实现应根据成员操作的真实异常行为声明，并用类型特征验证需要的性质。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("#include <type_traits>\nstruct MoveOnly { MoveOnly(MoveOnly&&) noexcept = default; };\nstatic_assert(std::is_nothrow_move_constructible_v<MoveOnly>);\nvoid never_fails() noexcept { /* 异常若逃逸会调用 std::terminate */ }\n// vector 扩容时可能为强异常保证回退到拷贝\n// 移动操作只有确实不抛才标 noexcept，不能作为优化装饰\n// noexcept(expr) 还可在模板中查询表达式的异常属性", lang: "cpp", block: true)
+  #raw("#include <type_traits>\nstruct MoveOnly\n{\n    MoveOnly(MoveOnly&&) noexcept = default;\n};\nstatic_assert(std::is_nothrow_move_constructible_v<MoveOnly>);\nvoid never_fails() noexcept\n{ /* 异常若逃逸会调用 std::terminate */\n}\n// vector 扩容时可能为强异常保证回退到拷贝\n// 移动操作只有确实不抛才标 noexcept，不能作为优化装饰\n// noexcept(expr) 还可在模板中查询表达式的异常属性", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -745,7 +745,7 @@
   #text("使用 RTTI 的动态信息通常要求编译时启用 RTTI。对空指针解引用后再对多态对象使用 typeid，会抛出 std::bad_typeid；先检查指针更清晰。还应注意运算数求值：当动态类型检查需要运行时对象时，相关表达式可能被求值。若目的只是执行不同操作，虚函数或访问者模式通常比到处比较 typeid 更容易扩展。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("#include <typeinfo>\nstruct Base { virtual ~Base() = default; }; struct Derived : Base {};\nBase* p = new Derived;\nbool same = (typeid(*p) == typeid(Derived)); // 多态 glvalue 得到动态类型\nconst char* name = typeid(*p).name(); // 名称格式由实现决定\n// 非多态表达式通常只报告静态类型；RTTI 需启用\n// 不要解引用空多态指针再 typeid；那会抛 std::bad_typeid\ndelete p;", lang: "cpp", block: true)
+  #raw("#include <typeinfo>\nstruct Base\n{\n    virtual ~Base() = default;\n};\nstruct Derived : Base\n{\n};\nBase* p = new Derived;\nbool same = (typeid(*p) == typeid(Derived)); // 多态 glvalue 得到动态类型\nconst char* name = typeid(*p).name(); // 名称格式由实现决定\n// 非多态表达式通常只报告静态类型；RTTI 需启用\n// 不要解引用空多态指针再 typeid；那会抛 std::bad_typeid\ndelete p;", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -756,7 +756,7 @@
   #text("复杂递归模板可能让编译变慢、错误信息难读，还可能生成过多代码。对简单数值计算，constexpr 函数常比递归模板更直观；公开接口的类型要求可用 concept 表达。模板技巧适合确有编译期选择需求时使用，不必把所有普通逻辑都移到类型系统里。还要留意编译期数值范围，避免计算本身发生溢出或递归深度过大。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("#include <cstddef>\ntemplate<std::size_t N> struct Factorial {\n  static constexpr std::size_t value = N * Factorial<N - 1>::value;\n};\ntemplate<> struct Factorial<0> { static constexpr std::size_t value = 1; };\nstatic_assert(Factorial<5>::value == 120); // 编译期实例化递归模板\nconstexpr std::size_t fact(std::size_t n) { return n < 2 ? 1 : n * fact(n - 1); }\n// 常量表达式通常更清楚；深层 TMP 会增加编译时间和诊断难度", lang: "cpp", block: true)
+  #raw("#include <cstddef>\ntemplate <std::size_t N> struct Factorial\n{\n    static constexpr std::size_t value = N * Factorial<N - 1>::value;\n};\ntemplate <> struct Factorial<0>\n{\n    static constexpr std::size_t value = 1;\n};\nstatic_assert(Factorial<5>::value == 120); // 编译期实例化递归模板\nconstexpr std::size_t fact(std::size_t n)\n{\n    return n < 2 ? 1 : n * fact(n - 1);\n}\n// 常量表达式通常更清楚；深层 TMP 会增加编译时间和诊断难度", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -767,7 +767,7 @@
   #text("decltype(auto) 则按 decltype 规则推导，可能得到引用类型。它常用于精确转发或保留表达式类型，但也容易意外返回局部变量引用。写返回 decltype(auto) 的函数时，要确认返回表达式对应的对象寿命长于调用方使用时间。理解声明语境和表达式值类别，比只看变量名称判断类型可靠。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("#include <utility>\nint x = 1; const int cx = 2;\nauto a = cx; // 按值推导为 int，顶层 const 被去掉\nconst auto& b = cx; // 保留 const 引用\ntemplate<class T> decltype(auto) identity(T&& value) { return std::forward<T>(value); }\n// 模板 T&& 对左值折叠为左值引用，对右值保持右值引用\n// 返回引用时要确认对象活得足够久，避免悬空", lang: "cpp", block: true)
+  #raw("#include <utility>\nint x = 1;\nconst int cx = 2;\nauto a = cx; // 按值推导为 int，顶层 const 被去掉\nconst auto& b = cx; // 保留 const 引用\ntemplate <class T> decltype(auto) identity(T&& value)\n{\n    return std::forward<T>(value);\n}\n// 模板 T&& 对左值折叠为左值引用，对右值保持右值引用\n// 返回引用时要确认对象活得足够久，避免悬空", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -778,7 +778,7 @@
   #text("C++14 的初始化捕获可在创建闭包时移动资源，例如把 unique_ptr 从调用方转移到任务中。闭包默认调用运算符不能修改按值捕获的副本，需要时可加 mutable。闭包的类型由编译器生成；非捕获 lambda 可转换为相容函数指针，带捕获的 lambda 则通常不能。长期保存任务时，捕获方式也决定任务是否拥有其依赖资源。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("#include <memory>\n#include <utility>\n#include <memory>\n#include <utility>\nauto make_task(std::unique_ptr<Job> job) {\n  return [owned = std::move(job)] { owned->run(); }; // 初始化捕获转移所有权\n}\nint total = 0; auto add = [&total](int n) { total += n; }; // 依赖 total 生命周期\nadd(3);\n// 闭包保存捕获状态；异步保存时避免引用短生命周期局部变量\n// 按值捕获可保存副本，必要时用 mutable 改闭包自己的副本", lang: "cpp", block: true)
+  #raw("#include <memory>\n#include <utility>\n#include <memory>\n#include <utility>\nauto make_task(std::unique_ptr<Job> job)\n{\n    return [owned = std::move(job)]\n    {\n        owned->run();\n    }; // 初始化捕获转移所有权\n}\nint total = 0;\nauto add = [&total](int n)\n{\n    total += n;\n}; // 依赖 total 生命周期\nadd(3);\n// 闭包保存捕获状态；异步保存时避免引用短生命周期局部变量\n// 按值捕获可保存副本，必要时用 mutable 改闭包自己的副本", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -789,7 +789,7 @@
   #text("把 nullptr 赋给具体指针类型会得到空指针值，也可在模板或函数参数中传递；需要显式命名它的类型时包含 <cstddef>。nullptr 不表示“没有值的任意对象”，不能直接用于任意整数参数。选择正确的重载仍应让接口设计清楚，不能依赖复杂的隐式转换绕过类型含义。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("#include <cstddef>\nvoid open(int); void open(const char*);\nopen(nullptr); // 空指针语义，选择指针重载\nopen(0); // 整数 0 匹配 int，历史 NULL 宏也可能是整数\nstd::nullptr_t empty = nullptr;\n// nullptr 可转换为对象/函数指针，不会误选整数重载\n// 需要头文件 <cstddef> 才直接命名 std::nullptr_t", lang: "cpp", block: true)
+  #raw("#include <cstddef>\nvoid open(int);\nvoid open(const char*);\nopen(nullptr); // 空指针语义，选择指针重载\nopen(0); // 整数 0 匹配 int，历史 NULL 宏也可能是整数\nstd::nullptr_t empty = nullptr;\n// nullptr 可转换为对象/函数指针，不会误选整数重载\n// 需要头文件 <cstddef> 才直接命名 std::nullptr_t", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -800,7 +800,7 @@
   #text("inline 并不保证编译器展开机器码调用；其语言层面还允许满足 ODR 的定义出现在多个翻译单元。适合普通计算的宏通常可换成函数或模板。宏仍有条件编译、字符串化和 token 拼接等预处理用途，但应避免将其当作没有类型的函数机制。宏命名也要避免污染包含它的所有源码。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("inline int square(int x) { return x * x; } // 类型检查，参数只求值一次\nint i = 3; int value = square(i++); // i 只递增一次\n#define SQUARE_BAD(x) ((x) * (x))\nint j = 3;\n// int wrong = SQUARE_BAD(j++); // 会重复递增且产生未定义行为\n// inline 不保证生成机器码内联，但可满足多翻译单元 ODR 例外\n// 宏仍适合条件编译；函数更安全、可调试、受作用域控制", lang: "cpp", block: true)
+  #raw("inline int square(int x)\n{\n    return x * x;\n} // 类型检查，参数只求值一次\nint i = 3;\nint value = square(i++); // i 只递增一次\n#define SQUARE_BAD(x) ((x) * (x))\nint j = 3;\n// int wrong = SQUARE_BAD(j++); // 会重复递增且产生未定义行为\n// inline 不保证生成机器码内联，但可满足多翻译单元 ODR 例外\n// 宏仍适合条件编译；函数更安全、可调试、受作用域控制", lang: "cpp", block: true)
 ]
 
 #heading(level: 2, outlined: true)[#text("3.2 值类别、移动与泛型", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
@@ -812,7 +812,7 @@
   #text("std::forward<T> 则只用于转发引用模板，按照推导得到的 T 保留传入实参是左值还是右值。普通函数形参即使写成 T&&，在函数体中命名后的变量也是左值表达式，因此需要 forward 转发原类别。移动后的源对象仍必须有效且可析构，但值可能未指定；只进行类型保证的操作或重新赋值。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("#include <string>\n#include <utility>\nvoid consume(std::string&& text) { store(std::move(text)); }\ntemplate<class F, class... Args>\ndecltype(auto) forward_call(F&& f, Args&&... args) {\n  return std::forward<F>(f)(std::forward<Args>(args)...);\n}\n// std::move 只转换值类别，移动由目标类型的重载实现\n// std::forward<T> 仅在转发引用模板里按 T 保留实参原值类别", lang: "cpp", block: true)
+  #raw("#include <string>\n#include <utility>\nvoid consume(std::string&& text)\n{\n    store(std::move(text));\n}\ntemplate <class F, class... Args> decltype(auto) forward_call(F&& f, Args&&... args)\n{\n    return std::forward<F>(f)(std::forward<Args>(args)...);\n}\n// std::move 只转换值类别，移动由目标类型的重载实现\n// std::forward<T> 仅在转发引用模板里按 T 保留实参原值类别", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -823,7 +823,7 @@
   #text("多个线程同时首次请求时，要保证只进行规定次数的计算；std::call_once 可协调单次初始化，成功后后续调用不会重复执行。若初始化抛出异常，之后的调用可能再次尝试，因此还要决定重试语义。延迟任务本身也有生命周期约束：按引用捕获的外部对象必须比任务活得更久。缓存会增加状态和同步成本，仅在延迟确有收益时使用。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("#include <mutex>\n#include <mutex>\n#include <optional>\nclass LazyValue { mutable std::optional<int> cache_; mutable std::once_flag once_;\npublic: int get() const { std::call_once(once_, [&] { cache_ = expensive_compute(); }); return *cache_; }\n};\n// 闭包/函数对象可推迟计算；optional 区分未计算和结果为 0\n// call_once 成功初始化后只执行一次；异常时后续调用可重试\n// 引用捕获对象仍须活得比延迟任务久", lang: "cpp", block: true)
+  #raw("#include <mutex>\n#include <mutex>\n#include <optional>\nclass LazyValue\n{\n    mutable std::optional<int> cache_;\n    mutable std::once_flag once_;\n\n  public:\n    int get() const\n    {\n        std::call_once(once_,\n                       [&]\n                       {\n                           cache_ = expensive_compute();\n                       });\n        return *cache_;\n    }\n};\n// 闭包/函数对象可推迟计算；optional 区分未计算和结果为 0\n// call_once 成功初始化后只执行一次；异常时后续调用可重试\n// 引用捕获对象仍须活得比延迟任务久", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -834,7 +834,7 @@
   #text("需要自定义时，可以用主模板提供默认结果，再用偏特化处理某种类型形状；继承 true_type 或 false_type 能得到标准布尔接口。早期代码常用 void_t 检查表达式是否合法，C++20 concept 更适合直接表达公开模板接口的要求。类型特征应封装具体检测意图，避免为了炫技构造让调用者难以理解的递归模板。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("#include <type_traits>\n#include <utility>\n#include <vector>\ntemplate<class T> struct is_pointer_like : std::false_type {};\ntemplate<class T> struct is_pointer_like<T*> : std::true_type {}; // 偏特化\nstatic_assert(is_pointer_like<int*>::value);\nusing ValueType = std::remove_cvref_t<const int&>; // 先复用标准特征\nstatic_assert(std::is_same_v<ValueType, int>); // C++20 concept 可直接写约束", lang: "cpp", block: true)
+  #raw("#include <type_traits>\n#include <utility>\n#include <vector>\ntemplate <class T> struct is_pointer_like : std::false_type\n{\n};\ntemplate <class T> struct is_pointer_like<T*> : std::true_type\n{\n}; // 偏特化\nstatic_assert(is_pointer_like<int*>::value);\nusing ValueType = std::remove_cvref_t<const int&>; // 先复用标准特征\nstatic_assert(std::is_same_v<ValueType, int>); // C++20 concept 可直接写约束", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -845,7 +845,7 @@
   #text("Concepts 让代码更清楚，但不能假定它与所有 SFINAE 重载选择完全等价。约束排序有自己的规则，迁移旧模板时要检查哪些重载成为候选以及歧义是否变化。SFINAE 仍适用于旧标准兼容代码和一些细粒度重载选择；新接口通常可以优先用 concept 把要求写在定义附近。〔S1，S2〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("#include <type_traits>\n#include <concepts>\ntemplate<class T> requires std::integral<T>\nT add(T a, T b) { return a + b; } // 约束直接说明所需性质\n// 旧标准常用替换失败从候选集移除：\ntemplate<class T, std::enable_if_t<std::is_integral_v<T>, int> = 0>\nT legacy_add(T a, T b) { return a + b; }\n// concepts 错误信息通常更清楚，但重载排序规则不完全等同 SFINAE", lang: "cpp", block: true)
+  #raw("#include <type_traits>\n#include <concepts>\ntemplate <class T>\n    requires std::integral<T>\nT add(T a, T b)\n{\n    return a + b;\n} // 约束直接说明所需性质\n// 旧标准常用替换失败从候选集移除：\ntemplate <class T, std::enable_if_t<std::is_integral_v<T>, int> = 0> T legacy_add(T a, T b)\n{\n    return a + b;\n}\n// concepts 错误信息通常更清楚，但重载排序规则不完全等同 SFINAE", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -856,7 +856,7 @@
   #text("惰性计算也意味着访问时可能重复执行过滤或变换函数，不能假设结果已缓存。许多 view 只保存底层数据的借用关系，并不拥有元素；如果容器销毁、扩容或迭代器失效，保存的 view 也可能不可用。返回或长期保存 view 时，必须保证底层范围寿命和迭代器有效期覆盖所有使用。〔S1，S2〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("#include <ranges>\n#include <vector>\nstd::vector<int> values{1, 2, 3, 4};\nauto odds = values | std::views::filter([](int n) { return n % 2; });\nauto doubled = odds | std::views::transform([](int n) { return n * 2; });\nfor (int n : doubled) consume(n); // 迭代时才过滤/变换，无中间容器\n// view 多数不拥有元素；保存它前要保证 values 和迭代器仍有效", lang: "cpp", block: true)
+  #raw("#include <ranges>\n#include <vector>\nstd::vector<int> values{1, 2, 3, 4};\nauto odds = values | std::views::filter(\n                         [](int n)\n                         {\n                             return n % 2;\n                         });\nauto doubled = odds | std::views::transform(\n                          [](int n)\n                          {\n                              return n * 2;\n                          });\nfor (int n : doubled)\n    consume(n); // 迭代时才过滤/变换，无中间容器\n// view 多数不拥有元素；保存它前要保证 values 和迭代器仍有效", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -867,7 +867,7 @@
   #text("vector 与 span 的职责不同：vector 拥有存储并管理容量变化；span 只描述一段现存区间。vector 销毁或导致存储重新分配时，原来的 span 可能变成悬空视图。接受 span 的函数不应保存它超过调用者数据寿命，除非另有所有权设计。需要可调整大小并拥有数据时，继续用 vector。〔S2〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("#include <span>\n#include <vector>\nint sum(std::span<const int> values) { int total = 0; for (int x : values) total += x; return total; }\nstd::vector<int> owned{1, 2, 3};\nint result = sum(owned); // span 借用 vector 的连续存储，不复制元素\n// vector 拥有并可扩容；span 只保存地址和长度，不延长生命周期\n// owned 被销毁或扩容后，不得继续用原 span", lang: "cpp", block: true)
+  #raw("#include <span>\n#include <vector>\nint sum(std::span<const int> values)\n{\n    int total = 0;\n    for (int x : values)\n        total += x;\n    return total;\n}\nstd::vector<int> owned{1, 2, 3};\nint result = sum(owned); // span 借用 vector 的连续存储，不复制元素\n// vector 拥有并可扩容；span 只保存地址和长度，不延长生命周期\n// owned 被销毁或扩容后，不得继续用原 span", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -878,7 +878,7 @@
   #text("视图的有效期受原始存储控制：原 string 销毁、扩容重分配、某些修改使数据位置失效，或临时字符串表达式结束后，view 都可能悬空。不要从函数返回指向局部 string 的 string_view，也不要把异步任务里的视图建立在调用者短期数据上。需要拥有内容时复制到 string，调用 C 接口前也要确保终止符和长度符合要求。〔S2〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("#include <string>\n#include <string_view>\n#include <string_view>\nint parse(std::string_view text) { return parse_digits(text); } // 无需复制字符串\nstd::string owner = \"123\"; std::string_view view = owner;\nint n = parse(view); // 仅在 owner 存活且存储未失效时安全\nstd::string_view dangling() { std::string local = \"bad\"; return local; } // 错误：悬空\n// view 不保证 data() 后有 NUL；传 C API 前要复制/保证终止", lang: "cpp", block: true)
+  #raw("#include <string>\n#include <string_view>\n#include <string_view>\nint parse(std::string_view text)\n{\n    return parse_digits(text);\n} // 无需复制字符串\nstd::string owner = \"123\";\nstd::string_view view = owner;\nint n = parse(view); // 仅在 owner 存活且存储未失效时安全\nstd::string_view dangling()\n{\n    std::string local = \"bad\";\n    return local;\n} // 错误：悬空\n// view 不保证 data() 后有 NUL；传 C API 前要复制/保证终止", lang: "cpp", block: true)
 ]
 
 #heading(level: 2, outlined: true)[#text("3.3 Modules、协程与编译期计算", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
@@ -890,7 +890,7 @@
   #text("模块接口需要先编译为编译器可读的模块工件，常叫 BMI；构建系统必须识别模块依赖并按顺序生成。模块可以与头文件逐步共存，但编译器、标准库及构建工具支持程度会影响可用性和实际构建收益。迁移前应在项目工具链上验证依赖扫描、缓存与第三方库集成，而不是假定所有编译环境都支持同一种方式。〔S1，S2〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// math.cppm：模块接口单元\nexport module math;\nexport int add(int a, int b) { return a + b; }\n// client.cpp：import math; 然后调用 add(1, 2)\n// import 提供显式接口且宏不会像文本 include 那样泄漏\n// BMI 需先构建；构建系统必须安排依赖，工具链支持仍需确认", lang: "cpp", block: true)
+  #raw("// math.cppm：模块接口单元\nexport module math;\nexport int add(int a, int b)\n{\n    return a + b;\n}\n// client.cpp：import math; 然后调用 add(1, 2)\n// import 提供显式接口且宏不会像文本 include 那样泄漏\n// BMI 需先构建；构建系统必须安排依赖，工具链支持仍需确认", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -901,7 +901,7 @@
   #text("协程只提供保存状态与挂起恢复的语言机制，不会自动创建线程，也不自动执行网络 I/O 或把任务放进调度队列。调用方或异步库必须负责何时恢复、在哪个执行器运行以及如何管理取消和资源。协程帧的分配与生命周期也要由返回对象和调用约定管理；不能因为函数表面上写成顺序逻辑就忽略异步错误处理。〔S1，S2〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("#include <coroutine>\nstruct Task { struct promise_type; std::coroutine_handle<promise_type> handle; };\nTask fetch() { co_await wait_for_io(); co_return; } // 关键字让编译器生成可暂停状态机\n// promise_type 定义返回对象、异常处理和初始/最终挂起行为\n// awaiter 决定是否挂起及恢复方式；调度器/调用方负责何时 resume\n// 协程本身不创建线程，也不自动并发或执行异步 I/O", lang: "cpp", block: true)
+  #raw("#include <coroutine>\nstruct Task\n{\n    struct promise_type;\n    std::coroutine_handle<promise_type> handle;\n};\nTask fetch()\n{\n    co_await wait_for_io();\n    co_return;\n} // 关键字让编译器生成可暂停状态机\n// promise_type 定义返回对象、异常处理和初始/最终挂起行为\n// awaiter 决定是否挂起及恢复方式；调度器/调用方负责何时 resume\n// 协程本身不创建线程，也不自动并发或执行异步 I/O", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -912,7 +912,7 @@
   #text("expected 从 C++23 标准库开始提供，使用时还需确认编译器和标准库实现支持。它与异常的适用边界要按项目接口约定：错误需要逐层显式处理时，expected 清楚地把错误放在返回值里；异常仍适合某些无法局部处理或跨多层传播的失败。读取 error 前要确认对象处于失败状态，调用方也不能默默丢弃错误。〔S2〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("#include <expected>\n#include <string>\n#include <string_view>\nstd::expected<int, std::string> parse(std::string_view text) { // C++23\n  if (text.empty()) return std::unexpected(std::string(\"empty input\"));\n  return parse_integer(text);\n}\nauto result = parse(\"42\");\nif (result) use(*result); else log(result.error()); // 调用方显式处理错误\n// expected 携带可恢复错误；不会自动日志，也不取代所有异常", lang: "cpp", block: true)
+  #raw("#include <expected>\n#include <string>\n#include <string_view>\nstd::expected<int, std::string> parse(std::string_view text)\n{ // C++23\n    if (text.empty())\n        return std::unexpected(std::string(\"empty input\"));\n    return parse_integer(text);\n}\nauto result = parse(\"42\");\nif (result)\n    use(*result);\nelse\n    log(result.error()); // 调用方显式处理错误\n// expected 携带可恢复错误；不会自动日志，也不取代所有异常", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -923,7 +923,7 @@
   #text("constinit 是 C++20 的存储期变量声明约束，要求静态或线程存储期变量经过常量初始化，避免依赖动态初始化顺序。它不会让变量自动成为 const，程序运行后仍可修改。要选择哪一个，应先问需要“允许编译期计算”“必须立即计算”，还是“保证启动时已静态初始化”；三者不能互相替代。〔S2〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("constexpr int twice(int x) { return x * 2; } // 可编译期或运行期求值\nconsteval int fixed(int x) { return x * 2; } // 调用必须立即常量求值\nconstinit int startup = twice(4); // C++20 静态初始化保证，但变量可修改\nint runtime = twice(read_input()); // constexpr 函数也可运行期调用\n// constinit 不能替代 const；三者约束的是不同事情\n// constinit 保证静态/线程存储期变量常量初始化，但不让对象自动 const", lang: "cpp", block: true)
+  #raw("constexpr int twice(int x)\n{\n    return x * 2;\n} // 可编译期或运行期求值\nconsteval int fixed(int x)\n{\n    return x * 2;\n} // 调用必须立即常量求值\nconstinit int startup = twice(4); // C++20 静态初始化保证，但变量可修改\nint runtime = twice(read_input()); // constexpr 函数也可运行期调用\n// constinit 不能替代 const；三者约束的是不同事情\n// constinit 保证静态/线程存储期变量常量初始化，但不让对象自动 const", lang: "cpp", block: true)
 ]
 
 
@@ -936,7 +936,7 @@
   #text("声明一个析构、拷贝或移动成员可能改变其他特殊成员的隐式生成规则，所以要从整体上检查复制、移动和销毁语义。自管资源的类型需要考虑三法则或五法则；更好的常见选择是让 RAII 成员承担所有权，遵循零法则。default 不是“保证一定有效”，delete 也不只是把函数藏在 private 后面。〔N19、N20〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("struct Handle {\n  Handle() = default;\n  Handle(const Handle&) = delete;\n  Handle& operator=(const Handle&) = delete;\n  Handle(Handle&&) = default; // 仍须确认成员的移动语义正确\n  Handle& operator=(Handle&&) = default;\n};", lang: "cpp", block: true)
+  #raw("struct Handle\n{\n    Handle() = default;\n    Handle(const Handle&) = delete;\n    Handle& operator=(const Handle&) = delete;\n    Handle(Handle&&) = default; // 仍须确认成员的移动语义正确\n    Handle& operator=(Handle&&) = default;\n};", lang: "cpp", block: true)
 ]
 
 #heading(level: 2, outlined: true)[#text("3.5 C++11 语言与模板补充", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
@@ -948,7 +948,7 @@
   #text("变长参数模板用参数包表达零个或多个类型或函数实参，实例化时可以把同一种操作展开到每个参数上。C++11 常见写法用递归重载逐项处理，C++17 才加入折叠表达式来简化一类聚合展开。写范围循环仍需考虑容器失效，枚举转换仍需考虑越界与协议编码；这几项是语言工具，不会自动提供这些额外保证。〔N21、N22、N23〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("enum class State : unsigned { idle, busy }; // enum class 不会隐式转成 int\nfor (const auto& item : items) use(item); // 范围 for 可避免不必要的复制\ntemplate<class... Args> void print_all(const Args&... args) { (print(args), ...); } // C++17 折叠表达式", lang: "cpp", block: true)
+  #raw("enum class State : unsigned\n{\n    idle,\n    busy\n}; // enum class 不会隐式转成 int\nfor (const auto& item : items)\n    use(item); // 范围 for 可避免不必要的复制\ntemplate <class... Args> void print_all(const Args&... args)\n{\n    (print(args), ...);\n} // C++17 折叠表达式", lang: "cpp", block: true)
 ]
 
 #heading(level: 1, outlined: true)[#text("第4章 并发与线程安全", size: 15pt, weight: "bold", fill: rgb("#000000"))]
@@ -961,7 +961,7 @@
   #text("这种循环检查可以处理虚假唤醒，也不依赖通知恰好在某个时间到达。生产者应先持锁更新状态或队列，释放锁后再通知；状态才是事实来源，通知只是提醒重新检查。若工作线程通过引用访问外部对象，线程退出前要 join，保证引用对象仍然存在。通知多次不会积累为多个待处理事件。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("#include <condition_variable>\n#include <mutex>\n#include <thread>\nstd::mutex m; std::condition_variable cv; bool ready = false;\nstd::thread worker([&] { std::unique_lock<std::mutex> lock(m);\n  cv.wait(lock, [&] { return ready; }); consume_data(); }); // wait 原子解锁并重查谓词\n{ std::lock_guard<std::mutex> lock(m); ready = true; } // 状态才是事实来源\ncv.notify_one(); worker.join(); // 线程退出前 join，避免悬空引用", lang: "cpp", block: true)
+  #raw("#include <condition_variable>\n#include <mutex>\n#include <thread>\nstd::mutex m;\nstd::condition_variable cv;\nbool ready = false;\nstd::thread worker(\n    [&]\n    {\n        std::unique_lock<std::mutex> lock(m);\n        cv.wait(lock,\n                [&]\n                {\n                    return ready;\n                });\n        consume_data();\n    }); // wait 原子解锁并重查谓词\n{\n    std::lock_guard<std::mutex> lock(m);\n    ready = true;\n} // 状态才是事实来源\ncv.notify_one();\nworker.join(); // 线程退出前 join，避免悬空引用", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -972,7 +972,7 @@
   #text("节点生命周期和 ABA 问题往往比 CAS 本身更难：一个线程读过的节点不能被另一线程提前释放，指针值也可能离开后又回到同一地址。hazard pointer 或 epoch 等机制可以延迟回收。无锁不等于每个操作都在有限步骤内完成，更不保证比互斥锁快。优先使用经过验证的实现，并进行压力与内存回收测试。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// 伪代码：Michael–Scott 队列；Node 含 atomic<Node*> next 和 value，先建 dummy\nstd::atomic<Node*> head{dummy}, tail{dummy};\nvoid push(Value v) { Node* n = new Node(std::move(v));\n  for (;;) { Node* t = tail.load(std::memory_order_acquire);\n    Node* next = t->next.load(std::memory_order_acquire);\n    if (t == tail.load() && !next && t->next.compare_exchange_weak(next, n)) break;\n    if (next) tail.compare_exchange_weak(t, next); } // 帮助推进尾指针\n}\n// 省略 dequeue/内存回收：不能在其他线程可能读取时 delete；还须处理 ABA", lang: "cpp", block: true)
+  #raw("// 伪代码：Michael–Scott 队列；Node 含 atomic<Node*> next 和 value，先建 dummy\nstd::atomic<Node*> head{dummy}, tail{dummy};\nvoid push(Value v)\n{\n    Node* n = new Node(std::move(v));\n    for (;;)\n    {\n        Node* t = tail.load(std::memory_order_acquire);\n        Node* next = t->next.load(std::memory_order_acquire);\n        if (t == tail.load() && !next && t->next.compare_exchange_weak(next, n))\n            break;\n        if (next)\n            tail.compare_exchange_weak(t, next);\n    } // 帮助推进尾指针\n}\n// 省略 dequeue/内存回收：不能在其他线程可能读取时 delete；还须处理 ABA", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -983,7 +983,7 @@
   #text("通知不会保存事件，也不代表计数自动加一。调用方要记住每次事件时，应在队列或计数器里记录它，再通知等待者；若是独立的计数许可，C++20 semaphore 往往更贴切。无论选哪种机制，都要定义关闭或取消时等待者如何醒来，避免线程永久睡眠。条件变量的正确性来自状态转换和锁协议，而不是通知次数。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("#include <condition_variable>\nstd::mutex m; std::condition_variable cv; int permits = 0;\nvoid wait_for_work() { std::unique_lock<std::mutex> lock(m);\n  cv.wait(lock, [&] { return permits > 0; }); --permits; }\nvoid signal_work() { { std::lock_guard<std::mutex> lock(m); ++permits; }\n  cv.notify_one(); }\n// wait 用谓词循环处理虚假唤醒；通知本身不保存事件\n// 若要保留每次事件，队列/计数状态须记录它；多线程计数可用 semaphore", lang: "cpp", block: true)
+  #raw("#include <condition_variable>\nstd::mutex m;\nstd::condition_variable cv;\nint permits = 0;\nvoid wait_for_work()\n{\n    std::unique_lock<std::mutex> lock(m);\n    cv.wait(lock,\n            [&]\n            {\n                return permits > 0;\n            });\n    --permits;\n}\nvoid signal_work()\n{\n    {\n        std::lock_guard<std::mutex> lock(m);\n        ++permits;\n    }\n    cv.notify_one();\n}\n// wait 用谓词循环处理虚假唤醒；通知本身不保存事件\n// 若要保留每次事件，队列/计数状态须记录它；多线程计数可用 semaphore", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -994,7 +994,7 @@
   #text("分析挂起时可查看线程栈及锁的持有、等待关系，找是否存在闭合等待环。避免死锁不等于保证公平，也不等于线程不会饥饿；这些是额外性质。哲学家问题可用统一顺序取筷子，或限制同时竞争人数来破坏循环等待。调查应使用受支持的调试工具，不能把某个 libc 私有锁字段当成通用接口。〔I40、I41〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("#include <mutex>\nstd::mutex account, inventory;\nvoid transfer() {\n  std::scoped_lock lock(account, inventory); // 一次获取多锁，避免反序死锁\n  update_account(); update_inventory(); // 只在临界区做必要工作\n} // 异常或返回时 RAII 自动解锁\n// 对外回调/未知代码可能反向获取锁；应避免持锁调用\n// 也可规定所有路径按同一全局顺序加锁", lang: "cpp", block: true)
+  #raw("#include <mutex>\nstd::mutex account, inventory;\nvoid transfer()\n{\n    std::scoped_lock lock(account, inventory); // 一次获取多锁，避免反序死锁\n    update_account();\n    update_inventory(); // 只在临界区做必要工作\n} // 异常或返回时 RAII 自动解锁\n// 对外回调/未知代码可能反向获取锁；应避免持锁调用\n// 也可规定所有路径按同一全局顺序加锁", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -1005,7 +1005,7 @@
   #text("异步函数中的异常会存进 future，在 get 时重新抛出；get 通常只能消费结果一次。std::async 不是有界线程池，也没有通用的强制取消机制；任务数量和线程资源要由应用管理。未来对象和任务的生命周期也需要清晰：若任务捕获了引用，必须确保外部对象直到任务完成仍然存活。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("#include <future>\nauto result = std::async(std::launch::async, [] { return compute(); });\n// 指定 async 避免默认策略可能 deferred 到 get 时才在本线程执行\ntry { auto value = result.get(); use(value); }\ncatch (const std::exception& e) { report(e.what()); } // 异常经 future 传播\n// get 只取结果一次；async 不是有界线程池，也不提供强制取消", lang: "cpp", block: true)
+  #raw("#include <future>\nauto result = std::async(std::launch::async,\n                         []\n                         {\n                             return compute();\n                         });\n// 指定 async 避免默认策略可能 deferred 到 get 时才在本线程执行\ntry\n{\n    auto value = result.get();\n    use(value);\n}\ncatch (const std::exception& e)\n{\n    report(e.what());\n} // 异常经 future 传播\n// get 只取结果一次；async 不是有界线程池，也不提供强制取消", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -1016,7 +1016,7 @@
   #text("lock_guard 用 RAII 包住一次锁定：构造时获得锁，离开作用域时释放，因此提前返回和异常也会清理。需要提前解锁、重新加锁或采用不同锁定策略时，可使用 unique_lock；同时获取多把锁可用 scoped_lock。锁保护哪些状态应明确一致，不能只锁写操作却让其他线程无锁读取同一数据。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("#include <mutex>\nstd::mutex m; int balance = 0;\nvoid deposit(int amount) {\n  std::lock_guard<std::mutex> lock(m); // 构造时锁定\n  balance += amount;\n  if (should_throw()) throw Error{}; // 示例：异常也会退出作用域\n} // 析构自动 unlock，避免手动 unlock 漏在异常路径\n// 多把锁用 std::scoped_lock；只由成功获取锁的线程释放", lang: "cpp", block: true)
+  #raw("#include <mutex>\nstd::mutex m;\nint balance = 0;\nvoid deposit(int amount)\n{\n    std::lock_guard<std::mutex> lock(m); // 构造时锁定\n    balance += amount;\n    if (should_throw())\n        throw Error{}; // 示例：异常也会退出作用域\n} // 析构自动 unlock，避免手动 unlock 漏在异常路径\n// 多把锁用 std::scoped_lock；只由成功获取锁的线程释放", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -1027,7 +1027,7 @@
   #text("初始实现优先使用默认顺序一致模型，先把同步关系写清楚；性能测量确有需要时，再依据 happens-before 关系放宽内存序。relaxed 适合只要求原子计数的场景，不发布其他数据。volatile 不能替代 atomic。读改写操作要选合适的函数，如 fetch_add 或 compare_exchange，并证明失败重试逻辑正确。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("#include <atomic>\nstd::atomic<int> requests{0};\nrequests.fetch_add(1, std::memory_order_relaxed); // 只需原子计数，不发布别的数据\nstd::atomic<bool> ready{false}; int payload = 0;\n// 若用 ready 发布 payload，应使用 release store / acquire load\n// atomic 只保护自身对象；余额与版本号等多字段不自动构成事务\n// 正确性优先用默认 seq_cst，再按同步关系优化内存序", lang: "cpp", block: true)
+  #raw("#include <atomic>\nstd::atomic<int> requests{0};\nrequests.fetch_add(1, std::memory_order_relaxed); // 只需原子计数，不发布别的数据\nstd::atomic<bool> ready{false};\nint payload = 0;\n// 若用 ready 发布 payload，应使用 release store / acquire load\n// atomic 只保护自身对象；余额与版本号等多字段不自动构成事务\n// 正确性优先用默认 seq_cst，再按同步关系优化内存序", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -1038,7 +1038,7 @@
   #text("线程局部存储不是跨线程通信机制，也不会保护普通全局变量；需要共享的数据仍要用锁或原子操作。大型 TLS 对象还会占用每个线程的内存。若它来自动态库，线程局部析构和库卸载还可能受平台运行时规则影响，不能在所有环境中假定相同。线程池复用线程时，线程局部状态也会跨多个任务持续存在。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("#include <string>\n#include <string_view>\nthread_local std::string scratch; // 每个线程都有独立字符串\nvoid parse(std::string_view input) { scratch.assign(input); process(scratch); }\n// 两线程调用时 scratch 不共享，避免为这份临时状态加锁\nstd::string shared; // 普通全局变量仍需同步保护\n// 线程退出时会析构自己的 thread_local 对象\n// TLS 不是跨线程通信方式；动态库卸载还需考虑平台运行时行为", lang: "cpp", block: true)
+  #raw("#include <string>\n#include <string_view>\nthread_local std::string scratch; // 每个线程都有独立字符串\nvoid parse(std::string_view input)\n{\n    scratch.assign(input);\n    process(scratch);\n}\n// 两线程调用时 scratch 不共享，避免为这份临时状态加锁\nstd::string shared; // 普通全局变量仍需同步保护\n// 线程退出时会析构自己的 thread_local 对象\n// TLS 不是跨线程通信方式；动态库卸载还需考虑平台运行时行为", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -1049,7 +1049,7 @@
   #text("工作线程不能让异常逃到线程入口，否则会终止程序；应在线程函数内捕获并通过状态或 promise/future 回传错误。引用参数、lambda 引用捕获以及共享对象都要保证活得比工作线程久。优先使用 RAII 管理线程，或在支持的 C++20 环境使用会请求停止并 join 的 jthread；即便如此，停止仍需线程合作响应。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("#include <exception>\n#include <thread>\nstd::thread worker([] { try { do_work(); } catch (...) { report_failure(); } });\n// 线程函数不可让异常逃逸到线程入口，否则会 terminate\nif (worker.joinable()) worker.join(); // 返回前确保工作结束\n// 所有引用捕获的数据都必须比 worker 活得久\n// detach 会让生命周期难以证明；优先 RAII 管理或 C++20 std::jthread", lang: "cpp", block: true)
+  #raw("#include <exception>\n#include <thread>\nstd::thread worker(\n    []\n    {\n        try\n        {\n            do_work();\n        }\n        catch (...)\n        {\n            report_failure();\n        }\n    });\n// 线程函数不可让异常逃逸到线程入口，否则会 terminate\nif (worker.joinable())\n    worker.join(); // 返回前确保工作结束\n// 所有引用捕获的数据都必须比 worker 活得久\n// detach 会让生命周期难以证明；优先 RAII 管理或 C++20 std::jthread", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -1060,7 +1060,7 @@
   #text("它更适合读多写少、读取临界区足以抵消额外同步成本的场景。写多或临界区很短时，普通 mutex 可能更简单也更快。标准不保证具体读写公平策略，写者可能等待；不能持有共享锁后直接假定可以原子升级为独占锁，否则容易死锁或产生检查与更新间隙。需要升级时应显式设计重试协议。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("#include <shared_mutex>\nstd::shared_mutex data_mutex; Data data;\nData snapshot() { std::shared_lock<std::shared_mutex> lock(data_mutex); return data; }\nvoid update(Data next) { std::unique_lock<std::shared_mutex> lock(data_mutex); data = std::move(next); }\n// 多个 reader 可同时读，writer 独占；锁覆盖整个数据访问\n// 写多时读写锁开销/等待可能不划算；标准不保证公平策略\n// 不要假设能安全地从共享锁直接升级到独占锁", lang: "cpp", block: true)
+  #raw("#include <shared_mutex>\nstd::shared_mutex data_mutex;\nData data;\nData snapshot()\n{\n    std::shared_lock<std::shared_mutex> lock(data_mutex);\n    return data;\n}\nvoid update(Data next)\n{\n    std::unique_lock<std::shared_mutex> lock(data_mutex);\n    data = std::move(next);\n}\n// 多个 reader 可同时读，writer 独占；锁覆盖整个数据访问\n// 写多时读写锁开销/等待可能不划算；标准不保证公平策略\n// 不要假设能安全地从共享锁直接升级到独占锁", lang: "cpp", block: true)
 ]
 
 #heading(level: 2, outlined: true)[#text("4.2 并发任务组织", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
@@ -1072,7 +1072,7 @@
   #text("有界队列还须明确满时是阻塞、拒绝还是丢弃。也可用 empty/full 信号量记录槽位和任务数量，再用互斥量保护队列；必须先获得许可，再进入队列临界区，以免持锁等待某个由其他线程释放的许可。关停时要定义剩余任务排空还是丢弃，以及等待者如何退出。通知或信号量是同步工具，任务队列和业务成功状态仍需清晰管理。〔N35〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("#include <condition_variable>\n#include <cstddef>\n#include <mutex>\n#include <queue>\n#include <utility>\nstd::mutex m; std::condition_variable not_empty, not_full;\nstd::queue<Job> q; bool stopping = false; constexpr std::size_t capacity = 8;\nvoid produce(Job job) { std::unique_lock<std::mutex> lk(m);\n  not_full.wait(lk, [] { return q.size() < capacity || stopping; });\n  if (stopping) return; q.push(std::move(job)); lk.unlock(); not_empty.notify_one(); }\nvoid consume() { std::unique_lock<std::mutex> lk(m);\n  not_empty.wait(lk, [] { return !q.empty() || stopping; });\n  if (q.empty()) return; Job job = std::move(q.front()); q.pop(); lk.unlock();\n  not_full.notify_one(); run(job); } // 锁外执行；shutdown 要唤醒等待者", lang: "cpp", block: true)
+  #raw("#include <condition_variable>\n#include <cstddef>\n#include <mutex>\n#include <queue>\n#include <utility>\nstd::mutex m;\nstd::condition_variable not_empty, not_full;\nstd::queue<Job> q;\nbool stopping = false;\nconstexpr std::size_t capacity = 8;\nvoid produce(Job job)\n{\n    std::unique_lock<std::mutex> lk(m);\n    not_full.wait(lk,\n                  []\n                  {\n                      return q.size() < capacity || stopping;\n                  });\n    if (stopping)\n        return;\n    q.push(std::move(job));\n    lk.unlock();\n    not_empty.notify_one();\n}\nvoid consume()\n{\n    std::unique_lock<std::mutex> lk(m);\n    not_empty.wait(lk,\n                   []\n                   {\n                       return !q.empty() || stopping;\n                   });\n    if (q.empty())\n        return;\n    Job job = std::move(q.front());\n    q.pop();\n    lk.unlock();\n    not_full.notify_one();\n    run(job);\n} // 锁外执行；shutdown 要唤醒等待者", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -1083,7 +1083,7 @@
   #text("接口还要定义任务异常如何回传、关闭时排空还是丢弃队列、是否允许继续提交，以及 shutdown 能否重复调用。停止时先发布停止状态并唤醒所有工作线程，再等待它们 join；线程仍依赖的对象必须在 join 后才销毁。线程池不会自动保证任务业务成功，任务结果与错误仍应通过 future、回调或状态返回给提交者。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// 线程池伪代码：队列由 mutex 保护，cv 表示“有任务或停止”\nvoid worker_loop() { for (;;) { Task task;\n  { std::unique_lock<std::mutex> lk(m);\n    cv.wait(lk, [&] { return stopping || !tasks.empty(); });\n    if (stopping && tasks.empty()) return;\n    task = std::move(tasks.front()); tasks.pop(); }\n  try { task(); } catch (...) { report_task_error(); } // 锁外执行\n} }\nvoid shutdown() { set_stopping(); cv.notify_all(); join_all(); }\n// API 还需规定队列满、异常传回与“排空/丢弃”策略", lang: "cpp", block: true)
+  #raw("// 线程池伪代码：队列由 mutex 保护，cv 表示“有任务或停止”\nvoid worker_loop()\n{\n    for (;;)\n    {\n        Task task;\n        {\n            std::unique_lock<std::mutex> lk(m);\n            cv.wait(lk,\n                    [&]\n                    {\n                        return stopping || !tasks.empty();\n                    });\n            if (stopping && tasks.empty())\n                return;\n            task = std::move(tasks.front());\n            tasks.pop();\n        }\n        try\n        {\n            task();\n        }\n        catch (...)\n        {\n            report_task_error();\n        } // 锁外执行\n    }\n}\nvoid shutdown()\n{\n    set_stopping();\n    cv.notify_all();\n    join_all();\n}\n// API 还需规定队列满、异常传回与“排空/丢弃”策略", lang: "cpp", block: true)
 ]
 
 #heading(level: 2, outlined: true)[#text("4.3 内存模型与无锁协作", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
@@ -1095,7 +1095,7 @@
   #text("选内存序应从数据依赖和 happens-before 关系出发，先写明谁发布、谁读取以及何时可见，再验证所有路径。不要把 acquire/release 当作给单个变量“加锁”；多个字段仍要有完整同步协议。只统计调用次数且不发布相关数据时 relaxed 可能足够。volatile 不能替代原子和同步。〔S2〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("#include <atomic>\n#include <thread>\nint payload = 0; std::atomic<bool> ready{false};\nstd::thread producer([&] { payload = 42; ready.store(true, std::memory_order_release); });\nwhile (!ready.load(std::memory_order_acquire)) {} // 读到 release 后同步\nint value = payload; // producer 对 payload 的写 happens-before 此读\nproducer.join(); // join 管理生命周期；不能用 volatile 代替 atomic", lang: "cpp", block: true)
+  #raw("#include <atomic>\n#include <thread>\nint payload = 0;\nstd::atomic<bool> ready{false};\nstd::thread producer(\n    [&]\n    {\n        payload = 42;\n        ready.store(true, std::memory_order_release);\n    });\nwhile (!ready.load(std::memory_order_acquire))\n{\n} // 读到 release 后同步\nint value = payload; // producer 对 payload 的写 happens-before 此读\nproducer.join(); // join 管理生命周期；不能用 volatile 代替 atomic", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -1106,7 +1106,7 @@
   #text("stop_token 是协作式信号，不会强行终止线程，也不会自动中断任意阻塞系统调用。线程需要主动检查、使用支持停止的等待机制，或让阻塞操作可取消。请求停止后仍须保证线程最终能返回，否则 jthread 析构等待时仍会卡住。停止逻辑还要负责唤醒条件变量上的线程，并确保退出前完成必要清理。〔S2〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("#include <thread>\nstd::jthread worker([](std::stop_token stop) {\n  while (!stop.stop_requested()) process_one(); // 合作式检查停止请求\n});\nworker.request_stop(); // 只发信号，不会强制杀掉线程\n// jthread 析构会请求停止并 join；线程体必须能最终退出\n// stop_token 不会自动中断任意阻塞调用，等待应使用可停止机制", lang: "cpp", block: true)
+  #raw("#include <thread>\nstd::jthread worker(\n    [](std::stop_token stop)\n    {\n        while (!stop.stop_requested())\n            process_one(); // 合作式检查停止请求\n    });\nworker.request_stop(); // 只发信号，不会强制杀掉线程\n// jthread 析构会请求停止并 join；线程体必须能最终退出\n// stop_token 不会自动中断任意阻塞调用，等待应使用可停止机制", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -1117,7 +1117,7 @@
   #text("如果只是让若干线程完成启动准备后一起开始一次任务，latch 结构简单合适；如果每轮算法都要等所有线程处理完各自分块再进入下一轮，例如重复图像处理阶段，就用 barrier。参与者数量和退出策略必须匹配实际运行线程，某个参与者缺席会让等待无法完成。使用前还要检查所需标准库版本与实现支持。〔S2〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("#include <latch>\nstd::latch start_line(4); // 一次性门闩，4 个参与者汇合后开放\nvoid worker() { prepare(); start_line.count_down(); start_line.wait(); run_phase(); }\n// 下一轮不可重置 latch；多轮阶段同步改用 std::barrier\n// barrier 每轮参与者到齐后进入下一阶段，还可执行 completion 回调\n// 启动后固定参与者数量的一次汇合选 latch；重复算法阶段选 barrier", lang: "cpp", block: true)
+  #raw("#include <latch>\nstd::latch start_line(4); // 一次性门闩，4 个参与者汇合后开放\nvoid worker()\n{\n    prepare();\n    start_line.count_down();\n    start_line.wait();\n    run_phase();\n}\n// 下一轮不可重置 latch；多轮阶段同步改用 std::barrier\n// barrier 每轮参与者到齐后进入下一阶段，还可执行 completion 回调\n// 启动后固定参与者数量的一次汇合选 latch；重复算法阶段选 barrier", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -1128,7 +1128,7 @@
   #text("相对忙等轮询，这种方式减少等待期间的 CPU 空转，但不一定适合需要极低唤醒延迟的所有场景。若状态从旧值变了又迅速回到 old，等待者可能观察不到中间变化；用单调递增序号或队列保存事件通常更可靠。atomic wait 也不是通用超时、取消或事件计数接口，应用要另外处理这些需求。〔S2〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("#include <atomic>\nstd::atomic<int> state{0};\nvoid waiter() { while (state.load() == 0) state.wait(0); // 值未变时阻塞\n  continue_work(); }\nvoid signal() { state.store(1); state.notify_one(); } // 先更新状态，再唤醒\n// notify 不是事件计数；谓词/值是状态来源，醒来后仍要重查\n// 相比忙等减少 CPU 空转；若值快速变回旧值，可能看不到中间状态", lang: "cpp", block: true)
+  #raw("#include <atomic>\nstd::atomic<int> state{0};\nvoid waiter()\n{\n    while (state.load() == 0)\n        state.wait(0); // 值未变时阻塞\n    continue_work();\n}\nvoid signal()\n{\n    state.store(1);\n    state.notify_one();\n} // 先更新状态，再唤醒\n// notify 不是事件计数；谓词/值是状态来源，醒来后仍要重查\n// 相比忙等减少 CPU 空转；若值快速变回旧值，可能看不到中间状态", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -1139,7 +1139,7 @@
   #text("竞态条件是更广义的逻辑问题，指结果取决于线程执行时序。例如库存用 atomic 保护，两个线程各自先读“库存大于零”，再分别减一；每次访问都原子，但检查和扣减没有组成一个事务，库存仍可能变负。修复数据竞争并不能保证业务不变量，必要时把整个检查更新放在锁中，或用 CAS 循环完成条件更新。〔S2〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("std::atomic<int> stock{1};\n// 两次原子操作各自安全，但“检查再扣减”不是一个原子事务\nif (stock.load() > 0) stock.fetch_sub(1); // 两线程都可能先读到 1，导致变负\n// 用 CAS 循环，或把检查与更新放进同一把 mutex\n// 数据竞争会导致 C++ 未定义行为；竞态条件还包括这种逻辑错误\n// 修掉 data race 后仍要验证业务不变量", lang: "cpp", block: true)
+  #raw("std::atomic<int> stock{1};\n// 两次原子操作各自安全，但“检查再扣减”不是一个原子事务\nif (stock.load() > 0)\n    stock.fetch_sub(1); // 两线程都可能先读到 1，导致变负\n// 用 CAS 循环，或把检查与更新放进同一把 mutex\n// 数据竞争会导致 C++ 未定义行为；竞态条件还包括这种逻辑错误\n// 修掉 data race 后仍要验证业务不变量", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -1150,7 +1150,7 @@
   #text("atomic_ref 存续期间，对目标的并发访问必须遵守原子访问规则。不能一个线程通过 atomic_ref 写，另一个线程同时用普通非原子读取同一对象；这仍会产生数据竞争。统一把相关并发读写都通过原子引用访问，或用锁保护普通访问。atomic_ref 是否无锁由实现和类型决定，不应把“atomic”误解为一定没有锁或固定开销。〔S2〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("#include <atomic>\nstruct Counter { alignas(std::atomic_ref<int>::required_alignment) int value = 0; };\nCounter counter;\nstd::atomic_ref<int> atomic_value(counter.value); // 在已有对象上原子操作\natomic_value.fetch_add(1, std::memory_order_relaxed);\n// atomic_ref 存活期间，禁止对 value 并发做普通非原子读写\n// Counter 和成员必须活到所有 atomic_ref 使用完；还需满足对齐要求", lang: "cpp", block: true)
+  #raw("#include <atomic>\nstruct Counter\n{\n    alignas(std::atomic_ref<int>::required_alignment) int value = 0;\n};\nCounter counter;\nstd::atomic_ref<int> atomic_value(counter.value); // 在已有对象上原子操作\natomic_value.fetch_add(1, std::memory_order_relaxed);\n// atomic_ref 存活期间，禁止对 value 并发做普通非原子读写\n// Counter 和成员必须活到所有 atomic_ref 使用完；还需满足对齐要求", lang: "cpp", block: true)
 ]
 
 #heading(level: 1, outlined: true)[#text("第5章 性能与工程实践", size: 15pt, weight: "bold", fill: rgb("#000000"))]
@@ -1163,7 +1163,7 @@
   #text("近似模型下，CPU 时间与退休指令数、平均 CPI 和时钟频率相关；IPC 是每周期退休指令数。它们帮助解释执行情况，却不能单独评价不同负载，墙钟时间还包含等待 I/O 或锁的时间。可结合 cycles、instructions、branch-misses 和 cache-misses 判断瓶颈，并在相同编译选项与端到端负载上复测，避免把微基准收益直接当成用户可见提升。〔I51〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("#include <chrono>\n#include <chrono>\nauto begin = std::chrono::steady_clock::now();\nfor (int i = 0; i < repetitions; ++i) run_representative_work();\nauto elapsed = std::chrono::steady_clock::now() - begin;\nreport(elapsed); // 先记录正确性、吞吐/尾延迟/内存等目标指标\n// 用 profiler 找热点，再一次只改一个因素并重复测量\n// 固定编译选项和输入；微基准收益须用端到端负载验证", lang: "cpp", block: true)
+  #raw("#include <chrono>\n#include <chrono>\nauto begin = std::chrono::steady_clock::now();\nfor (int i = 0; i < repetitions; ++i)\n    run_representative_work();\nauto elapsed = std::chrono::steady_clock::now() - begin;\nreport(elapsed); // 先记录正确性、吞吐/尾延迟/内存等目标指标\n// 用 profiler 找热点，再一次只改一个因素并重复测量\n// 固定编译选项和输入；微基准收益须用端到端负载验证", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -1174,7 +1174,7 @@
   #text("从函数按值返回局部结果通常能由返回值优化消除拷贝，必要时对象也可移动；不要返回局部变量的引用。emplace 可能让元素直接在容器存储中构造，但是否省步骤取决于参数和类型，不能当成固定性能保证。避免复制的同时也要保证引用目标始终活着，先用 profiler 找到实际复制成本再调整接口。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("#include <vector>\nvoid inspect(const std::vector<Record>& records) { // 只读借用，不复制大容器\n  for (const Record& record : records) inspect_one(record);\n}\nstd::vector<Record> make_records() { std::vector<Record> result;\n  fill(result); return result; // 返回局部值可做 NRVO，不要返回局部引用\n}\nvoid take_ownership(std::vector<Record> records) { consume(std::move(records)); }\n// 借用用引用/span；真正转移所有权时用值加移动，并检查生命周期", lang: "cpp", block: true)
+  #raw("#include <vector>\nvoid inspect(const std::vector<Record>& records)\n{ // 只读借用，不复制大容器\n    for (const Record& record : records)\n        inspect_one(record);\n}\nstd::vector<Record> make_records()\n{\n    std::vector<Record> result;\n    fill(result);\n    return result; // 返回局部值可做 NRVO，不要返回局部引用\n}\nvoid take_ownership(std::vector<Record> records)\n{\n    consume(std::move(records));\n}\n// 借用用引用/span；真正转移所有权时用值加移动，并检查生命周期", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -1185,7 +1185,7 @@
   #text("收益受 CPU 指令集、数据对齐、循环尾部、分支和内存带宽影响；计算密集与内存密集程序的效果差别很大。手写向量代码还需处理不满一整个向量的尾部，并保证目标机器支持相关指令。应在实际部署 CPU 和代表性数据上对比吞吐，避免因一组微基准数据向量化而让通用路径变慢。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("#include <cstddef>\n// 连续数组、彼此独立的运算利于编译器自动向量化\nfor (std::size_t i = 0; i < count; ++i) output[i] = input[i] * scale + bias;\n// 先确认无重叠/别名假设，查看编译器向量化报告\n// 对齐、尾部元素、分支和内存带宽都会影响收益\n// 手写 intrinsic 前，在目标 CPU 和代表性数据上比较吞吐\n// SIMD 只适合彼此独立且能批量执行的工作", lang: "cpp", block: true)
+  #raw("#include <cstddef>\n// 连续数组、彼此独立的运算利于编译器自动向量化\nfor (std::size_t i = 0; i < count; ++i)\n    output[i] = input[i] * scale + bias;\n// 先确认无重叠/别名假设，查看编译器向量化报告\n// 对齐、尾部元素、分支和内存带宽都会影响收益\n// 手写 intrinsic 前，在目标 CPU 和代表性数据上比较吞吐\n// SIMD 只适合彼此独立且能批量执行的工作", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -1196,7 +1196,7 @@
   #text("过多展开会增加代码体积、指令缓存压力和编译工作，反而可能拖慢程序。头文件中的小函数可能适合 inline，但性能判断要看目标构建产物、优化汇编和代表性基准。不要仅因函数短就手工内联，也不要把 inline 当作强制优化开关。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// 头文件中的定义可标 inline 以符合多翻译单元 ODR\ninline int normalize(int x) { return x < 0 ? 0 : x; }\nint result = normalize(input); // 编译器仍可决定保留普通调用\n// 内联可省调用并暴露常量传播；过度展开增大代码和指令缓存压力\n// 查看优化后汇编与基准，不要把 inline 当性能保证\n// ODR 允许定义跨单元出现，与优化器是否展开是两回事", lang: "cpp", block: true)
+  #raw("// 头文件中的定义可标 inline 以符合多翻译单元 ODR\ninline int normalize(int x)\n{\n    return x < 0 ? 0 : x;\n}\nint result = normalize(input); // 编译器仍可决定保留普通调用\n// 内联可省调用并暴露常量传播；过度展开增大代码和指令缓存压力\n// 查看优化后汇编与基准，不要把 inline 当性能保证\n// ODR 允许定义跨单元出现，与优化器是否展开是两回事", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -1207,7 +1207,7 @@
   #text("过度展开会增大代码，增加寄存器压力和指令缓存未命中；尾部不足一个展开批次的数据还需额外处理。编译器通常能根据优化信息自动选择展开，手工改写后应检查汇编、正确覆盖尾部，并在代表性数据上测量。若循环受内存带宽限制，展开未必有帮助。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("#include <cstddef>\nfor (std::size_t i = 0; i + 3 < n; i += 4) { // 一次处理四项\n  sum += values[i]; sum += values[i + 1];\n  sum += values[i + 2]; sum += values[i + 3];\n}\nfor (std::size_t i = n - n % 4; i < n; ++i) sum += values[i]; // 尾部\n// 展开可能减少分支，但会增加代码体积/寄存器压力\n// 现代编译器常能自动展开；先看汇编和真实基准", lang: "cpp", block: true)
+  #raw("#include <cstddef>\nfor (std::size_t i = 0; i + 3 < n; i += 4)\n{ // 一次处理四项\n    sum += values[i];\n    sum += values[i + 1];\n    sum += values[i + 2];\n    sum += values[i + 3];\n}\nfor (std::size_t i = n - n % 4; i < n; ++i)\n    sum += values[i]; // 尾部\n// 展开可能减少分支，但会增加代码体积/寄存器压力\n// 现代编译器常能自动展开；先看汇编和真实基准", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -1218,7 +1218,7 @@
   #text("线程上限不等于“可用内存除以固定栈大小”：还受栈与保护区、地址空间、系统和容器进程/线程限额等约束，pthread_create 可能因资源限制返回 EAGAIN。Linux 亲和性可以限制线程运行 CPU 集合，但不等于独占核心，也可能破坏负载均衡或 NUMA 放置。应同时比较吞吐和尾延迟，并评估缩小线程栈的溢出风险。〔I25、I52〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// 伪代码：启动时创建固定工作线程，后续任务复用线程\nThreadPool pool(worker_count);\nfor (Batch batch : split_into_coarse_batches(input))\n  pool.submit([batch] { process(batch); });\npool.wait_idle(); // 完成后继续汇总；析构前先排空并 join\n// 合并过小任务可降低调度/分配开销；队列、停止和异常需定义\n// 线程太多会增加切换和争用，按吞吐与尾延迟测量", lang: "cpp", block: true)
+  #raw("// 伪代码：启动时创建固定工作线程，后续任务复用线程\nThreadPool pool(worker_count);\nfor (Batch batch : split_into_coarse_batches(input))\n    pool.submit(\n        [batch]\n        {\n            process(batch);\n        });\npool.wait_idle(); // 完成后继续汇总；析构前先排空并 join\n// 合并过小任务可降低调度/分配开销；队列、停止和异常需定义\n// 线程太多会增加切换和争用，按吞吐与尾延迟测量", lang: "cpp", block: true)
 ]
 
 #heading(level: 2, outlined: true)[#text("5.2 算法、缓存与 I/O", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
@@ -1241,7 +1241,7 @@
   #text("不要为减少一次 cache miss 就盲目重排公开结构，改动可能破坏 ABI。分支预测失败也会丢弃错误路径工作；排序数据或给 likely/unlikely 提示不是免费优化，数据重排本身有成本，编译器提示也不强制硬件预测。用 profiler、硬件计数器和代表性输入确认缓存、带宽或分支确实是瓶颈，再比较端到端收益。〔I42、I53、I54、S3〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("#include <cstddef>\n// 行主序矩阵按行扫描，可顺着连续地址访问\nfor (std::size_t r = 0; r < rows; ++r)\n  for (std::size_t c = 0; c < cols; ++c) sum += matrix[r * cols + c];\n// 分块让工作集更可能留在缓存；AoS 适合逐对象处理、SoA 适合批量单字段\n// 循环融合可减少重复读写，也可能扩大工作集或降低可读性\n// 用 cache-miss/带宽计数确认瓶颈，别为 ABI 贸然重排公开结构", lang: "cpp", block: true)
+  #raw("#include <cstddef>\n// 行主序矩阵按行扫描，可顺着连续地址访问\nfor (std::size_t r = 0; r < rows; ++r)\n    for (std::size_t c = 0; c < cols; ++c)\n        sum += matrix[r * cols + c];\n// 分块让工作集更可能留在缓存；AoS 适合逐对象处理、SoA 适合批量单字段\n// 循环融合可减少重复读写，也可能扩大工作集或降低可读性\n// 用 cache-miss/带宽计数确认瓶颈，别为 ABI 贸然重排公开结构", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -1252,7 +1252,7 @@
   #text("C 流的 setvbuf 应在该流开始 I/O 前配置，它只控制 C stdio 缓冲。接口选择要与读取语义一致，不能为了吞吐破坏协议边界。std::async 只是调度一个任务，不能把阻塞文件读取自动变成内核异步 I/O；真正异步能力依平台接口与存储设备而定。改动后用真实文件大小和读写模式测量。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("#include <iostream>\n#include <vector>\nint main() {\n  std::ios::sync_with_stdio(false); std::cin.tie(nullptr); // 所有 I/O 前调用\n  std::vector<int> values; int x;\n  while (std::cin >> x) values.push_back(x); // 批量缓冲输入\n  std::cout << values.size() << '\\n';\n} // 关闭 sync 后勿假设与 printf 的缓冲顺序；交互场景需 flush\n// 异步调度不等于内核异步 I/O；按平台选缓冲/批量接口", lang: "cpp", block: true)
+  #raw("#include <iostream>\n#include <vector>\nint main()\n{\n    std::ios::sync_with_stdio(false);\n    std::cin.tie(nullptr); // 所有 I/O 前调用\n    std::vector<int> values;\n    int x;\n    while (std::cin >> x)\n        values.push_back(x); // 批量缓冲输入\n    std::cout << values.size() << '\\n';\n} // 关闭 sync 后勿假设与 printf 的缓冲顺序；交互场景需 flush\n// 异步调度不等于内核异步 I/O；按平台选缓冲/批量接口", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -1263,7 +1263,7 @@
   #text("数据布局要配合访问：逐个处理完整对象适合 AoS，一次对大量对象处理同一字段时 SoA 可避免加载无关数据。缓存行大小不是所有 CPU 都固定 64 字节，伪共享会让逻辑独立的写入争抢同一行。缓存命中也不代表数据已经持久化到存储介质。用目标 CPU 的硬件信息、工作集和计数器实际测量 miss、带宽和同步开销。〔I55〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("#include <cstddef>\n#include <vector>\nstruct AoS { float x, y, z; };\nstd::vector<AoS> points(count); // 整个对象处理时 AoS 连续\nstd::vector<float> x(count), y(count), z(count); // 批量改 x 时 SoA 少加载无关字段\nfor (std::size_t i = 0; i < count; ++i) x[i] *= scale; // 空间局部性\n// 重用近期数据利用时间局部性；相邻数据利用空间局部性\n// 缓存行和伪共享依硬件；用工作集与硬件计数器验证", lang: "cpp", block: true)
+  #raw("#include <cstddef>\n#include <vector>\nstruct AoS\n{\n    float x, y, z;\n};\nstd::vector<AoS> points(count); // 整个对象处理时 AoS 连续\nstd::vector<float> x(count), y(count), z(count); // 批量改 x 时 SoA 少加载无关字段\nfor (std::size_t i = 0; i < count; ++i)\n    x[i] *= scale; // 空间局部性\n// 重用近期数据利用时间局部性；相邻数据利用空间局部性\n// 缓存行和伪共享依硬件；用工作集与硬件计数器验证", lang: "cpp", block: true)
 ]
 
 #heading(level: 2, outlined: true)[#text("5.3 链接期优化", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
@@ -1288,7 +1288,7 @@
   #text("宏 guard 名称应足够唯一，否则两个不同头文件误用相同名字，其中一个可能被静默跳过。重复包含保护也不等于消除了真正的类型依赖循环；A 需要 B 的完整定义、B 又需要 A 的完整定义时，仍需重新设计边界或采用前向声明。团队统一命名与头文件依赖规则，便于跨工具链维护。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// 可移植的 include guard\n#ifndef PROJECT_NET_SOCKET_HPP\n#define PROJECT_NET_SOCKET_HPP\nstruct Socket { void close(); };\n#endif\n// #pragma once 更短且主流编译器支持，但属于实现扩展\n// 二者都防止同一翻译单元重复展开；guard 宏必须在工程内唯一\n// 它们不消除真正的循环依赖", lang: "cpp", block: true)
+  #raw("// 可移植的 include guard\n#ifndef PROJECT_NET_SOCKET_HPP\n#define PROJECT_NET_SOCKET_HPP\nstruct Socket\n{\n    void close();\n};\n#endif\n// #pragma once 更短且主流编译器支持，但属于实现扩展\n// 二者都防止同一翻译单元重复展开；guard 宏必须在工程内唯一\n// 它们不消除真正的循环依赖", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -1321,7 +1321,7 @@
   #text("这类隐式入口会隐藏依赖关系，多个初始化器之间的顺序也不容易维护，还可能遇到静态初始化顺序或库卸载问题。普通应用通常应使用 RAII 对象、函数内局部 static 或显式 start/stop 接口，让谁初始化、谁关闭更清楚。只有确实需要运行时约定的构造钩子时，才依赖工具链扩展并为其边界写清楚。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("#if defined(__GNUC__)\n__attribute__((constructor)) static void before_main() { init_global(); }\n__attribute__((destructor)) static void after_main() { shutdown_global(); }\n#endif\n// 这是 GCC/Clang 扩展，不是标准 C++，库卸载和顺序依平台\n// 多个初始化器之间的依赖难表达，可能遇到静态初始化顺序问题\n// 普通程序优先使用 RAII、函数内 static 或显式启动/停止接口", lang: "cpp", block: true)
+  #raw("#if defined(__GNUC__)\n__attribute__((constructor)) static void before_main()\n{\n    init_global();\n}\n__attribute__((destructor)) static void after_main()\n{\n    shutdown_global();\n}\n#endif\n// 这是 GCC/Clang 扩展，不是标准 C++，库卸载和顺序依平台\n// 多个初始化器之间的依赖难表达，可能遇到静态初始化顺序问题\n// 普通程序优先使用 RAII、函数内 static 或显式启动/停止接口", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -1332,7 +1332,7 @@
   #text("一旦要按值存储成员、继承该类、访问其成员或计算 sizeof，就需要完整类定义。把不必要的 include 移进源文件，可减少耦合；但函数定义若在头文件内联访问成员，调用者仍必须看到完整定义。前向声明不能替代定义，也不能解决设计上彼此需要完整布局的循环依赖。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// node.hpp：若只声明指针/引用，可避免包含完整定义\nclass Node;\nvoid visit(const Node& node);\nclass Owner { Node* node_; }; // 指针成员允许不完整类型\n// node.cpp 再 #include \"node_definition.hpp\" 访问 Node 成员\n// 按值成员、继承、sizeof 或内联访问成员需要完整类型定义", lang: "cpp", block: true)
+  #raw("// node.hpp：若只声明指针/引用，可避免包含完整定义\nclass Node;\nvoid visit(const Node& node);\nclass Owner\n{\n    Node* node_;\n}; // 指针成员允许不完整类型\n// node.cpp 再 #include \"node_definition.hpp\" 访问 Node 成员\n// 按值成员、继承、sizeof 或内联访问成员需要完整类型定义", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -1343,7 +1343,7 @@
   #text("前向声明能减少依赖，但成员按值保存、继承和内联访问成员等场景仍需完整定义。模板通常要在实例化处看到定义，因此常放在头文件或模块接口中。拆分声明和实现也要保持 ABI/API 边界清楚，构建系统应显式列出源文件、库依赖和生成步骤。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// widget.hpp：向调用方暴露声明和所需完整类型\n#ifndef WIDGET_HPP\n#define WIDGET_HPP\nclass Widget { public: void run(); };\n#endif\n// widget.cpp：#include \"widget.hpp\" 后定义 void Widget::run() { ... }\n// 每个头文件应可自包含；非模板实现一般只在一个源文件定义\n// 模板实现通常需在实例化点可见；前向声明可降低无关重编译", lang: "cpp", block: true)
+  #raw("// widget.hpp：向调用方暴露声明和所需完整类型\n#ifndef WIDGET_HPP\n#define WIDGET_HPP\nclass Widget\n{\n  public:\n    void run();\n};\n#endif\n// widget.cpp：#include \"widget.hpp\" 后定义 void Widget::run() { ... }\n// 每个头文件应可自包含；非模板实现一般只在一个源文件定义\n// 模板实现通常需在实例化点可见；前向声明可降低无关重编译", lang: "cpp", block: true)
 ]
 
 #heading(level: 2, outlined: true)[#text("6.2 编译、链接与库", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
@@ -1366,7 +1366,7 @@
   #text("若在多个源文件都放普通变量定义，通常会产生重复定义链接错误。C++17 的 inline 变量允许在头文件中提供符合 ODR 的共享定义。无论用哪种方式，全局状态仍有初始化顺序和并发访问问题；需要控制生命周期或保持业务不变量时，封装为服务或对象往往比公开可变全局变量更稳妥。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// shared.hpp：仅声明，不分配定义\nextern int shared_count;\n// state.cpp：程序中恰好一个定义\nint shared_count = 0;\n// use.cpp：包含声明后可访问 shared_count\nvoid increment() { ++shared_count; } // 多线程时仍需同步\n// C++17 可用 inline int shared_count = 0; 放头文件共享一个实体", lang: "cpp", block: true)
+  #raw("// shared.hpp：仅声明，不分配定义\nextern int shared_count;\n// state.cpp：程序中恰好一个定义\nint shared_count = 0;\n// use.cpp：包含声明后可访问 shared_count\nvoid increment()\n{\n    ++shared_count;\n} // 多线程时仍需同步\n// C++17 可用 inline int shared_count = 0; 放头文件共享一个实体", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -1388,7 +1388,7 @@
   #text("按值成员、继承、sizeof 或头文件内联代码访问成员，都需要完整类定义，因此仅前向声明不够。此时可抽出共同接口、调整所有权关系或将实现移出头文件。明确哪一侧只借用不拥有对象，有助于避免为了编译通过而放松生命周期边界。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// a.hpp：只通过引用提及 B，可前向声明\nclass B;\nclass A { public: void use(const B&); private: B* b_; };\n// a.cpp 再 include b.hpp 并定义 A::use，因访问成员需要完整类型\n// 如果 A 按值保存 B、继承 B 或内联访问 B 的字段，则前向声明不够\n// include guard 防重复展开，不会消除真实依赖循环", lang: "cpp", block: true)
+  #raw("// a.hpp：只通过引用提及 B，可前向声明\nclass B;\nclass A\n{\n  public:\n    void use(const B&);\n\n  private:\n    B* b_;\n};\n// a.cpp 再 include b.hpp 并定义 A::use，因访问成员需要完整类型\n// 如果 A 按值保存 B、继承 B 或内联访问 B 的字段，则前向声明不够\n// include guard 防重复展开，不会消除真实依赖循环", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -1410,7 +1410,7 @@
   #text("打开构建系统的 verbose 输出可看到真正执行的命令，用 nm -C、dumpbin 等核对符号名。还要检查编译器版本、运行库和宏配置，避免同一接口被不同 ABI 规则编译。源文件含头文件 guard 并不保证 ODR 一定正确，链接器发现不了所有跨翻译单元定义不一致。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// header.hpp：多翻译单元可见的相同函数定义要满足 inline 规则\ninline int helper(int x) { return x + 1; }\n// 若移除 inline 且 header 被 a.cpp、b.cpp 同时包含，会重复定义\n// undefined reference 则相反：只有声明，定义没有进入链接输入\n// 用 nm -C 查符号，构建 verbose 输出确认哪个 .o/.a 真正参与链接\n// 链接成功也不能证明 ODR 一定满足", lang: "cpp", block: true)
+  #raw("// header.hpp：多翻译单元可见的相同函数定义要满足 inline 规则\ninline int helper(int x)\n{\n    return x + 1;\n}\n// 若移除 inline 且 header 被 a.cpp、b.cpp 同时包含，会重复定义\n// undefined reference 则相反：只有声明，定义没有进入链接输入\n// 用 nm -C 查符号，构建 verbose 输出确认哪个 .o/.a 真正参与链接\n// 链接成功也不能证明 ODR 一定满足", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -1444,7 +1444,7 @@
   #text("修改公共类大小、成员布局或虚函数序列，可能让旧二进制按错误偏移读写；改变调用约定、符号名或运行库也可能造成不兼容。稳定二进制边界常采用不透明句柄和 C ABI，把实现类留在库内部。即使 C ABI 也要约定字符串编码、资源释放和错误返回。版本策略应覆盖二进制依赖用户，而不只检查源码编译。〔S4〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// 稳定 C ABI 示例：C/C++ 两侧共享不透明句柄，不暴露类布局\nextern \"C\" { struct Engine;\n  Engine* engine_create();\n  void engine_destroy(Engine*);\n  int engine_run(Engine*, const char* input);\n}\n// 源码兼容看重新编译后能否调用；ABI 兼容看旧二进制能否继续链接运行\n// 改公开类大小、虚函数顺序、调用约定或运行库可能破坏 ABI", lang: "cpp", block: true)
+  #raw("// 稳定 C ABI 示例：C/C++ 两侧共享不透明句柄，不暴露类布局\nextern \"C\"\n{\n    struct Engine;\n    Engine* engine_create();\n    void engine_destroy(Engine*);\n    int engine_run(Engine*, const char* input);\n}\n// 源码兼容看重新编译后能否调用；ABI 兼容看旧二进制能否继续链接运行\n// 改公开类大小、虚函数顺序、调用约定或运行库可能破坏 ABI", lang: "cpp", block: true)
 ]
 
 
@@ -1468,7 +1468,7 @@
   #text("共享库的只读代码页常可跨进程共享映射，但可写数据具有进程各自的语义。RUNPATH、环境、符号版本以及 RTLD_NOW/RTLD_LAZY 会影响加载与绑定时机。库文件存在不代表所有依赖都能解析，也不代表 ABI 相容；排查应结合装载器诊断工具、目标架构和符号版本信息。〔N25〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("void* handle = dlopen(\"plugin.so\", RTLD_NOW); // 运行时装入共享库\nusing Entry = int (*)();\nauto entry = reinterpret_cast<Entry>(dlsym(handle, \"plugin_start\"));\nif (entry) entry(); // 调用前应检查错误；dlclose 只减少引用计数", lang: "cpp", block: true)
+  #raw("void* handle = dlopen(\"plugin.so\", RTLD_NOW); // 运行时装入共享库\nusing Entry = int (*)();\nauto entry = reinterpret_cast<Entry>(dlsym(handle, \"plugin_start\"));\nif (entry)\n    entry(); // 调用前应检查错误；dlclose 只减少引用计数", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -1479,7 +1479,7 @@
   #text("栈帧可能保存局部对象、溢出参数、需要由被调用方保留的寄存器、返回信息和对齐填充；优化后内联、尾调用、省略帧指针都会改变实际形态。ABI 还规定哪些寄存器由调用方或被调用方保存。调试回溯可使用展开信息，优化构建中的变量位置和源码帧不一定与未优化代码逐一对应。〔N26、N11〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("long compute(long first, long second, long third) { return first + second + third; }\nlong result = compute(1, 2, 3); // 参数可能走寄存器，也可能走栈，取决于 ABI\n// 用目标架构的反汇编和展开信息确认，不要假设所有参数都压栈", lang: "cpp", block: true)
+  #raw("long compute(long first, long second, long third)\n{\n    return first + second + third;\n}\nlong result = compute(1, 2, 3); // 参数可能走寄存器，也可能走栈，取决于 ABI\n// 用目标架构的反汇编和展开信息确认，不要假设所有参数都压栈", lang: "cpp", block: true)
 ]
 
 #heading(level: 2, outlined: true)[#text("6.5 指令集、ABI 与二进制兼容", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
@@ -1517,7 +1517,7 @@
   #text("符号链接另有自己的 inode，保存的是目标路径，因此可以跨文件系统，也可以指向尚不存在的目标。删除名字只是移除目录项：硬链接计数归零后，如果仍有进程打开文件，内核还要等这些引用释放才回收内容。所以删除正在写入的日志不一定立即释放空间。最终访问哪个文件还取决于路径解析、挂载点和符号链接。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("struct Inode { Permission mode; Owner uid; Size bytes; BlockMap data; int links; };\n// 目录项保存 name -> inode；文件名不是 inode 的一部分\nlink(\"a\", \"b\"); // 两个名字共享 inode 和内容\nunlink(\"a\"); // 链接计数减一；另一个名字仍可访问\n// 最后一个目录链接删除后，若仍有打开句柄，数据也要等关闭后回收\nsymlink(\"missing-or-any-path\", \"shortcut\"); // 符号链接有自己的 inode，可悬空\n// inode 编号只在本文件系统内有意义；路径解析还受挂载点影响", lang: "cpp", block: true)
+  #raw("struct Inode\n{\n    Permission mode;\n    Owner uid;\n    Size bytes;\n    BlockMap data;\n    int links;\n};\n// 目录项保存 name -> inode；文件名不是 inode 的一部分\nlink(\"a\", \"b\"); // 两个名字共享 inode 和内容\nunlink(\"a\"); // 链接计数减一；另一个名字仍可访问\n// 最后一个目录链接删除后，若仍有打开句柄，数据也要等关闭后回收\nsymlink(\"missing-or-any-path\", \"shortcut\"); // 符号链接有自己的 inode，可悬空\n// inode 编号只在本文件系统内有意义；路径解析还受挂载点影响", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -1528,7 +1528,7 @@
   #text("S 态常能被信号打断，D 态通常不能靠普通信号立即唤醒，持续 D 态要结合内核栈、设备和 I/O 排查。Z 态已经执行完，只留下退出状态等信息，父进程用 wait 系列回收。孤儿则是父进程先退出，存活子进程由合适的子收割者或所在 PID 命名空间的 init 接管；孤儿与僵尸描述的是两种不同关系，不能混称。〔S5〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("state = inspect_with_ps_STAT(pid);\nif (state == \"R\") schedule_or_running(); // 可运行/运行\nif (state == \"S\") wait_interruptible_event(); // 可被普通信号打断的睡眠\nif (state == \"D\") inspect_kernel_stack_and_io(); // 常见于不可中断 I/O 等待\nif (state == \"T\") inspect_job_control_or_debugger();\nif (state == \"Z\") parent.waitpid(pid); // 僵尸只留退出信息，等父进程回收\n// 持续 D 态查设备/I/O；普通信号通常不能立即唤醒 D 态任务。", lang: "cpp", block: true)
+  #raw("state = inspect_with_ps_STAT(pid);\nif (state == \"R\")\n    schedule_or_running(); // 可运行/运行\nif (state == \"S\")\n    wait_interruptible_event(); // 可被普通信号打断的睡眠\nif (state == \"D\")\n    inspect_kernel_stack_and_io(); // 常见于不可中断 I/O 等待\nif (state == \"T\")\n    inspect_job_control_or_debugger();\nif (state == \"Z\")\n    parent.waitpid(pid); // 僵尸只留退出信息，等父进程回收\n// 持续 D 态查设备/I/O；普通信号通常不能立即唤醒 D 态任务。", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -1539,7 +1539,7 @@
   #text("exec 则是在当前进程里换一套程序映像，成功后执行新程序，PID 保持不变，也不会返回旧代码。命令行启动外部程序通常先 fork，再由子进程 exec，父进程 wait。exec 失败必须走明确的错误路径；子进程常用 _exit 退出，避免重复执行父进程继承来的缓冲刷新等清理。父进程应处理 wait 被信号中断的情况，并最终回收退出状态。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("pid = fork();\nif (pid == 0) { // 子进程：逻辑独立，物理页通常先通过写时复制共享\n    execve(program, argv, envp); // 成功后替换进程映像、PID 不变且不返回\n    report_exec_error(errno); _exit(127); // 只有失败才走到这里\n} else if (pid > 0) {\n    waitpid(pid, &status, 0); // 回收子进程并读取退出状态，避免僵尸\n} else { report_fork_error(errno); }", lang: "cpp", block: true)
+  #raw("pid = fork();\nif (pid == 0)\n{ // 子进程：逻辑独立，物理页通常先通过写时复制共享\n    execve(program, argv, envp); // 成功后替换进程映像、PID 不变且不返回\n    report_exec_error(errno);\n    _exit(127); // 只有失败才走到这里\n}\nelse if (pid > 0)\n{\n    waitpid(pid, &status, 0); // 回收子进程并读取退出状态，避免僵尸\n}\nelse\n{\n    report_fork_error(errno);\n}", lang: "cpp", block: true)
 ]
 
 #heading(level: 2, outlined: true)[#text("7.2 I/O 多路复用", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
@@ -1551,7 +1551,7 @@
   #text("epoll 把兴趣集长期保存在内核，目标就绪时组织就绪项，epoll_wait 主要返回这些有事件的项，因此大量空闲长连接时通常更合适。不过结果仍要复制到用户空间，注册变更和事件处理也有成本，不能说所有操作都是常数时间。连接少、大多活跃或业务处理很重时，应以实际负载比较。ET 模式还要使用非阻塞读写并处理到 EAGAIN。〔N49、S5〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// select：每次重建 fd_set，并扫描受 FD_SETSIZE 限制的描述符。\nselect_wait_and_scan(all_fds);\n// poll：没有固定 fd_set 位图上限，但等待返回仍要遍历监视列表。\npoll_wait_and_scan(all_fds);\n// epoll：内核维护兴趣集与就绪队列，wait 主要取回有事件的 fd。\nauto ready = epoll_wait(epfd); for (auto event : ready) dispatch(event);\n// 连接少/多数都活跃时差别可能不明显；先按实测瓶颈选择。", lang: "cpp", block: true)
+  #raw("// select：每次重建 fd_set，并扫描受 FD_SETSIZE 限制的描述符。\nselect_wait_and_scan(all_fds);\n// poll：没有固定 fd_set 位图上限，但等待返回仍要遍历监视列表。\npoll_wait_and_scan(all_fds);\n// epoll：内核维护兴趣集与就绪队列，wait 主要取回有事件的 fd。\nauto ready = epoll_wait(epfd);\nfor (auto event : ready)\n    dispatch(event);\n// 连接少/多数都活跃时差别可能不明显；先按实测瓶颈选择。", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -1562,7 +1562,7 @@
   #text("因此 ET 必须配合非阻塞 I/O，在收到事件后循环读写，直到遇到 EAGAIN 或 EWOULDBLOCK，表示当前无法继续。读到零表示对端关闭发送方向，应按协议结束和清理；EINTR 可以重试，其他错误应明确处理。ET 有机会减少重复提醒，但对状态管理要求更高，不保证吞吐一定胜过 LT。还要防止单个连接长时间占用事件循环。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// ET：注册前把 fd 设为非阻塞；就绪后循环读取直至 EAGAIN\nfor (;;) { auto n = ::read(fd, buffer, sizeof(buffer));\n    if (n > 0) { consume(buffer, n); continue; }\n    if (n == 0) { close(fd); break; } // EOF 后关闭并退出，不能继续读已关闭 fd\n    if (errno == EINTR) continue; // 信号中断但无数据，继续尝试\n    if (errno == EAGAIN || errno == EWOULDBLOCK) break; // 当前缓冲读空\n    handle_error(errno); break;\n} // ET 漏读到 EAGAIN 后不一定再有边沿；LT 通常会继续报告可读", lang: "cpp", block: true)
+  #raw("// ET：注册前把 fd 设为非阻塞；就绪后循环读取直至 EAGAIN\nfor (;;)\n{\n    auto n = ::read(fd, buffer, sizeof(buffer));\n    if (n > 0)\n    {\n        consume(buffer, n);\n        continue;\n    }\n    if (n == 0)\n    {\n        close(fd);\n        break;\n    } // EOF 后关闭并退出，不能继续读已关闭 fd\n    if (errno == EINTR)\n        continue; // 信号中断但无数据，继续尝试\n    if (errno == EAGAIN || errno == EWOULDBLOCK)\n        break; // 当前缓冲读空\n    handle_error(errno);\n    break;\n} // ET 漏读到 EAGAIN 后不一定再有边沿；LT 通常会继续报告可读", lang: "cpp", block: true)
 ]
 
 #heading(level: 2, outlined: true)[#text("7.3 内存、进程间通信与并发模型", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
@@ -1574,7 +1574,7 @@
   #text("内核先判断地址是否属于合法区域以及访问权限是否允许，才能决定补页还是报告故障。越界、非法写只读区域等通常会导致 SIGSEGV，映射文件某些后端错误可能导致 SIGBUS。无需磁盘读取的轻缺页与需要调入数据的主缺页耗时不同，所以缺页次数不能直接当成磁盘访问次数。持续主缺页往往提示内存压力或访问局部性差，要同时看换页和工作集。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("address = load_or_store(virtual_address);\nif (!page_table_has_mapping(address) || !permission_allows(address, operation)) {\n    trap_to_kernel_page_fault(address); // CPU 同步异常，交给内核判因\n    if (is_valid_demand_page(address)) { map_or_load_page(); retry_instruction(); }\n    else signal_process(SIGSEGV_or_SIGBUS); // 越权/无效地址不应盲目重试\n}\n// 匿名页分配、驻留页权限处理可无需磁盘；主缺页调入文件/交换页更慢。\n// 少量缺页常见，持续主缺页要排查内存压力与访问局部性。", lang: "cpp", block: true)
+  #raw("address = load_or_store(virtual_address);\nif (!page_table_has_mapping(address) || !permission_allows(address, operation))\n{\n    trap_to_kernel_page_fault(address); // CPU 同步异常，交给内核判因\n    if (is_valid_demand_page(address))\n    {\n        map_or_load_page();\n        retry_instruction();\n    }\n    else\n        signal_process(SIGSEGV_or_SIGBUS); // 越权/无效地址不应盲目重试\n}\n// 匿名页分配、驻留页权限处理可无需磁盘；主缺页调入文件/交换页更慢。\n// 少量缺页常见，持续主缺页要排查内存压力与访问局部性。", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -1587,7 +1587,7 @@
   #text("申请是否成功还受地址空间、RLIMIT、cgroup 和内存承诺策略影响。Linux overcommit 的模式零做启发式检查，模式一允许过量承诺，模式二按配置预算核算；CommitLimit、Committed_AS 与实际驻留量 RSS 不是一回事。即使没有 Swap，也可能回收文件页腾出内存，因此不能只拿申请量与 RAM 比较，更不能把 mmap 成功当作未来每次写入都保证成功。〔I20、N44、I16〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("void* p = mmap(nullptr, length, PROT_READ | PROT_WRITE, MAP_SHARED, fd, offset);\nif (p == MAP_FAILED) return report_mapping_error(errno); // 先检查失败\n// offset 需满足页对齐等平台要求；返回映射不代表页已驻留 RAM\nwrite_bytes(p); // MAP_SHARED 与文件映射共享修改，落盘时机另行管理\nvoid* q = mmap(..., MAP_PRIVATE, ...); // 写入通常触发写时复制隔离\n// 文件截断后访问超出新 EOF 的页可能收到 SIGBUS\nmunmap(p, length); // 映射长度与释放范围要匹配", lang: "cpp", block: true)
+  #raw("void* p = mmap(nullptr, length, PROT_READ | PROT_WRITE, MAP_SHARED, fd, offset);\nif (p == MAP_FAILED)\n    return report_mapping_error(errno); // 先检查失败\n// offset 需满足页对齐等平台要求；返回映射不代表页已驻留 RAM\nwrite_bytes(p); // MAP_SHARED 与文件映射共享修改，落盘时机另行管理\nvoid* q = mmap(..., MAP_PRIVATE, ...); // 写入通常触发写时复制隔离\n// 文件截断后访问超出新 EOF 的页可能收到 SIGBUS\nmunmap(p, length); // 映射长度与释放范围要匹配", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -1598,7 +1598,7 @@
   #text("用 perf top、perf record 或对应运行时的采样工具定位最常出现的调用路径，再与请求量、锁竞争、错误重试和最近变更对照。JVM 可从 top -H 找十进制 TID，转成十六进制后匹配 jstack 的 nid，或用 Arthas thread 看栈。修复后在相同负载下比较吞吐和尾延迟：CPU 降低也可能只是处理请求变少，不能仅凭瞬时占用判定优化有效。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("top_or_ps(pid); // 先确认进程 CPU，再找高占用线程并识别用户态/系统态\nfor (tid : hot_threads(pid)) { // ps -L / top -H 等工具得到线程 ID\n    profile_stack(tid); // perf top/record 或采样 profiler 找热点栈\n    map_tid_decimal_to_hex_for_logs(tid); // 日志/内核工具的 ID 进制可能不同\n}\ncorrelate_with_request_rate_logs_locks_syscalls_and_recent_changes();\noptimize_confirmed_hot_path();\nbenchmark_same_load_and_compare_throughput_and_tail_latency(); // 不凭瞬时 CPU 百分比下结论", lang: "cpp", block: true)
+  #raw("top_or_ps(pid); // 先确认进程 CPU，再找高占用线程并识别用户态/系统态\nfor (tid : hot_threads(pid))\n{ // ps -L / top -H 等工具得到线程 ID\n    profile_stack(tid); // perf top/record 或采样 profiler 找热点栈\n    map_tid_decimal_to_hex_for_logs(tid); // 日志/内核工具的 ID 进制可能不同\n}\ncorrelate_with_request_rate_logs_locks_syscalls_and_recent_changes();\noptimize_confirmed_hot_path();\nbenchmark_same_load_and_compare_throughput_and_tail_latency(); // 不凭瞬时 CPU 百分比下结论", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -1609,7 +1609,7 @@
   #text("加载后先看崩溃信号和所有线程调用栈，再切到相关线程与栈帧，检查参数、对象地址和生命周期。优化编译可能让变量消失或被搬到寄存器，不能假定所有局部变量都能恢复。崩溃在释放内存或容器操作处，根因也可能是更早的越界写。可用 ASan、UBSan 或最小复现把怀疑变成证据，不能只按栈顶位置修改代码。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("enable_core_dump_and_reproduce();\ngdb(\"./program\", \"core\");\nthread_apply_all(\"bt\"); // 先看所有线程与崩溃线程栈，不把栈顶直接当根因\nselect_thread(crashing_thread); frame(fault_frame); print(arguments_and_nearby_state);\ncheck_binary_matches_core_and_debug_symbols(); // 符号不匹配会误导栈和变量\nrebuild_with_asan_ubsan_or_minimal_reproducer(); // 定位越界、空指针、释放后使用", lang: "cpp", block: true)
+  #raw("enable_core_dump_and_reproduce();\ngdb(\"./program\", \"core\");\nthread_apply_all(\"bt\"); // 先看所有线程与崩溃线程栈，不把栈顶直接当根因\nselect_thread(crashing_thread);\nframe(fault_frame);\nprint(arguments_and_nearby_state);\ncheck_binary_matches_core_and_debug_symbols(); // 符号不匹配会误导栈和变量\nrebuild_with_asan_ubsan_or_minimal_reproducer(); // 定位越界、空指针、释放后使用", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -1620,7 +1620,7 @@
   #text("共享内存减少某些内核传递拷贝，但不会自动解决并发可见性和清理。管道有容量，所有写端引用都关闭且缓存读尽后读端才见 EOF；没有读者时写入要处理 SIGPIPE 或 EPIPE。PIPE_BUF 范围内的写入原子性只防止多个写者交错，不保证一次 read 就是一次消息。匿名管道常在 fork 后共享，FIFO 则有路径名，打开和读写还需考虑对端及非阻塞语义。〔I26、N35〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("if (large_payload && same_host) { shared_memory(); add_process_shared_mutex_or_atomic(); }\nelse if (small_parent_child_stream) { pipe(); respect_pipe_capacity_and_backpressure(); }\nelse if (same_host && socket_protocol_needed) unix_domain_socket();\nelse { tcp_or_udp_socket(); } // 跨主机需要考虑网络故障与协议\n// 消息队列适合带排队语义的离散消息；信号只传少量通知信息。\n// IPC 选型同时看数据量、主机范围、同步/容量、背压和故障恢复。", lang: "cpp", block: true)
+  #raw("if (large_payload && same_host)\n{\n    shared_memory();\n    add_process_shared_mutex_or_atomic();\n}\nelse if (small_parent_child_stream)\n{\n    pipe();\n    respect_pipe_capacity_and_backpressure();\n}\nelse if (same_host && socket_protocol_needed)\n    unix_domain_socket();\nelse\n{\n    tcp_or_udp_socket();\n} // 跨主机需要考虑网络故障与协议\n// 消息队列适合带排队语义的离散消息；信号只传少量通知信息。\n// IPC 选型同时看数据量、主机范围、同步/容量、背压和故障恢复。", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -1631,7 +1631,7 @@
   #text("协程则通常由运行时在用户态按挂起点切换，可以把很多等待 I/O 的任务复用到少量承载线程上；能否并行取决于运行时是否使用多个内核线程。直接调用阻塞接口可能卡住承载线程及其上的其他协程。线程触发默认致命信号通常结束整个进程，运行时捕获的语言异常却可能只结束一个任务；捕获 SIGSEGV 也不能让任意内存损坏或 C++ 未定义行为安全继续。〔N30、N34〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("Process p = isolated_address_space_and_resources(); // 故障隔离较好，创建/切换成本通常较高\nThread t = shared_heap_and_file_descriptors(p); // 内核调度；共享状态需加锁/原子保护\nCoroutine c = runtime_switches_at_await_points(); // 用户态轻量切换，适合大量 I/O 等待\nif (coroutine_calls_blocking_io()) block_carrier_thread(); // 可能连带卡住其他协程\nif (runtime_schedules_on_multiple_kernel_threads()) coroutine_work_can_run_in_parallel();\n// 选型按隔离、共享、调度成本与阻塞行为，不按“协程一定并行”判断。", lang: "cpp", block: true)
+  #raw("Process p = isolated_address_space_and_resources(); // 故障隔离较好，创建/切换成本通常较高\nThread t = shared_heap_and_file_descriptors(p); // 内核调度；共享状态需加锁/原子保护\nCoroutine c = runtime_switches_at_await_points(); // 用户态轻量切换，适合大量 I/O 等待\nif (coroutine_calls_blocking_io())\n    block_carrier_thread(); // 可能连带卡住其他协程\nif (runtime_schedules_on_multiple_kernel_threads())\n    coroutine_work_can_run_in_parallel();\n// 选型按隔离、共享、调度成本与阻塞行为，不按“协程一定并行”判断。", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -1642,7 +1642,7 @@
   #text("例如父进程有一百兆数据，子进程马上 exec 新程序，大部分旧页面从未被写，就避免了无用复制。相反，如果子进程逐页修改整块数据，仍会付出页面复制、缺页处理和页表管理成本。复制粒度通常是页，不是单个变量；少量字节的分散写入也可能触碰很多页。共享映射与私有写时复制语义不同，不能把所有 fork 后映射都概括为彼此隔离。〔S5〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("fork(); // 父子逻辑上各自拥有地址空间，物理只读映射可暂时共享\nmark_shared_pages_read_only_and_cow();\nif (parent_or_child_writes(page)) {\n    page_fault(); // 写入方触发内核异常\n    private_copy = allocate_and_copy(page); remap_writer(private_copy);\n}\n// 未写页面继续共享；fork 后立即 exec 常省去大部分数据复制。\n// 若大量页被写，仍要复制页面并建立页表，成本按写入比例发生。", lang: "cpp", block: true)
+  #raw("fork(); // 父子逻辑上各自拥有地址空间，物理只读映射可暂时共享\nmark_shared_pages_read_only_and_cow();\nif (parent_or_child_writes(page))\n{\n    page_fault(); // 写入方触发内核异常\n    private_copy = allocate_and_copy(page);\n    remap_writer(private_copy);\n}\n// 未写页面继续共享；fork 后立即 exec 常省去大部分数据复制。\n// 若大量页被写，仍要复制页面并建立页表，成本按写入比例发生。", lang: "cpp", block: true)
 ]
 
 #heading(level: 2, outlined: true)[#text("7.4 I/O 完成模型", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
@@ -1654,7 +1654,7 @@
   #text("单个事件循环容易理解，但耗时业务会拖住其他连接。可以用有界工作池执行业务，再把结果送回拥有连接的循环；也可以由主循环接入连接，多个子循环分别管理连接状态，交接时仍需同步、唤醒和背压。线程变多不会自动改变 I/O 模型。现代 Linux 的 io_uring 能对受支持的文件和 socket 操作提供完成结果，因此不能说 Linux 只有 Reactor，也不能保证异步方案在所有负载下更快。〔S5、S6〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// Reactor：就绪通知只说明“可以尝试”，应用仍执行非阻塞读写。\nfor (event : epoll_wait(epfd)) { if (event.readable) read_until_eagain(event.fd); }\n// Proactor：先提交 I/O 请求，完成时通知，回调拿到结果/字节数。\nsubmit_async_read(fd, buffer, on_completion_result);\n// 判断模式看通知表示 ready 还是 operation completed，而不是看 API 有无 callback。\n// Linux epoll 是就绪通知；异步库可在上层包装成完成回调式接口。", lang: "cpp", block: true)
+  #raw("// Reactor：就绪通知只说明“可以尝试”，应用仍执行非阻塞读写。\nfor (event : epoll_wait(epfd))\n{\n    if (event.readable)\n        read_until_eagain(event.fd);\n}\n// Proactor：先提交 I/O 请求，完成时通知，回调拿到结果/字节数。\nsubmit_async_read(fd, buffer, on_completion_result);\n// 判断模式看通知表示 ready 还是 operation completed，而不是看 API 有无 callback。\n// Linux epoll 是就绪通知；异步库可在上层包装成完成回调式接口。", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -1665,7 +1665,7 @@
   #text("io_uring 的共享队列和批量提交可以减少系统调用以及请求描述信息的搬运，但普通读写不会因此自动变成零拷贝。能提交哪些操作、如何执行以及是否受安全策略限制，都与目标内核、文件类型和配置有关。部署前要核实支持情况，并用真实连接数、报文大小和存储负载比较延迟与吞吐；接口更新并不等于每种场景都更快。〔S5〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("epoll_add(fd, READABLE); // 内核记录兴趣；返回就绪后仍由应用调用 read\nif (epoll_wait_reports(fd)) n = ::read(fd, buffer, size);\nsubmit_io_uring_sqe(READ, fd, buffer, size); // 提交队列发布读写操作请求\ncqe = wait_io_uring_cqe(); // 完成队列带回操作结果，而不只是“可能可读”\n// io_uring 可减少逐次系统调用/复制，但受内核版本、文件类型和安全限制影响。\n// 先核对目标环境支持情况，再按真实负载基准测试。", lang: "cpp", block: true)
+  #raw("epoll_add(fd, READABLE); // 内核记录兴趣；返回就绪后仍由应用调用 read\nif (epoll_wait_reports(fd))\n    n = ::read(fd, buffer, size);\nsubmit_io_uring_sqe(READ, fd, buffer, size); // 提交队列发布读写操作请求\ncqe = wait_io_uring_cqe(); // 完成队列带回操作结果，而不只是“可能可读”\n// io_uring 可减少逐次系统调用/复制，但受内核版本、文件类型和安全限制影响。\n// 先核对目标环境支持情况，再按真实负载基准测试。", lang: "cpp", block: true)
 ]
 
 
@@ -1689,7 +1689,7 @@
   #text("内核随后建立页表、内存分配、调度与设备驱动等基础能力，准备或切换到真正的根文件系统，再启动第一个用户态进程 PID 1。PID 1 继续组织设备、挂载和服务依赖。排障可以沿这条链找最后成功的一步：找不到根设备与某个业务服务端口未就绪不是同层问题。看到登录界面或引导成功也不代表数据库、网络和应用依赖都准备好了。〔N28〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("enum class BootStage { firmware, bootloader, kernel, initramfs, rootfs, init };\nBootStage next(BootStage stage) { /* 每层完成初始化后再交接给下一层 */ return BootStage::kernel; }\n// 真实启动由固件、引导器、内核和 PID 1 分阶段完成", lang: "cpp", block: true)
+  #raw("enum class BootStage\n{\n    firmware,\n    bootloader,\n    kernel,\n    initramfs,\n    rootfs,\n    init\n};\nBootStage next(BootStage stage)\n{ /* 每层完成初始化后再交接给下一层 */\n    return BootStage::kernel;\n}\n// 真实启动由固件、引导器、内核和 PID 1 分阶段完成", lang: "cpp", block: true)
 ]
 
 #heading(level: 2, outlined: true)[#text("7.6 内核边界、调度与同步", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
@@ -1701,7 +1701,7 @@
   #text("例如 read 的库包装最终可能进入内核读取文件，但“库函数”与“系统调用”不是同义词：一些接口可能通过 vDSO 在用户态得到结果。硬件中断和缺页等同步异常也能进入内核。还要区分权限切换与任务切换：当前线程完成一次系统调用后可以直接继续，并不必然换成另一个线程；只有阻塞、抢占等需要调度时才发生相关任务切换。〔N29〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("char buffer[100];\nssize_t count = ::read(fd, buffer, sizeof(buffer)); // 系统调用跨入内核并检查 fd 与缓冲区\nif (count < 0) handle_errno(errno); // 普通函数调用不会切换到内核权限", lang: "cpp", block: true)
+  #raw("char buffer[100];\nssize_t count = ::read(fd, buffer, sizeof(buffer)); // 系统调用跨入内核并检查 fd 与缓冲区\nif (count < 0)\n    handle_errno(errno); // 普通函数调用不会切换到内核权限", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -1712,7 +1712,7 @@
   #text("如果切换到不同地址空间，还涉及页表上下文及地址转换缓存管理。同一进程的线程共享地址空间，可以省去部分工作，但仍有各自的栈和寄存器。实际成本又受 TLB 标记、缓存局部性、CPU 迁移和工作集影响，不能绝对保证某次线程切换一定比某次进程切换快。评价设计时还要统计切换频率，以及每次切换后重新暖缓存的间接成本。〔N30、N31、N32〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("struct CpuContext { std::uintptr_t pc, sp; std::array<std::uintptr_t, 8> registers; };\nCpuContext saved = save_current_context();\nrestore_context(other_thread); // 恢复到暂停位置；不同地址空间还要切换页表", lang: "cpp", block: true)
+  #raw("struct CpuContext\n{\n    std::uintptr_t pc, sp;\n    std::array<std::uintptr_t, 8> registers;\n};\nCpuContext saved = save_current_context();\nrestore_context(other_thread); // 恢复到暂停位置；不同地址空间还要切换页表", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -1723,7 +1723,7 @@
   #text("POSIX 因而要求多线程 fork 后到 exec 前的子路径，只调用异步信号安全函数。printf、复杂内存分配和普通库调用都不能随意放进去。pthread_atfork 能协调自己掌握的锁，却很难覆盖所有第三方库状态。启动新程序时保持子路径极小，或采用满足需求的 posix_spawn；父进程稍后解锁不会改好子进程里那个独立的锁副本。〔N33〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("pid_t child = ::fork();\nif (child == 0) { ::execve(path, argv, envp); ::write(STDERR_FILENO, \"exec failed\\n\", 12); ::_exit(127); }\n// fork 后子进程只有调用线程；失败路径避免使用可能持锁的复杂库函数", lang: "cpp", block: true)
+  #raw("pid_t child = ::fork();\nif (child == 0)\n{\n    ::execve(path, argv, envp);\n    ::write(STDERR_FILENO, \"exec failed\\n\", 12);\n    ::_exit(127);\n}\n// fork 后子进程只有调用线程；失败路径避免使用可能持锁的复杂库函数", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -1734,7 +1734,7 @@
   #text("信号的处理方式通常是进程级属性，屏蔽字又有线程维度；同步硬件故障常送给触发线程，但默认致命动作作用于整个进程。SIGKILL、SIGSTOP 不可捕获或忽略。处理函数不能随意加锁、分配或调用非异步信号安全库，通常只设置安全标志或写自管道，把复杂清理留给正常执行流。捕获未知 SIGSEGV 后返回并不等于修复了内存错误。〔N34、N35〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("std::counting_semaphore<3> slots{3}; // 计数资源表示最多三个空槽\nstd::mutex queue_mutex;\nslots.acquire(); { std::lock_guard lock(queue_mutex); queue.push(task); } // mutex 保护临界区\nslots.release(); // 信号处理函数只设置 sig_atomic_t 标志，不在其中操作队列", lang: "cpp", block: true)
+  #raw("std::counting_semaphore<3> slots{3}; // 计数资源表示最多三个空槽\nstd::mutex queue_mutex;\nslots.acquire();\n{\n    std::lock_guard lock(queue_mutex);\n    queue.push(task);\n} // mutex 保护临界区\nslots.release(); // 信号处理函数只设置 sig_atomic_t 标志，不在其中操作队列", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -1745,7 +1745,7 @@
   #text("Linux 有普通、FIFO、RR、Deadline 等类别，公平调度的内部实现也在演进：长期使用过 CFS，较新内核逐步转向 EEVDF，不能把某版红黑树实现当永久规则。FIFO、RR 的 sched_priority 越大越优先，普通任务的 nice 越小通常权重越高，nice 并不会将它升级为实时任务。相同优先级 FIFO 不靠普通轮转时间片分配机会，RR 则增加时间片；实时预算、权限、亲和性及带宽配置也会影响结果。〔N31、N36〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("enum class Policy { fair, fifo, round_robin };\n// SCHED_FIFO 同优先级任务不会因普通时间片自动轮转；SCHED_RR 会轮转\nsched_param param{}; param.sched_priority = priority;\npthread_setschedparam(thread.native_handle(), SCHED_RR, &param); // 需检查权限与返回码", lang: "cpp", block: true)
+  #raw("enum class Policy\n{\n    fair,\n    fifo,\n    round_robin\n};\n// SCHED_FIFO 同优先级任务不会因普通时间片自动轮转；SCHED_RR 会轮转\nsched_param param{};\nparam.sched_priority = priority;\npthread_setschedparam(thread.native_handle(), SCHED_RR, &param); // 需检查权限与返回码", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -1756,7 +1756,7 @@
   #text("悲观与乐观回答“何时防冲突”：悲观先取得锁再读改数据，乐观先计算，提交时用版本号或 CAS 核对是否被别人修改，冲突就重试。乐观仍需原子校验，副作用要能避免重复；冲突频繁时反而浪费工作。读写锁、递归锁也有各自语义，不能只按名字替换。Linux 内核普通自旋锁在 PREEMPT_RT 下还有实现差异，应区分用户态锁和具体内核配置。〔N37、N38〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("std::atomic<int> balance{100};\nint old = balance.load();\nwhile (old >= 20 && !balance.compare_exchange_weak(old, old - 20)) { /* 冲突后重试并重新检查 */ }\n// 只有 CAS 成功才发布扣款事件；不可撤销操作不要放在重试循环里", lang: "cpp", block: true)
+  #raw("std::atomic<int> balance{100};\nint old = balance.load();\nwhile (old >= 20 && !balance.compare_exchange_weak(old, old - 20))\n{ /* 冲突后重试并重新检查 */\n}\n// 只有 CAS 成功才发布扣款事件；不可撤销操作不要放在重试循环里", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -1767,7 +1767,7 @@
   #text("处理方法要针对原因。死锁可用统一锁序减少环路；活锁可用明确仲裁、有界重试和带随机性的退避打破同步节奏；饥饿可用公平排队、优先级老化或资源配额改善。随机退避只能降低碰撞概率，不是所有任务必然完成的数学保证。因此既要检查“有没有锁环”，也要观察任务等待时间和实际完成数量，确认系统确实有进展。〔N31、N38〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("std::unique_lock<std::mutex> first(mutex_a, std::defer_lock), second(mutex_b, std::defer_lock);\nif (std::try_lock(first, second) == -1) update_both(); // 失败就释放已取得的锁\n// std::scoped_lock 可按安全顺序同时锁定；有限重试和公平队列可避免活锁/饥饿", lang: "cpp", block: true)
+  #raw("std::unique_lock<std::mutex> first(mutex_a, std::defer_lock), second(mutex_b, std::defer_lock);\nif (std::try_lock(first, second) == -1)\n    update_both(); // 失败就释放已取得的锁\n// std::scoped_lock 可按安全顺序同时锁定；有限重试和公平队列可避免活锁/饥饿", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -1803,7 +1803,7 @@
   #text("若活跃工作集持续大于可用内存，页面刚换出又要换入，便会发生抖动。应结合 cgroup 限额、可回收量与工作集，减少保留数据、限制并发或扩容，而不是反复重启。分配标志还决定能否睡眠、重试和回收，不能认为所有分配失败都走同一条 OOM 路径。〔N40、I18、I19〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("std::array<bool, 3> referenced{true, false, true};\nstd::size_t hand = 0;\nwhile (referenced[hand]) { referenced[hand] = false; hand = (hand + 1) % referenced.size(); }\nevict_page(hand); // Clock 给访问位为 1 的页一次再访问机会", lang: "cpp", block: true)
+  #raw("std::array<bool, 3> referenced{true, false, true};\nstd::size_t hand = 0;\nwhile (referenced[hand])\n{\n    referenced[hand] = false;\n    hand = (hand + 1) % referenced.size();\n}\nevict_page(hand); // Clock 给访问位为 1 的页一次再访问机会", lang: "cpp", block: true)
 ]
 
 #heading(level: 2, outlined: true)[#text("7.8 文件系统、缓存与持久化", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
@@ -1837,7 +1837,7 @@
   #text("如果用“写临时文件，再 rename 覆盖正式文件”发布配置，仅同步文件内容还不够，目录项的变更也要按协议持久化，通常需同步包含目录。每步都要检查错误，尤其不能 fsync 失败仍宣布保存成功。最终保证受文件系统、挂载选项和设备缓存是否诚实执行刷新影响；数据库提交还取决于日志刷盘策略，网络收到字节的确认更不能替代业务或持久化确认。〔N45〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("write_all(temp_fd, data, size); // 循环处理短写和 EINTR\nif (::fsync(temp_fd) == 0 && ::rename(temp_path, final_path) == 0) {\n  ::fsync(directory_fd); // 同步目录项，才能确认替换操作的持久化\n}", lang: "cpp", block: true)
+  #raw("write_all(temp_fd, data, size); // 循环处理短写和 EINTR\nif (::fsync(temp_fd) == 0 && ::rename(temp_path, final_path) == 0)\n{\n    ::fsync(directory_fd); // 同步目录项，才能确认替换操作的持久化\n}", lang: "cpp", block: true)
 ]
 
 #heading(level: 2, outlined: true)[#text("7.9 中断与 I/O 语义", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
@@ -1849,7 +1849,7 @@
   #text("不能睡眠的硬中断上下文可把后续工作交给软中断或工作队列。软中断有时在中断返回等路径执行，压力大时也可能交给 ksoftirqd；即使由该线程执行，也不能按普通可睡眠任务随意写。工作队列由工作线程运行，可承载可能阻塞的处理。线程化中断和 PREEMPT_RT 会改变部分上下文细节。排查软中断压力，应观察 /proc/softirqs 和 /proc/interrupts 的时间增量、CPU 分布与网卡负载，累计值本身不能表示耗时。〔N46、N47、N38、I57、I60〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("enum class HandlerContext { hard_irq, soft_irq, workqueue };\nvoid hard_irq() { acknowledge_device(); schedule_softirq(); } // 快速确认，不睡眠\nvoid workqueue() { perform_slow_io(); } // 可睡眠的慢操作放到工作队列", lang: "cpp", block: true)
+  #raw("enum class HandlerContext\n{\n    hard_irq,\n    soft_irq,\n    workqueue\n};\nvoid hard_irq()\n{\n    acknowledge_device();\n    schedule_softirq();\n} // 快速确认，不睡眠\nvoid workqueue()\n{\n    perform_slow_io();\n} // 可睡眠的慢操作放到工作队列", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -1860,7 +1860,7 @@
   #text("epoll 报可读只说明现在值得尝试，不保证数据仍在，也不保证一次读完一条完整消息：另一线程可能先取走，结果可能是 EOF，也可能是错误。事件循环通常用非阻塞 fd，根据真实返回值累积和解析字节；read 为零代表流结束，EINTR 可按条件重试，EAGAIN 表示当前读空，其他错误须处理。多路复用改善等待方式，不自动提供消息边界。〔N48、N49〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("ssize_t n = ::recv(socket_fd, buffer, sizeof(buffer), 0);\nif (n > 0) input.append(buffer, static_cast<std::size_t>(n));\nelse if (n == 0) close_peer(); else if (errno == EAGAIN || errno == EINTR) retry_later();\n// epoll 报就绪不代表一次 recv 能读到完整业务消息", lang: "cpp", block: true)
+  #raw("ssize_t n = ::recv(socket_fd, buffer, sizeof(buffer), 0);\nif (n > 0)\n    input.append(buffer, static_cast<std::size_t>(n));\nelse if (n == 0)\n    close_peer();\nelse if (errno == EAGAIN || errno == EINTR)\n    retry_later();\n// epoll 报就绪不代表一次 recv 能读到完整业务消息", lang: "cpp", block: true)
 ]
 
 #heading(level: 2, outlined: true)[#text("7.10 Linux内存管理机制", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
@@ -1873,7 +1873,7 @@
   #text("可按负载选本地优先、绑定或交错策略，并用 numastat、numa_maps 观察。cpuset 会限制允许节点，CPU 亲和性也影响本地策略的参照位置。把线程绑到某 CPU 不会自动搬迁已经存在的页面；改了策略通常只影响后续分配，页面迁移和自动 NUMA 平衡还受配置、可移动性及成本限制。因此测量要同时观察远端访问、带宽和延迟，避免把策略配置误当成已实现的数据迁移。〔I15、I18〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("std::vector<int> values(count);\nstd::thread worker([&] { for (int& value : values) value = initialize(); }); // 首次触页常按本地策略分配\nworker.join();\n// NUMA 亲和性和内存放置需一起测量；绑核不会自动迁移已分配页面", lang: "cpp", block: true)
+  #raw("std::vector<int> values(count);\nstd::thread worker(\n    [&]\n    {\n        for (int& value : values)\n            value = initialize();\n    }); // 首次触页常按本地策略分配\nworker.join();\n// NUMA 亲和性和内存放置需一起测量；绑核不会自动迁移已分配页面", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -1884,7 +1884,7 @@
   #text("GFP 标志会约束可用 Zone、是否允许回收和睡眠。GFP_KERNEL 可能直接回收并睡眠，不能在禁止睡眠的中断上下文使用；GFP_NOWAIT 不睡眠且可能失败，GFP_ATOMIC 可用部分保留资源，但同样不能保证成功，应限制使用。设备 DMA 要走 DMA API 处理总线地址、映射和同步，普通内核指针或物理地址不能直接当设备可访问地址。分配失败必须按调用上下文设计回退。〔I17〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("void* object = kmalloc(object_size, GFP_KERNEL); // 进程上下文允许睡眠，但分配仍可能失败\nif (object != nullptr) kfree(object); // 与 kmalloc 配对释放\n// 中断上下文不能睡眠；DMA 地址应通过 DMA API 获取", lang: "cpp", block: true)
+  #raw("void* object = kmalloc(object_size, GFP_KERNEL); // 进程上下文允许睡眠，但分配仍可能失败\nif (object != nullptr)\n    kfree(object); // 与 kmalloc 配对释放\n// 中断上下文不能睡眠；DMA 地址应通过 DMA API 获取", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -1906,7 +1906,7 @@
   #text("文件页可沿 address_space 的索引定位映射 VMA，匿名页则通过 anon_vma 等关系组织映射；不是为每个匿名页复制一份完整 VMA。映射计数表示映射关系，引用计数还可能包括缓存、临时持有等引用，两者都不表示访问频次，也不一定等于进程数。遍历和解除映射要按相应锁及页表同步规则执行，否则并发解除后仍使用映射可能造成错误。〔I16〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("std::unordered_multimap<Page*, Mapping> reverse_map; // 物理页反查所有虚拟映射\nfor (const Mapping& mapping : reverse_map.equal_range(page)) unmap(mapping);\nif (page->map_count() == 0 && page->ref_count() == 0) reclaim(page); // 解除映射后才可回收", lang: "cpp", block: true)
+  #raw("std::unordered_multimap<Page*, Mapping> reverse_map; // 物理页反查所有虚拟映射\nfor (const Mapping& mapping : reverse_map.equal_range(page))\n    unmap(mapping);\nif (page->map_count() == 0 && page->ref_count() == 0)\n    reclaim(page); // 解除映射后才可回收", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -1917,7 +1917,7 @@
   #text("HIGHMEM 主要出现在部分 32 位配置，指没有永久内核映射的高端内存；现代 64 位机器不能机械套用。热添加的内存要上线后才能供分配，热移除通常先下线并迁移页面。MOVABLE 区提高可迁移性，固定或不可移动页面仍会阻挡下线。具体能力取决于内核配置、体系结构和设备，查看节点、Zone 与 PFN 时要把“页描述符、物理页内容、可分配状态”区分开。〔I18、I30、I32〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("auto pfn = physical_address / PAGE_SIZE;\nif (pfn_valid(pfn)) { struct page* metadata = pfn_to_page(pfn); inspect(metadata->zone, metadata->node); }\n// struct page 是元数据；页面内容位于对应物理页，不在描述符对象里", lang: "cpp", block: true)
+  #raw("auto pfn = physical_address / PAGE_SIZE;\nif (pfn_valid(pfn))\n{\n    struct page* metadata = pfn_to_page(pfn);\n    inspect(metadata->zone, metadata->node);\n}\n// struct page 是元数据；页面内容位于对应物理页，不在描述符对象里", lang: "cpp", block: true)
 ]
 
 #heading(level: 2, outlined: true)[#text("7.11 文件与设备数据路径", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
@@ -1930,7 +1930,7 @@
   #text("Linux 块层还会合并相邻请求、排队并交给设备，blk-mq 提供软件及硬件多队列。none、mq-deadline、BFQ 等策略是否可用受内核、驱动和设备影响，应在目标系统检查。调度可能改善公平或延迟，也可能牺牲吞吐；SSD、虚拟化存储和控制器自身都改变排序成本。应在真实读写比例下比较吞吐、IOPS、尾延迟和不同任务的公平性，不要把 CFQ 或固定五种算法说成所有 Linux 的默认情况。〔I21〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("std::vector<int> requests{10, 45, 80};\nstd::sort(requests.begin(), requests.end(), [&](int a, int b) { return std::abs(a - head) < std::abs(b - head); });\n// SSTF缩短近处寻道但可能饿死远端；SSD还应实测尾延迟与公平性", lang: "cpp", block: true)
+  #raw("std::vector<int> requests{10, 45, 80};\nstd::sort(requests.begin(),\n          requests.end(),\n          [&](int a, int b)\n          {\n              return std::abs(a - head) < std::abs(b - head);\n          });\n// SSTF缩短近处寻道但可能饿死远端；SSD还应实测尾延迟与公平性", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -1941,7 +1941,7 @@
   #text("文件系统还会用位图记录空闲块或 inode，并以块组等布局改善局部性。数据块耗尽和 inode 耗尽是两种独立问题：磁盘容量看起来尚有空间，也可能创建不了新文件。现代文件系统会采用 extent、树索引和延迟分配等实现，具体 inode 指针数、目录索引方式与块格式依文件系统而异，不能把一种 Unix 教材布局当成统一磁盘格式。〔I22、I36〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("struct Extent { std::uint64_t first_block; std::size_t length; };\nstd::vector<Extent> extents{{100, 3}, {220, 1}}; // 连续块合并为extent\nstd::uint64_t physical = extents[0].first_block + 2; // 逻辑块2映射到物理块102", lang: "cpp", block: true)
+  #raw("struct Extent\n{\n    std::uint64_t first_block;\n    std::size_t length;\n};\nstd::vector<Extent> extents{{100, 3}, {220, 1}}; // 连续块合并为extent\nstd::uint64_t physical = extents[0].first_block + 2; // 逻辑块2映射到物理块102", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -1952,7 +1952,7 @@
   #text("MMIO 寄存器不是普通 RAM，memcpy 或只加 volatile 都不能替代规定的访问宽度、顺序和总线规则；posted write 有时需读回确认送达。DMA 让设备搬运数据，但驱动仍须准备映射、描述符并完成缓存同步，地址要经 DMA API 转换，不能简单把 CPU 指针交给设备。设备可通过中断或轮询报告完成，DMA 也不表示 CPU 完全不参与。〔I23、I17〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("void* buffer = dma_alloc_coherent(device, length, &dma_address, GFP_KERNEL);\nwrite_descriptor(dma_address, length); writel(START, device_register);\nwait_for_completion(); // DMA映射/同步及释放必须遵循对应设备API", lang: "cpp", block: true)
+  #raw("void* buffer = dma_alloc_coherent(device, length, &dma_address, GFP_KERNEL);\nwrite_descriptor(dma_address, length);\nwritel(START, device_register);\nwait_for_completion(); // DMA映射/同步及释放必须遵循对应设备API", lang: "cpp", block: true)
 ]
 
 #heading(level: 2, outlined: true)[#text("7.12 硬件执行与内核架构", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
@@ -1976,7 +1976,7 @@
   #text("微内核尽量保留调度、地址空间和 IPC 等核心，把更多服务放在用户态；服务间隔离和替换更方便，但通信与系统设计成本要看实现。seL4 是一个微内核实例。Windows NT 常称混合架构，含内核、Executive、HAL 及用户态子系统，不能简化成“微内核外套一层代码”。架构标签本身不证明快慢或可靠性，要对照服务边界、故障隔离和真实工作负载。〔I58、I59〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("enum class KernelLayout { monolithic, microkernel, hybrid };\nKernelLayout choice = KernelLayout::microkernel; // 按性能、隔离边界与恢复成本选型\n// 微内核常把驱动/服务移到进程间通信边界；具体取舍取决于实现", lang: "cpp", block: true)
+  #raw("enum class KernelLayout\n{\n    monolithic,\n    microkernel,\n    hybrid\n};\nKernelLayout choice = KernelLayout::microkernel; // 按性能、隔离边界与恢复成本选型\n// 微内核常把驱动/服务移到进程间通信边界；具体取舍取决于实现", lang: "cpp", block: true)
 ]
 
 
@@ -2001,7 +2001,7 @@
   #text("重定向可能影响方法：历史上不少客户端遇到 301/302 会把 POST 改为 GET；需要保留方法和请求体时应考虑 307/308。重试不能只看“不是 200”：429、503 可结合 Retry-After 和退避策略；一般 4xx 修正请求前重试无用。即使 5xx，也要考虑操作是否已经在上游完成，避免重复产生副作用。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("switch (response.status) {\ncase 100: case 103: interim_information_only(); break; // 1xx 不是最终结果\ncase 200: success_with_representation(); break; case 201: resource_created(); break;\ncase 204: success_without_body(); break; // 2xx 成功类\ncase 301: follow_redirect_or_cache_by_rules(); break; // 3xx\ncase 401: authenticate_request(); break; case 403: deny_authorized_identity(); break;\ncase 404: resource_absent(); break; case 429: wait_retry_after_with_backoff(); break;\ncase 503: retry_if_safe_and_retry_after_allows(); break; // 5xx\n}\n// 4xx 通常先修正请求，不盲目重试；仍须考虑幂等性和截止时间", lang: "cpp", block: true)
+  #raw("switch (response.status)\n{\ncase 100:\ncase 103:\n    interim_information_only();\n    break; // 1xx 不是最终结果\ncase 200:\n    success_with_representation();\n    break;\ncase 201:\n    resource_created();\n    break;\ncase 204:\n    success_without_body();\n    break; // 2xx 成功类\ncase 301:\n    follow_redirect_or_cache_by_rules();\n    break; // 3xx\ncase 401:\n    authenticate_request();\n    break;\ncase 403:\n    deny_authorized_identity();\n    break;\ncase 404:\n    resource_absent();\n    break;\ncase 429:\n    wait_retry_after_with_backoff();\n    break;\ncase 503:\n    retry_if_safe_and_retry_after_allows();\n    break; // 5xx\n}\n// 4xx 通常先修正请求，不盲目重试；仍须考虑幂等性和截止时间", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -2014,7 +2014,7 @@
   #text("TLS 1.3 恢复时可能发送 0-RTT 早期数据，但它没有新一轮 DHE 提供的前向保密，也缺少跨连接的固有防重放保证。早期请求要能安全重放，并配合去重和服务器反重放策略；“业务幂等”单独不足以覆盖全部副作用。TLS 1.2 False Start 也只是满足条件时的提前发送优化，并非用了 ECDHE 就自动启用。〔S7、I5、I4〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("client = connect_tls(server_name);\ncert = peer_certificate_chain();\nverify_chain_to_trusted_CA(cert); verify_hostname(cert, server_name);\nverify_expiry_and_usage(cert); // 证书提供公钥/身份链，客户端仍须检查用途和域名\nkeys = tls_handshake_negotiate_and_authenticate(cert); // 非对称机制用于认证/协商\nsecure_channel = derive_symmetric_keys(keys); // 后续记录层保护机密性与完整性\nsend_http_over(secure_channel); // TLS 不替代应用自身的权限检查", lang: "cpp", block: true)
+  #raw("client = connect_tls(server_name);\ncert = peer_certificate_chain();\nverify_chain_to_trusted_CA(cert);\nverify_hostname(cert, server_name);\nverify_expiry_and_usage(cert); // 证书提供公钥/身份链，客户端仍须检查用途和域名\nkeys = tls_handshake_negotiate_and_authenticate(cert); // 非对称机制用于认证/协商\nsecure_channel = derive_symmetric_keys(keys); // 后续记录层保护机密性与完整性\nsend_http_over(secure_channel); // TLS 不替代应用自身的权限检查", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -2025,7 +2025,7 @@
   #text("HTTP 持久连接表示多次请求复用连接，SO_KEEPALIVE 才控制 TCP 保活探测，两者不是一个开关。网线拔掉或机器断电不一定送出 FIN；空闲又无探测时，连接可能长期留存，有未确认数据则重传、用户超时会推动失败。Linux socket 通常需显式启用保活并按平台配置探测。任何探测都只是存活线索，调用本身还要有截止时间、退避和幂等保护；关闭 socket 也可能受共享引用、未读数据和 SO_LINGER 影响。〔N70、N74〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("tcp_keepalive_enable(socket); // 空闲探测由 OS 参数控制，默认间隔可能很长\nschedule_application_heartbeat(session, sla_period); // 检查进程卡死/会话失效\nif (heartbeat_deadline_missed()) mark_suspect_then_reconnect_with_backoff();\nset_request_deadline(deadline); // 连接探测成功不代表某次业务调用会完成\nretry_only_if_operation_is_idempotent_or_has_request_id();\n// 代理、线程阻塞和网络分区都可能影响探测；两者只是存活线索\n// 应按 SLA 配探测间隔/重试，而不是依赖操作系统默认 keepalive", lang: "cpp", block: true)
+  #raw("tcp_keepalive_enable(socket); // 空闲探测由 OS 参数控制，默认间隔可能很长\nschedule_application_heartbeat(session, sla_period); // 检查进程卡死/会话失效\nif (heartbeat_deadline_missed())\n    mark_suspect_then_reconnect_with_backoff();\nset_request_deadline(deadline); // 连接探测成功不代表某次业务调用会完成\nretry_only_if_operation_is_idempotent_or_has_request_id();\n// 代理、线程阻塞和网络分区都可能影响探测；两者只是存活线索\n// 应按 SLA 配探测间隔/重试，而不是依赖操作系统默认 keepalive", lang: "cpp", block: true)
 ]
 
 #heading(level: 2, outlined: true)[#text("8.2 TCP、UDP 与传输控制", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
@@ -2037,7 +2037,7 @@
   #text("主动关闭方进入 TIME_WAIT，保留内核状态一段时间，好让最后 ACK 可以重发并隔离旧连接报文；通常应用 fd 已关闭，这不是应用线程还占着连接。优先复用长连接并查明谁在主动关闭。tcp_fin_timeout 管的是孤儿 FIN_WAIT_2，不是 TIME_WAIT。tcp_tw_reuse 的语义须按目标内核文档检查；tcp_tw_recycle 已在 Linux 4.12 删除。过早复用或强制 RST 会破坏旧报文隔离和可靠终止。〔N66、N69、N70〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("client.send(SYN, seq=c); server.reply(SYN | ACK, ack=c+1, seq=s);\nclient.send(ACK, ack=s+1); // 确认双方初始序号与双向可达后建立连接\n// 关闭方向独立：FIN -> ACK -> FIN -> ACK，常见四段挥手\nactive_closer.send(FIN); peer.ack_then_later_send(FIN); active_closer.send(ACK);\nactive_closer.enter(TIME_WAIT); // 主动关闭方等待，必要时重传最后 ACK\nwait_2MSL_then_release_tuple(); // 让旧报文消退，避免新连接误收旧段\n// TIME_WAIT 占用有成本，但也保护端口复用和连接正确性", lang: "cpp", block: true)
+  #raw("client.send(SYN, seq = c);\nserver.reply(SYN | ACK, ack = c + 1, seq = s);\nclient.send(ACK, ack = s + 1); // 确认双方初始序号与双向可达后建立连接\n// 关闭方向独立：FIN -> ACK -> FIN -> ACK，常见四段挥手\nactive_closer.send(FIN);\npeer.ack_then_later_send(FIN);\nactive_closer.send(ACK);\nactive_closer.enter(TIME_WAIT); // 主动关闭方等待，必要时重传最后 ACK\nwait_2MSL_then_release_tuple(); // 让旧报文消退，避免新连接误收旧段\n// TIME_WAIT 占用有成本，但也保护端口复用和连接正确性", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -2048,7 +2048,7 @@
   #text("UDP 边界也不意味着接收缓冲无限，缓冲不足时一个数据报可能被截断。QUIC 等可以在 UDP 之上实现可靠传输：它按流偏移重组数据，丢失内容用新包号重传，ACK 区间帮助发现缺口，并区分流级、连接级流控和连接拥塞控制。但裸 UDP 不会自动变可靠，DNS、媒体和 HTTP 所用传输也因协议版本及部署而异。〔I9、S7〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("tcp.send(bytes); // TCP 不保留 send/recv 边界，提供有序可靠字节流\nreceive_with_length_prefix_delimiter_or_fixed_frame();\n// TCP 用 ACK/重传、流量控制和拥塞控制；可靠性会带来重传/队头等待。\nudp.send_datagram(bytes); // 保留数据报边界，但协议不承诺交付/顺序/去重\nif (dns_query || loss_tolerant_realtime_media) choose_udp_when_app_semantics_fit();\n// DNS 需要时也会转 TCP；UDP 应用需自行考虑丢包与拥塞，不能假设可靠。", lang: "cpp", block: true)
+  #raw("tcp.send(bytes); // TCP 不保留 send/recv 边界，提供有序可靠字节流\nreceive_with_length_prefix_delimiter_or_fixed_frame();\n// TCP 用 ACK/重传、流量控制和拥塞控制；可靠性会带来重传/队头等待。\nudp.send_datagram(bytes); // 保留数据报边界，但协议不承诺交付/顺序/去重\nif (dns_query || loss_tolerant_realtime_media)\n    choose_udp_when_app_semantics_fit();\n// DNS 需要时也会转 TCP；UDP 应用需自行考虑丢包与拥塞，不能假设可靠。", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -2059,7 +2059,7 @@
   #text("ACK 号表示下一个期望字节，累计确认只确认连续收到的前缀；后续乱序段可暂存，出现缺口不代表其他数据没到。RTO 按平滑 RTT 和变化估计并会退避，不是固定秒数。协商 SACK 后，接收方还能报告不连续已收区间，减少多个缺口下的无效重传；D-SACK 标示重复收到的区间，可帮助分析重复接收，但单凭它不能确定唯一丢包原因。连接建立时协商的 MSS、接收缓存和路径变化也会影响吞吐。〔N66、I6、I37、I38〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("#include <algorithm>\nsegment.seq = first_byte_sequence; segment.checksum = checksum(header, payload);\nreceiver.accept_in_order_bytes(); receiver.send_cumulative_ack(next_expected_seq);\nif (timer_expired || duplicate_acks_indicate_gap) retransmit_missing_range();\nlimit_in_flight_by(std::min(receiver_window_rwnd, congestion_window_cwnd));\n// 序列号/累计 ACK 支持有序交付；校验和发现传输损坏\n// rwnd 保护接收缓存，cwnd 保护网络路径；二者较小者限制在途字节\n// TCP 向应用交付字节流，无消息边界；MSS、缓存和路径也影响吞吐", lang: "cpp", block: true)
+  #raw("#include <algorithm>\nsegment.seq = first_byte_sequence;\nsegment.checksum = checksum(header, payload);\nreceiver.accept_in_order_bytes();\nreceiver.send_cumulative_ack(next_expected_seq);\nif (timer_expired || duplicate_acks_indicate_gap)\n    retransmit_missing_range();\nlimit_in_flight_by(std::min(receiver_window_rwnd, congestion_window_cwnd));\n// 序列号/累计 ACK 支持有序交付；校验和发现传输损坏\n// rwnd 保护接收缓存，cwnd 保护网络路径；二者较小者限制在途字节\n// TCP 向应用交付字节流，无消息边界；MSS、缓存和路径也影响吞吐", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -2070,7 +2070,7 @@
   #text("接收窗口变成零时，发送方仍需按 TCP 规则探测窗口何时重新开放。以 Reno 模型来说，慢启动近似每 RTT 倍增 cwnd，拥塞避免近似线性增长，超时与重复 ACK 的恢复路径不同；CUBIC、BBR 等算法不都遵循相同更新规则。socket 缓冲区又是另一约束，自动调节、应用读写速度、ACK 时序和路径反馈都会影响吞吐，应结合目标主机正在使用的拥塞算法判断。〔I35、N70〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("#include <algorithm>\nrwnd = receiver_advertised_free_buffer(); // 接收端流控，保护消费/缓存能力\ncwnd = sender_congestion_controller_estimate(); // 网络拥塞控制，保护传输路径\nin_flight_limit = std::min(rwnd, cwnd);\nif (rwnd == 0) periodically_probe_window_update(); // 对端读出数据后可重新开放\nif (cwnd_is_small_or_loss_detected()) reduce_send_rate_and_recover();\n// rwnd 小先查应用读取/缓冲；cwnd 小查丢包、时延、ECN 等路径反馈\n// 窗口探测不是立即发送任意数据，发送方仍须遵守协议窗口规则", lang: "cpp", block: true)
+  #raw("#include <algorithm>\nrwnd = receiver_advertised_free_buffer(); // 接收端流控，保护消费/缓存能力\ncwnd = sender_congestion_controller_estimate(); // 网络拥塞控制，保护传输路径\nin_flight_limit = std::min(rwnd, cwnd);\nif (rwnd == 0)\n    periodically_probe_window_update(); // 对端读出数据后可重新开放\nif (cwnd_is_small_or_loss_detected())\n    reduce_send_rate_and_recover();\n// rwnd 小先查应用读取/缓冲；cwnd 小查丢包、时延、ECN 等路径反馈\n// 窗口探测不是立即发送任意数据，发送方仍须遵守协议窗口规则", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -2092,7 +2092,7 @@
   #text("两端通告的 MSS 分别限制各自发送方向，路径变化或隧道封装仍可能使实际可用大小更小。IP 分片需要目的端重组，少一片就无法交付原数据报，之后 TCP 才能恢复缺失字节。若防火墙错误丢弃 ICMP，路径 MTU 发现可能形成“连接建立但大包卡住”的黑洞，可结合较小报文、抓包和分组层探测定位。不要只看接口 MTU 就断定整条路径同样大小。〔N66、I11〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("path_mtu = minimum_link_mtu_on_route(); // 端到端路径上的最小链路 MTU\nmss = path_mtu - ip_header_bytes - tcp_header_bytes; // TCP 负载要扣除头部\nif (ipv4 && fragmentation_allowed) router_may_fragment_packet();\nif (ipv4_df || ipv6) source_uses_icmp_feedback_to_adjust_packet_size();\n// IPv6 路由器不分片，需由源端依据 ICMPv6 做 PMTU 发现\nif (icmp_blocked_or_misconfigured()) detect_path_mtu_black_hole_and_retransmissions();\n// TCP MSS 影响分段负载；隧道封装等还会进一步减小可用 MTU", lang: "cpp", block: true)
+  #raw("path_mtu = minimum_link_mtu_on_route(); // 端到端路径上的最小链路 MTU\nmss = path_mtu - ip_header_bytes - tcp_header_bytes; // TCP 负载要扣除头部\nif (ipv4 && fragmentation_allowed)\n    router_may_fragment_packet();\nif (ipv4_df || ipv6)\n    source_uses_icmp_feedback_to_adjust_packet_size();\n// IPv6 路由器不分片，需由源端依据 ICMPv6 做 PMTU 发现\nif (icmp_blocked_or_misconfigured())\n    detect_path_mtu_black_hole_and_retransmissions();\n// TCP MSS 影响分段负载；隧道封装等还会进一步减小可用 MTU", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -2103,7 +2103,7 @@
   #text("应用应定义帧格式：固定长度、分隔符、长度前缀或自描述编码都可以。解析端必须缓存半包、循环拆出缓冲区里的多帧，并验证长度、字符集和格式。长度前缀要设最大值，避免恶意值导致无限分配；分隔符要考虑转义和跨缓冲区查找。发送端的 send 完成也不等于对端收到完整帧。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("buffer.append(socket.read_available()); // TCP 是字节流，一次 send 不对应一次 recv\nwhile (buffer.size() >= header_bytes) {\n    length = decode_big_endian_length(buffer);\n    if (length > MAX_FRAME || length > SIZE_MAX - header_bytes) close_as_protocol_error();\n    if (buffer.size() < header_bytes + length) break; // 半包留待后续读取\n    parse_and_validate_frame(buffer.subspan(header_bytes, length));\n    buffer.erase_prefix(header_bytes + length); // 同一缓冲可能含多帧\n}\n// 定长、分隔符或长度前缀都能定界；校验格式并限制长度防内存耗尽\n// 解析循环只消费完整帧，不能把残留半帧误判为错误", lang: "cpp", block: true)
+  #raw("buffer.append(socket.read_available()); // TCP 是字节流，一次 send 不对应一次 recv\nwhile (buffer.size() >= header_bytes)\n{\n    length = decode_big_endian_length(buffer);\n    if (length > MAX_FRAME || length > SIZE_MAX - header_bytes)\n        close_as_protocol_error();\n    if (buffer.size() < header_bytes + length)\n        break; // 半包留待后续读取\n    parse_and_validate_frame(buffer.subspan(header_bytes, length));\n    buffer.erase_prefix(header_bytes + length); // 同一缓冲可能含多帧\n}\n// 定长、分隔符或长度前缀都能定界；校验格式并限制长度防内存耗尽\n// 解析循环只消费完整帧，不能把残留半帧误判为错误", lang: "cpp", block: true)
 ]
 
 #heading(level: 2, outlined: true)[#text("8.3 名称解析与服务端网络", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
@@ -2115,7 +2115,7 @@
   #text("优化前先看缓存、DNS、连接、首字节和资源加载的实际耗时。减少重定向和无用请求常有帮助，文本可评估 gzip/Brotli，已压缩媒体重复压缩收益很小。Accept-Encoding 选择内容编码，缓存应按 Vary 区分变体。合并、内联可以少一次请求，却增大失效范围或首屏负担；HTTP/2 多路复用后不能照搬旧的合并规则。Accept 中的 q 表示偏好权重，不是图片压缩质量。〔N51、N53、S7〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("url = parse_and_normalize(input_url); if (service_worker_or_cache_hit(url)) render_cached();\nip = resolve_dns_via_browser_os_or_recursive_cache(url.host); // 未命中才向上查询\nconnection = connect_tcp_tls_or_quic(ip, url); response = send_http(connection, url);\ndom = parse_html(response); styles = parse_css_and_compute_style(dom);\nlayout(dom, styles); paint_and_composite();\n// 脚本可能在过程中执行并请求子资源；缓存、重定向和预加载会改变顺序。\n// DNS/连接/资源耗时分别影响等待，不是单一固定串行流水线。", lang: "cpp", block: true)
+  #raw("url = parse_and_normalize(input_url);\nif (service_worker_or_cache_hit(url))\n    render_cached();\nip = resolve_dns_via_browser_os_or_recursive_cache(url.host); // 未命中才向上查询\nconnection = connect_tcp_tls_or_quic(ip, url);\nresponse = send_http(connection, url);\ndom = parse_html(response);\nstyles = parse_css_and_compute_style(dom);\nlayout(dom, styles);\npaint_and_composite();\n// 脚本可能在过程中执行并请求子资源；缓存、重定向和预加载会改变顺序。\n// DNS/连接/资源耗时分别影响等待，不是单一固定串行流水线。", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -2126,7 +2126,7 @@
   #text("内核可在 accept 前完成握手并缓存连接数据，所以“应用没 accept”不等于 TCP 尚未建立。队列溢出时客户端可能重试、超时或收到 RST，取决于 tcp_abort_on_overflow 等配置和具体时序。SYN cookies 通过校验 Cookie 减少半开连接状态压力，不是另建 Cookie 队列，也解决不了 accept 处理过慢或入口带宽不足。应将队列参数、应用 accept 速率和抓包一起分析。〔S5、N67、N69〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("#include <algorithm>\nlisten(fd, requested_backlog); // Linux 主要限制已完成握手、等待 accept 的队列\nsyn_queue_capacity = tcp_max_syn_backlog; // 半连接请求属于另一队列/机制\nactual_accept_limit = std::min(requested_backlog, somaxconn);\nwhile (accept_queue_growing()) measure_application_accept_rate_and_worker_latency();\n// 队列满时客户端可能重试或失败；检查半连接压力、内核参数和 accept 速度\n// tcp_max_syn_backlog/somaxconn 的实际行为依 Linux 版本和配置验证\n// backlog 不能代替及时 accept、连接超时和容量规划", lang: "cpp", block: true)
+  #raw("#include <algorithm>\nlisten(fd, requested_backlog); // Linux 主要限制已完成握手、等待 accept 的队列\nsyn_queue_capacity = tcp_max_syn_backlog; // 半连接请求属于另一队列/机制\nactual_accept_limit = std::min(requested_backlog, somaxconn);\nwhile (accept_queue_growing())\n    measure_application_accept_rate_and_worker_latency();\n// 队列满时客户端可能重试或失败；检查半连接压力、内核参数和 accept 速度\n// tcp_max_syn_backlog/somaxconn 的实际行为依 Linux 版本和配置验证\n// backlog 不能代替及时 accept、连接超时和容量规划", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -2137,7 +2137,7 @@
   #text("可在确认问题后测试 TCP_NODELAY，但批量合并也可能减少报文开销，需一起测吞吐和延迟。接收端避免过小通告窗口是缓解糊涂窗口综合征的相关措施，方向与 Nagle 不同。Linux TCP_QUICKACK 只是临时提示快速确认，后续处理可能重新延迟 ACK。ACK 是否与 FIN 合并取决于时序和关闭方向，不是设置选项就固定报文数。〔S7、N70〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("write_small_request(); // 有未确认数据时，Nagle 可能暂存后续小段\nreceiver_may_delay_ack_briefly(); // 接收端尝试合并 ACK 或搭载反向数据\n// 两者叠加时，小请求/响应可能多等一个确认周期\nif (interactive_latency_is_measured_bottleneck) setsockopt(TCP_NODELAY, true);\n// 关闭 Nagle 可降低等待，但会增加小包数量和网络开销\n// Delayed ACK 时机依实现/流量；测量真实 RTT 和请求大小再调整\n// 批量吞吐、拥塞和服务器负载也应一起比较", lang: "cpp", block: true)
+  #raw("write_small_request(); // 有未确认数据时，Nagle 可能暂存后续小段\nreceiver_may_delay_ack_briefly(); // 接收端尝试合并 ACK 或搭载反向数据\n// 两者叠加时，小请求/响应可能多等一个确认周期\nif (interactive_latency_is_measured_bottleneck)\n    setsockopt(TCP_NODELAY, true);\n// 关闭 Nagle 可降低等待，但会增加小包数量和网络开销\n// Delayed ACK 时机依实现/流量；测量真实 RTT 和请求大小再调整\n// 批量吞吐、拥塞和服务器负载也应一起比较", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -2148,7 +2148,7 @@
   #text("HPACK 的动态表、静态表和可选 Huffman 编码用于首部，不压缩 DATA 正文。HTTP/2 还有流级和连接级流控。HTTP/3 的 QPACK 把动态表更新与字段块解耦以降低阻塞，但字段块引用未收到的表项仍可能等待，因而限制可阻塞流数。QUIC 连接 ID 有助地址改变时维持连接，迁移仍须路径验证并受端点策略限制，不是任意换地址即可绕过验证。〔S7、I9、I10〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("http2.multiplex_streams_over_one_tcp_connection(); http2.compress_headers_with_HPACK();\nif (tcp_segment_lost) later_tcp_bytes_wait_for_retransmission(); // 跨流字节队头阻塞\nhttp3.map_http_frames_to_quic_streams_over_udp();\nif (quic_stream_A_lost) stream_B_can_deliver_independent_bytes();\n// QUIC 仍有共享拥塞控制和连接层丢包影响，不是消除所有阻塞。\n// HTTP/3 通常还整合 TLS 加密；性能依网络与实现。", lang: "cpp", block: true)
+  #raw("http2.multiplex_streams_over_one_tcp_connection();\nhttp2.compress_headers_with_HPACK();\nif (tcp_segment_lost)\n    later_tcp_bytes_wait_for_retransmission(); // 跨流字节队头阻塞\nhttp3.map_http_frames_to_quic_streams_over_udp();\nif (quic_stream_A_lost)\n    stream_B_can_deliver_independent_bytes();\n// QUIC 仍有共享拥塞控制和连接层丢包影响，不是消除所有阻塞。\n// HTTP/3 通常还整合 TLS 加密；性能依网络与实现。", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -2159,7 +2159,7 @@
   #text("DoH 和 DoT 保护客户端到递归解析器这一段传输，DoQ 则用 QUIC 传递 DNS 查询；它们不改变权威数据的层级，也不自动证明解析器给出的答案正确。排查时应说明自己问的是浏览器缓存、系统解析器还是权威 DNS。直接对权威服务器查询与普通用户使用递归服务，路径和结果可能不同。〔S8〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("if (browser_cache.contains(name)) return browser_cache[name];\nif (os_or_recursive_resolver_cache.contains(name)) return cached_answer;\nanswer = recursive_resolver.query_root_then_tld_then_authoritative(name);\nrecursive_resolver.cache(answer, answer.ttl); // 未命中才按委派关系逐层查询\n// 实际递归器可能命中转发器/缓存，不一定访问每一级权威服务器。\n// DoH/DoT 改变客户端到解析器的传输保护，不改变 DNS 权威层级。", lang: "cpp", block: true)
+  #raw("if (browser_cache.contains(name))\n    return browser_cache[name];\nif (os_or_recursive_resolver_cache.contains(name))\n    return cached_answer;\nanswer = recursive_resolver.query_root_then_tld_then_authoritative(name);\nrecursive_resolver.cache(answer, answer.ttl); // 未命中才按委派关系逐层查询\n// 实际递归器可能命中转发器/缓存，不一定访问每一级权威服务器。\n// DoH/DoT 改变客户端到解析器的传输保护，不改变 DNS 权威层级。", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -2170,7 +2170,7 @@
   #text("通配地址和具体地址绑定可能冲突，IPv6 的 :: 是否也接收 IPv4 还取决于 IPV6_V6ONLY。客户端 connect 自动选择临时端口时，不同远端四元组可以共享同一源端口；预先显式 bind 可能改变本地二元组的占用和复用条件。所以不能用临时端口数量直接推导服务器全局连接上限。〔S5、N70〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("set_option(SO_REUSEADDR); // Linux 常用于重启绑定等规则，不代表任意多进程共享监听\nif (multiple_listeners && each_socket_sets_before_bind(SO_REUSEPORT)) {\n    bind_same_eligible_address_and_port(); kernel_distributes_connections();\n}\n// 需满足权限、地址匹配等条件；不同 Linux/BSD/Windows 语义有差异。\nverify_target_os_docs_and_test(); // 不把同名选项当跨平台等价保证", lang: "cpp", block: true)
+  #raw("set_option(SO_REUSEADDR); // Linux 常用于重启绑定等规则，不代表任意多进程共享监听\nif (multiple_listeners && each_socket_sets_before_bind(SO_REUSEPORT))\n{\n    bind_same_eligible_address_and_port();\n    kernel_distributes_connections();\n}\n// 需满足权限、地址匹配等条件；不同 Linux/BSD/Windows 语义有差异。\nverify_target_os_docs_and_test(); // 不把同名选项当跨平台等价保证", lang: "cpp", block: true)
 ]
 
 
@@ -2183,7 +2183,7 @@
   #text("socket 是操作系统提供的通信接口，不是某个应用协议。Nginx 的 HTTP 反向代理处理应用层语义，stream 模块也能转发传输层连接。改服务端口不会改变协议所在层或消息语义；理解抓包应判断每个头部属于哪一层，以及它对谁有效。〔N50、N51〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("struct TcpSegment { int source_port, destination_port; std::string payload; };\nstruct IpPacket { IpAddress source, destination; TcpSegment segment; };\nauto frame = ethernet_wrap(next_hop_mac, ip_wrap(server_ip, tcp_wrap(443, 53000, request)));\n// socket是API抽象；路由器会重建链路帧，端到端IP通常保持", lang: "cpp", block: true)
+  #raw("struct TcpSegment\n{\n    int source_port, destination_port;\n    std::string payload;\n};\nstruct IpPacket\n{\n    IpAddress source, destination;\n    TcpSegment segment;\n};\nauto frame = ethernet_wrap(next_hop_mac, ip_wrap(server_ip, tcp_wrap(443, 53000, request)));\n// socket是API抽象；路由器会重建链路帧，端到端IP通常保持", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -2216,7 +2216,7 @@
   #text("下载期间资源若更新，按旧偏移拼新内容会损坏文件。客户端可用 If-Range 和强 ETag 验证表示未变；验证不通过就重新取完整版本。字节范围针对具体表示，内容编码变化也可能让本地偏移不再对应原始内容，因此需校验版本和哈希。〔N51〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("Request request{\"GET\", \"/large-file\"};\nrequest.headers[\"Range\"] = \"bytes=1000-\";\nrequest.headers[\"If-Range\"] = saved_etag; // 仅拼接相同版本的资源\nif (response.status == 206 && response.etag == saved_etag) append(temp_file, response.body);\nelse if (response.status == 200) replace(temp_file, response.body);", lang: "cpp", block: true)
+  #raw("Request request{\"GET\", \"/large-file\"};\nrequest.headers[\"Range\"] = \"bytes=1000-\";\nrequest.headers[\"If-Range\"] = saved_etag; // 仅拼接相同版本的资源\nif (response.status == 206 && response.etag == saved_etag)\n    append(temp_file, response.body);\nelse if (response.status == 200)\n    replace(temp_file, response.body);", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -2227,7 +2227,7 @@
   #text("DoT、DoH 和 DoQ 以加密传输承载 DNS，各有自己的端口和封装，不能套用“DNS 总是 UDP 53”。如果题目说传统 DNS，答案应限定其语境；分析抓包时还要区分普通查询、区域传送和加密 DNS。〔N56〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("DnsReply reply = query_dns(\"www.example.com\", Type::A, Transport::udp);\nif (reply.truncated) reply = query_dns(\"www.example.com\", Type::A, Transport::tcp);\n// 区域传送通常使用TCP；UDP截断时客户端可回退到TCP", lang: "cpp", block: true)
+  #raw("DnsReply reply = query_dns(\"www.example.com\", Type::A, Transport::udp);\nif (reply.truncated)\n    reply = query_dns(\"www.example.com\", Type::A, Transport::tcp);\n// 区域传送通常使用TCP；UDP截断时客户端可回退到TCP", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -2238,7 +2238,7 @@
   #text("选择时看跨语言契约、浏览器兼容、调试、负载和服务治理，而不是先断言 HTTP 必然慢或 RPC 必然用某种传输。网络远程调用会超时、部分失败或重复执行，即便代码写成 user.Get() 也不具有本地函数的可靠性。需设计截止时间、错误语义和幂等策略。〔N62〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("RpcReply reply = call(\"UserService.Get\", request, deadline);\nif (reply.timed_out()) reply = query_request_status(request.id); // 超时不代表服务端没执行\nif (reply.is_retryable()) retry_with_same_id(request); // 幂等键避免重复副作用", lang: "cpp", block: true)
+  #raw("RpcReply reply = call(\"UserService.Get\", request, deadline);\nif (reply.timed_out())\n    reply = query_request_status(request.id); // 超时不代表服务端没执行\nif (reply.is_retryable())\n    retry_with_same_id(request); // 幂等键避免重复副作用", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -2260,7 +2260,7 @@
   #text("代理终止 TLS 后，客户端到代理与代理到源站是两条独立连接；后半段是否加密、如何验证证书要另配。代理传给后端的 X-Forwarded-For、Forwarded 等头可以被客户端伪造，代理应清理外来值并由后端只信任受控入口写入的数据。转发头不是身份凭证，也不能替代源站认证。〔N51〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("TlsConnection client_to_proxy = accept_client_tls(client);\nRequest request = sanitize_forwarded_headers(client_to_proxy.request());\nTlsConnection proxy_to_backend = connect_tls(backend, verify_certificate=true);\nproxy_to_backend.send(request); // 两段TLS认证分别配置，业务授权仍由服务端检查", lang: "cpp", block: true)
+  #raw("TlsConnection client_to_proxy = accept_client_tls(client);\nRequest request = sanitize_forwarded_headers(client_to_proxy.request());\nTlsConnection proxy_to_backend = connect_tls(backend, verify_certificate = true);\nproxy_to_backend.send(request); // 两段TLS认证分别配置，业务授权仍由服务端检查", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -2271,7 +2271,7 @@
   #text("缓存键和转发策略必须符合资源语义，慎重处理查询参数、Cookie、鉴权头及压缩变体，避免把用户数据共享给别人。动态请求不保证更快，源站故障时能否使用旧缓存取决于策略。更新可以使用内容哈希版本名、短 TTL 或显式刷新，但 CDN 加速不能代替源站鉴权。〔N65、N53〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("using CacheKey = std::tuple<std::string, std::string, Encoding>;\nCacheKey key{host, path, required_encoding};\nif (cache.contains(key)) return cache.at(key);\nResponse response = fetch_from_origin(key); // 私有Cookie等变化也必须纳入策略", lang: "cpp", block: true)
+  #raw("using CacheKey = std::tuple<std::string, std::string, Encoding>;\nCacheKey key{host, path, required_encoding};\nif (cache.contains(key))\n    return cache.at(key);\nResponse response = fetch_from_origin(key); // 私有Cookie等变化也必须纳入策略", lang: "cpp", block: true)
 ]
 
 #heading(level: 2, outlined: true)[#text("8.5 HTTP 缓存、会话与浏览器安全", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
@@ -2283,7 +2283,7 @@
   #text("no-cache 允许保存响应，但复用前必须成功验证；no-store 要求这次请求或响应不被存储。还要区分 private 与共享缓存，按 Vary 区分语言或压缩等变体，并谨慎缓存鉴权内容，避免用户 A 的响应给用户 B。no-cache 并不等于“每次都返回 200”，304 本身是有效的验证结果。〔N53〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("Request request = get(\"/page\"); request.headers[\"If-None-Match\"] = cached.etag;\nResponse response = send(request);\nif (response.status == 304) refresh_expiry(cached); else if (response.status == 200) cache.store(response);\n// no-cache表示复用前验证；no-store表示不保存可复用副本", lang: "cpp", block: true)
+  #raw("Request request = get(\"/page\");\nrequest.headers[\"If-None-Match\"] = cached.etag;\nResponse response = send(request);\nif (response.status == 304)\n    refresh_expiry(cached);\nelse if (response.status == 200)\n    cache.store(response);\n// no-cache表示复用前验证；no-store表示不保存可复用副本", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -2294,7 +2294,7 @@
   #text("定位异常时按层比较 hosts、解析器配置、本机和递归缓存、递归器回答、权威记录。DNS 劫持可能来自被改过的本地配置、恶意递归器或伪造记录。DNSSEC 可验证已签名记录的真实性与完整性；DoH/DoT 加密客户端到解析器的传输，但不会保证恶意解析器返回正确答案。〔N54、N55〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("auto system_result = getaddrinfo(\"service.example\"); // 遵循hosts与NSS顺序\nDnsReply direct_result = query_dns(\"service.example\", trusted_resolver);\nif (system_result != direct_result.addresses) inspect_hosts_cache_and_resolver();\n// 分别核对本机覆盖、递归解析与权威记录", lang: "cpp", block: true)
+  #raw("auto system_result = getaddrinfo(\"service.example\"); // 遵循hosts与NSS顺序\nDnsReply direct_result = query_dns(\"service.example\", trusted_resolver);\nif (system_result != direct_result.addresses)\n    inspect_hosts_cache_and_resolver();\n// 分别核对本机覆盖、递归解析与权威记录", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -2305,7 +2305,7 @@
   #text("会话 ID 可以放在 Cookie 或请求头中，Cookie 只是承载方式，不会改变 HTTP 协议无状态属性。禁用 Cookie 后可以显式携带凭证，但把它放 URL 容易落入历史记录、代理日志和引用来源。服务端仍需限制凭证权限、生命周期和撤销方式，不能把“token”这个名称当作安全保证。〔N57、N51〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("Cookie cookie{}; // 使用普通赋值初始化配置，避免混用聚合与指定初始化\ncookie.name = \"sid\"; cookie.value = random_session_id();\ncookie.http_only = true; cookie.secure = true; cookie.same_site = SameSite::lax;\nresponse.set_cookie(cookie);\nSession session = session_store.find(request.cookie(\"sid\")); // 服务端验证会话有效期和权限", lang: "cpp", block: true)
+  #raw("Cookie cookie{}; // 使用普通赋值初始化配置，避免混用聚合与指定初始化\ncookie.name = \"sid\";\ncookie.value = random_session_id();\ncookie.http_only = true;\ncookie.secure = true;\ncookie.same_site = SameSite::lax;\nresponse.set_cookie(cookie);\nSession session = session_store.find(request.cookie(\"sid\")); // 服务端验证会话有效期和权限", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -2327,7 +2327,7 @@
   #text("多实例可持有同一可信密钥或公钥离线验证，不必每次查询单一会话库；共享状态也可以扩展，所以不是唯一方案。纯离线验证的令牌泄露后难以即时撤销，可用短有效期、刷新令牌轮换、撤销列表或版本检查，但这些办法重新引入存储和运维复杂度。设计要权衡离线验证效率与撤销及时性。〔N60、N61〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("Jwt jwt = parse(token);\nif (!allowed_algorithm(jwt.header.alg) || !verify_signature(jwt, public_key)) reject();\nif (jwt.issuer != expected_issuer || jwt.audience != expected_audience || jwt.expired(now)) reject();\n// JWT载荷可读；需要立即撤销时还需版本号、撤销表或短有效期", lang: "cpp", block: true)
+  #raw("Jwt jwt = parse(token);\nif (!allowed_algorithm(jwt.header.alg) || !verify_signature(jwt, public_key))\n    reject();\nif (jwt.issuer != expected_issuer || jwt.audience != expected_audience || jwt.expired(now))\n    reject();\n// JWT载荷可读；需要立即撤销时还需版本号、撤销表或短有效期", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -2338,7 +2338,7 @@
   #text("CORS 是浏览器端的读取控制，不是服务端鉴权。非浏览器客户端可以直接请求，一些跨源写请求也可能已经到达服务器，即使浏览器最后不让脚本读取响应。服务端必须独立认证、授权并防范 CSRF，不能信任“预检通过”或仅凭 Origin 放行重要操作。〔N64〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("if (request.is_non_simple()) send_preflight(\"OPTIONS\", origin, method, headers);\nResponse response = send_actual_request();\nif (cors_allows(response, origin)) expose_to_browser_script(response); // CORS不是身份认证", lang: "cpp", block: true)
+  #raw("if (request.is_non_simple())\n    send_preflight(\"OPTIONS\", origin, method, headers);\nResponse response = send_actual_request();\nif (cors_allows(response, origin))\n    expose_to_browser_script(response); // CORS不是身份认证", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -2349,7 +2349,7 @@
   #text("CSRF 则诱使浏览器向目标站发起请求，利用浏览器自动附带的现有凭证；攻击者通常不需要读到响应或执行目标站脚本。可用不可预测的 CSRF token、合适的 SameSite Cookie、Origin 校验，并避免用 GET 做敏感写操作。HttpOnly 和 CORS 单独都不能解决全部问题；成功的 XSS 还能绕过许多 CSRF 防护。〔N75、N76〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("Node* safe_comment = document.createTextNode(user_input); // 当文本插入，避免按HTML解释\ncomment_area.appendChild(safe_comment);\nif (!valid_csrf(request) || !authorized(session, request)) reject(); // 分别防CSRF并鉴权", lang: "cpp", block: true)
+  #raw("Node* safe_comment = document.createTextNode(user_input); // 当文本插入，避免按HTML解释\ncomment_area.appendChild(safe_comment);\nif (!valid_csrf(request) || !authorized(session, request))\n    reject(); // 分别防CSRF并鉴权", lang: "cpp", block: true)
 ]
 
 #heading(level: 2, outlined: true)[#text("8.6 TCP 状态与应用确认", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
@@ -2374,7 +2374,7 @@
   #text("TCP Fast Open 在双方支持时用先前获取的 Cookie 把早期数据放进 SYN，仍保留三次握手；部署要考虑回退和重放。它需要内核、应用及路径配合。TLS ClientHello 可以与 TFO 配合，但这不专属于 TLS 1.3，也不自动等于 TLS 0-RTT 应用数据。〔N66、N67、I7、I8、N69〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("send_syn(client, initial_seq);\nif (received_syn_ack()) send_ack(); // 内核完成握手后放入accept队列\nint connection_fd = ::accept(listener_fd, nullptr, nullptr); // accept取连接，不发起握手", lang: "cpp", block: true)
+  #raw("send_syn(client, initial_seq);\nif (received_syn_ack())\n    send_ack(); // 内核完成握手后放入accept队列\nint connection_fd = ::accept(listener_fd, nullptr, nullptr); // accept取连接，不发起握手", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -2385,7 +2385,7 @@
   #text("半关闭允许一方用 shutdown 关闭发送方向，同时继续接收对端剩余数据。FIN 是字节流中的有序结束位置，之前的数据有缺口时，乱序 FIN 要等缺口补齐才消费；read 返回零表示有序数据读完后的 EOF，不是收到额外 EOF 字节。close 只释放当前 fd 引用，dup/fork 共享引用未关闭时未必发送 FIN；shutdown 操作的是 socket 方向。未读数据或 SO_LINGER 也可能让退出导致 RST，不能保证每次都优雅 FIN。tcp_fin_timeout 主要管无应用引用的 FIN_WAIT_2，不能控制仍被使用的半关闭连接。〔N70、N66〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("::shutdown(socket_fd, SHUT_WR); // 只关闭本端发送方向\nfor (;;) {\n  ssize_t n = ::read(socket_fd, buffer, sizeof(buffer));\n  if (n > 0) { consume(buffer, static_cast<std::size_t>(n)); continue; }\n  if (n == 0) break; if (errno == EINTR) continue; throw_system_error(errno);\n} // EOF后关闭socket；迟迟不close会让对端停在CLOSE_WAIT", lang: "cpp", block: true)
+  #raw("::shutdown(socket_fd, SHUT_WR); // 只关闭本端发送方向\nfor (;;)\n{\n    ssize_t n = ::read(socket_fd, buffer, sizeof(buffer));\n    if (n > 0)\n    {\n        consume(buffer, static_cast<std::size_t>(n));\n        continue;\n    }\n    if (n == 0)\n        break;\n    if (errno == EINTR)\n        continue;\n    throw_system_error(errno);\n} // EOF后关闭socket；迟迟不close会让对端停在CLOSE_WAIT", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -2396,7 +2396,7 @@
   #text("业务成功的确认点必须由应用协议定义，例如服务器完成持久化后返回订单 ID。客户端超时可能不知道操作究竟失败还是响应丢失，应使用请求 ID、幂等约束或状态查询收敛。不能把 send 成功或一次 ACK 当作资金、订单等业务已经提交。〔N74〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("SendResult result = send_all(socket, request_with_id(idempotency_key));\nif (!application_ack_before_deadline(idempotency_key)) query_operation_status(idempotency_key);\n// TCP ACK只确认传输层收到字节；应用确认才说明业务结果已知", lang: "cpp", block: true)
+  #raw("SendResult result = send_all(socket, request_with_id(idempotency_key));\nif (!application_ack_before_deadline(idempotency_key))\n    query_operation_status(idempotency_key);\n// TCP ACK只确认传输层收到字节；应用确认才说明业务结果已知", lang: "cpp", block: true)
 ]
 
 #heading(level: 2, outlined: true)[#text("8.7 网络故障与安全", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
@@ -2408,7 +2408,7 @@
   #text("缓解要分层：网络侧可联合运营商清洗和边缘分发，主机侧审慎启用 SYN cookies 并调整队列，应用侧用有界并发、超时、鉴权和公平限流。Cookies 会由序号携带可校验信息，最终 ACK 到来后重算验证再建立状态；它不消除握手计算，也不解决 accept 慢、上游带宽打满或应用层洪泛。队列与重试参数需按目标内核和实际丢弃层次评估，源站绕过和误伤正常用户也要纳入演练。〔N68、N69〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("if (syn_rate(source) > threshold) apply_edge_rate_limit(source);\nif (accept_queue_full()) inspect_accept_workers_and_syn_cookies();\n// 链路饱和需上游清洗；单纯增大backlog不能恢复入口带宽", lang: "cpp", block: true)
+  #raw("if (syn_rate(source) > threshold)\n    apply_edge_rate_limit(source);\nif (accept_queue_full())\n    inspect_accept_workers_and_syn_cookies();\n// 链路饱和需上游清洗；单纯增大backlog不能恢复入口带宽", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -2419,7 +2419,7 @@
   #text("抓包需对齐两端时钟与观察点，并理解 Wireshark 相对序号、窗口缩放、卸载造成的大包或校验和显示，以及分析器的推测标签。一个点没见 ACK 不证明对端没发。按时间增量查看驱动 ring、softnet、qdisc、socket 和握手队列的丢弃及重传，再联系带宽、RTT、吞吐和 PPS；小包流量可能先耗尽包处理能力。中间跳的 ICMP 被限速不等于业务丢包，驱动计数器语义也需查设备文档。〔N70、N74、I2〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("auto start = Clock::now(); auto dns = resolve(host); auto connected = connect(host);\nauto tls_done = handshake(connected); auto first_byte = request_and_wait_first_byte(connected);\nlog_latency(request_id, start, dns, connected, tls_done, first_byte); // 按阶段对齐两端日志", lang: "cpp", block: true)
+  #raw("auto start = Clock::now();\nauto dns = resolve(host);\nauto connected = connect(host);\nauto tls_done = handshake(connected);\nauto first_byte = request_and_wait_first_byte(connected);\nlog_latency(request_id, start, dns, connected, tls_done, first_byte); // 按阶段对齐两端日志", lang: "cpp", block: true)
 ]
 
 #heading(level: 2, outlined: true)[#text("8.8 网络层与链路层", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
@@ -2431,7 +2431,7 @@
   #text("CIDR 前缀表示网络部分，路由通常按最长前缀匹配，默认路由只在没有更具体项时使用；不能只凭传统 A/B/C 类判断同网段。策略路由和 NAT 会改变实际路径及地址。127.0.0.1、::1 是回环本地交付，不依赖网线；localhost 是名称，可能解析成任一地址族，要核对实际解析和监听范围。MAC 也不是可验证的全球身份。〔N71、N50、S5〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("IpAddress destination = parse_ip(\"203.0.113.20\");\nIpAddress next_hop = route_table.longest_prefix_match(destination).gateway_or(destination);\nMacAddress mac = arp_cache.resolve(next_hop); ethernet_send(mac, ip_packet(destination, payload));\n// 外网帧目的MAC是网关；IP目的地址仍是远端服务器", lang: "cpp", block: true)
+  #raw("IpAddress destination = parse_ip(\"203.0.113.20\");\nIpAddress next_hop = route_table.longest_prefix_match(destination).gateway_or(destination);\nMacAddress mac = arp_cache.resolve(next_hop);\nethernet_send(mac, ip_packet(destination, payload));\n// 外网帧目的MAC是网关；IP目的地址仍是远端服务器", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -2442,7 +2442,7 @@
   #text("防火墙或限速策略可以丢 ICMP，因此 ping 失败而 HTTP 正常；ping 成功也可能遇到端口未监听或应用异常。某跳不回应探测，不说明它没有转发业务包。UDP traceroute 到终点常见 ICMP 端口不可达，TCP 探测则可能收到 SYN+ACK 或 RST。ICMP 差错也用于路径 MTU 等诊断，但会受过滤、限速和协议差错报告规则约束；历史 Source Quench 已废弃，不能当作现代拥塞控制建议。〔N72、I39〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("auto icmp_time = ping(host); // ICMP探测失败不代表服务端口不可达\nauto tcp = connect_tcp(host, 443); auto tls = start_tls(tcp);\nHttpResponse response = get_health_endpoint(tls); // 直接验证应用路径", lang: "cpp", block: true)
+  #raw("auto icmp_time = ping(host); // ICMP探测失败不代表服务端口不可达\nauto tcp = connect_tcp(host, 443);\nauto tls = start_tls(tcp);\nHttpResponse response = get_health_endpoint(tls); // 直接验证应用路径", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -2466,7 +2466,7 @@
   #text("交换机学习源地址，不是通过每个端点的目的地址来学习，也不等于配置了 IP。二层环路会让广播和未知单播持续放大，需要生成树等环路控制；VLAN、端口状态和过滤规则会改变可转发的端口集合。排障时应同时检查 MAC 表、VLAN 和端口状态。〔I1〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("using MacKey = std::pair<VlanId, MacAddress>;\nmac_table[{vlan10, source_mac}] = ingress_port; // 交换机从源MAC学习\nif (mac_table.contains({vlan10, destination_mac})) forward(mac_table.at(key)); else flood_except(ingress_port);", lang: "cpp", block: true)
+  #raw("using MacKey = std::pair<VlanId, MacAddress>;\nmac_table[{vlan10, source_mac}] = ingress_port; // 交换机从源MAC学习\nif (mac_table.contains({vlan10, destination_mac}))\n    forward(mac_table.at(key));\nelse\n    flood_except(ingress_port);", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -2477,7 +2477,7 @@
   #text("路由器不会替 IPv6 源端分片；源端依据 Packet Too Big 等反馈调整包大小，必要时自行分片。更大的地址空间或协议支持并不自动提供认证和加密，双栈 DNS、访问控制和 MTU 仍要正确配置。迁移时需同时检查监听地址族、路由和防火墙，不能仅因接口显示 IPv6 地址就断言外部服务可达。〔I11、I12、I29〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("if (!neighbor_cache.contains(next_hop)) send_icmpv6_neighbor_solicitation(next_hop);\nNeighborAdvertisement reply = wait_for_neighbor_advertisement();\nneighbor_cache[next_hop] = reply.link_address; // IPv6用NDP取代ARP", lang: "cpp", block: true)
+  #raw("if (!neighbor_cache.contains(next_hop))\n    send_icmpv6_neighbor_solicitation(next_hop);\nNeighborAdvertisement reply = wait_for_neighbor_advertisement();\nneighbor_cache[next_hop] = reply.link_address; // IPv6用NDP取代ARP", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -2488,7 +2488,7 @@
   #text("普通路由器不转发客户端网段广播，跨子网时 DHCP Relay 在本地接收并转交服务器，附带链路信息让服务器选对地址池。DHCP 服务器不一定可信，拿到租约也不保证没有冲突或网络已通，应进行冲突检测并验证实际连通性。不能把整个租期的续租过程都说成四次广播。〔I13〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("enum class DhcpState { discover, offer, request, acknowledge, renew, rebind };\nsend_dhcp(DhcpState::discover); auto offer = receive_offer();\nsend_dhcp_request(offer.address); auto lease = receive_ack(); // 跨子网由relay转发广播", lang: "cpp", block: true)
+  #raw("enum class DhcpState\n{\n    discover,\n    offer,\n    request,\n    acknowledge,\n    renew,\n    rebind\n};\nsend_dhcp(DhcpState::discover);\nauto offer = receive_offer();\nsend_dhcp_request(offer.address);\nauto lease = receive_ack(); // 跨子网由relay转发广播", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -2499,7 +2499,7 @@
   #text("加入组只表示接收意愿，不建立 TCP 式连接，也不保证交付、顺序或身份认证；发送方通常无须先加入接收组。交换机可通过 IGMP Snooping 限制无关端口泛洪，但行为还取决于设备和网络配置。应用若需要可靠数据、发送者认证或重放保护，必须在更高层另行设计。〔I14、I1〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("int fd = ::socket(AF_INET, SOCK_DGRAM, 0);\nip_mreq group{}; group.imr_multiaddr = multicast_address;\n::setsockopt(fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &group, sizeof(group)); // 加组不提供可靠传输", lang: "cpp", block: true)
+  #raw("int fd = ::socket(AF_INET, SOCK_DGRAM, 0);\nip_mreq group{};\ngroup.imr_multiaddr = multicast_address;\n::setsockopt(fd, IPPROTO_IP, IP_ADD_MEMBERSHIP, &group, sizeof(group)); // 加组不提供可靠传输", lang: "cpp", block: true)
 ]
 
 #heading(level: 2, outlined: true)[#text("8.10 Linux网络数据路径", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
@@ -2512,7 +2512,7 @@
   #text("发送时数据从 socket 进入协议栈、队列和驱动，驱动提交描述符后网卡读取并发出。sk_buff 保存包元信息并引用数据区，移动首部指针或克隆时可以少复制；克隆 skb 不意味着整份 payload 都复制。发送完成只表示设备资源可回收，TCP 为未确认字节保留数据以便重传，所以绝不等同于对端 ACK 或业务成功。〔I2、I3〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("enum class RxStage { dma, interrupt, napi_poll, protocol_stack, socket_queue };\nvoid poll_rx(int budget) { for (int i = 0; i < budget && packet_ready(); ++i) deliver_to_socket(build_skb()); }\n// NAPI按预算轮询；TCP仍需保留未确认数据以便重传", lang: "cpp", block: true)
+  #raw("enum class RxStage\n{\n    dma,\n    interrupt,\n    napi_poll,\n    protocol_stack,\n    socket_queue\n};\nvoid poll_rx(int budget)\n{\n    for (int i = 0; i < budget && packet_ready(); ++i)\n        deliver_to_socket(build_skb());\n}\n// NAPI按预算轮询；TCP仍需保留未确认数据以便重传", lang: "cpp", block: true)
 ]
 
 
@@ -2526,7 +2526,7 @@
   #text("在 InnoDB 中，事务自己的修改可见；ReadView 建立前已提交的版本可见，建立时仍活跃的事务版本通常不可见。RC 每次一致性读生成新视图，RR 通常在首次一致性读建立后复用，不是 BEGIN 一执行就固定。长事务会让旧版本和 undo 难以清理，增加空间及扫描成本，所以查询长时间不结束也会拖累写入。〔S9、I61、I88〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("Transaction t1(db, Isolation::repeatable_read); auto first = t1.select_balance(id); // 快照100\nTransaction t2(db); t2.update_balance(id, 80); t2.commit();\nauto second = t1.select_balance(id); // RR普通读仍看到旧版本", lang: "cpp", block: true)
+  #raw("Transaction t1(db, Isolation::repeatable_read);\nauto first = t1.select_balance(id); // 快照100\nTransaction t2(db);\nt2.update_balance(id, 80);\nt2.commit();\nauto second = t1.select_balance(id); // RR普通读仍看到旧版本", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -2537,7 +2537,7 @@
   #text("AOF 重写扫描当前状态，省去无效历史命令；混合模式可用 RDB 数据作基础。Redis 7 起多文件 AOF 由 base、增量文件和 manifest 管理，父进程写新增量、子进程生成 base，再切换清单；base 可为 RDB 或 AOF 格式，旧重写流程不能原样套用。RDB 与 AOF 可并用，应按可接受丢失窗口和恢复时间测试。〔I77、N116〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("periodically_fork_snapshot_to_RDB(); // 紧凑，恢复通常快；只含某时点，可能丢其后写入\nappend_write_commands_to_AOF(); // 恢复点可近，需重放且文件可能更大\nconfigure_fsync(\"everysec\"); // 延迟/耐久折中；always 更耐久也可能更慢\nif (background_snapshot_writes) account_for_COW_memory_amplification();\n// 监控快照年龄、AOF 重写、恢复耗时；按 RPO/RTO 实测，而非只看格式。\nenable_both_if_backup_restore_speed_and_a_finer_RPO_are_both_required(); // 同时运行仍要监控资源", lang: "cpp", block: true)
+  #raw("periodically_fork_snapshot_to_RDB(); // 紧凑，恢复通常快；只含某时点，可能丢其后写入\nappend_write_commands_to_AOF(); // 恢复点可近，需重放且文件可能更大\nconfigure_fsync(\"everysec\"); // 延迟/耐久折中；always 更耐久也可能更慢\nif (background_snapshot_writes)\n    account_for_COW_memory_amplification();\n// 监控快照年龄、AOF 重写、恢复耗时；按 RPO/RTO 实测，而非只看格式。\nenable_both_if_backup_restore_speed_and_a_finer_RPO_are_both_required(); // 同时运行仍要监控资源", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -2548,7 +2548,7 @@
   #text("还要区分 maxmemory 与进程 RSS：复制、AOF 缓冲、fork 写时复制和碎片都会占额外内存。应为这些用途留余量，监控淘汰数、命令错误和尾延迟。如果业务键都没有 TTL，volatile 策略可能让写入失败；不能只按一个估算的键空间大小配置内存上限。〔I78、N116〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("if (used_memory_reaches_maxmemory) {\n    if (policy == noeviction) return write_error_but_reads_may_work();\n    candidates = policy_is_volatile ? keys_with_ttl : all_keys;\n    if (candidates.empty()) return eviction_cannot_free_key();\n    evict_by_configured_policy(candidates); // LRU/LFU/TTL 等按配置近似选择\n}\nreserve_memory_for_replication_AOF_buffers_and_fragmentation();\nmonitor(evicted_keys, rejected_writes, latency);", lang: "cpp", block: true)
+  #raw("if (used_memory_reaches_maxmemory)\n{\n    if (policy == noeviction)\n        return write_error_but_reads_may_work();\n    candidates = policy_is_volatile ? keys_with_ttl : all_keys;\n    if (candidates.empty())\n        return eviction_cannot_free_key();\n    evict_by_configured_policy(candidates); // LRU/LFU/TTL 等按配置近似选择\n}\nreserve_memory_for_replication_AOF_buffers_and_fragmentation();\nmonitor(evicted_keys, rejected_writes, latency);", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -2559,7 +2559,7 @@
   #text("Redlock 在互不复制的多个主节点申请同一令牌，要求多数成功，并扣除请求耗时和时钟漂移后仍有正租期；失败要尽力安全释放所有节点。它依赖时间及故障假设，多数成功不等于严格互斥。关键资源应由下游检查单调 fencing token，或用数据库条件更新拒绝旧持有者。续租和客户端取消信号本身挡不住已在途的迟到写。〔S10、N119〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("std::string token = random_token();\nif (redis.set(lock_key, token, nx, 30s)) process_order();\nredis.eval(\"if redis.call('GET',KEYS[1])==ARGV[1] then return redis.call('DEL',KEYS[1]) end\", lock_key, token);\n// 下游用单调fencing token拒绝过期持有者的写入", lang: "cpp", block: true)
+  #raw("std::string token = random_token();\nif (redis.set(lock_key, token, nx, 30s))\n    process_order();\nredis.eval(\"if redis.call('GET',KEYS[1])==ARGV[1] then return redis.call('DEL',KEYS[1]) end\",\n           lock_key,\n           token);\n// 下游用单调fencing token拒绝过期持有者的写入", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -2570,7 +2570,7 @@
   #text("Stream 是带 ID 和消费组的追加日志，ID 在一个流内有序唯一。List 的弹出没有确认和自动重投，可先 LMOVE/BLMOVE 到处理中队列，再自行确认及回收；Pub/Sub 至多一次且不存离线消息，可靠任务可评估 Stream。还要看命令复杂度、集合规模、持久化和是否必须精确。〔I84、I85、I86、N126〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("SET(key, value); INCR(counter); // String：缓存值/计数\nHSET(user, field, value); // Hash：字段对象；List 可做两端队列\nSADD(tags, tag); // Set 去重；ZADD(rank, score, member); // ZSet 排序/Top N\nXADD(stream, id, fields); // Stream 带 ID 消息流/消费组\nSETBIT(flags, offset, 1); HLL_ADD(unique_visitors, item); GEOADD(locations, lon, lat, id);\n// Bitmap / HyperLogLog / GEO 分别用于位状态、近似基数、地理查询。\n// 比较命令复杂度、集合规模、精确性、持久化与恢复需求再选。", lang: "cpp", block: true)
+  #raw("SET(key, value);\nINCR(counter); // String：缓存值/计数\nHSET(user, field, value); // Hash：字段对象；List 可做两端队列\nSADD(tags, tag); // Set 去重；ZADD(rank, score, member); // ZSet 排序/Top N\nXADD(stream, id, fields); // Stream 带 ID 消息流/消费组\nSETBIT(flags, offset, 1);\nHLL_ADD(unique_visitors, item);\nGEOADD(locations, lon, lat, id);\n// Bitmap / HyperLogLog / GEO 分别用于位状态、近似基数、地理查询。\n// 比较命令复杂度、集合规模、精确性、持久化与恢复需求再选。", lang: "cpp", block: true)
 ]
 
 #heading(level: 2, outlined: true)[#text("9.2 MySQL 索引、事务与并发控制", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
@@ -2582,7 +2582,7 @@
   #text("页内记录的物理位置不要求有序，next_record 把记录按索引序串联；Page Directory 保存若干分组边界槽，二分定位后在小组内查找，常见组约 4–8 条。容量可粗估为内部扇出^(高度−1)乘叶页记录数，再考虑键宽、行宽、填充率及缓存。两千万行不是分表硬门槛；是否拆分要看工作负载、索引宽度和 I/O。哈希适合等值但不提供同样的顺序范围能力。〔S9、N94、I72、I73〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("page = read_index_page(); // InnoDB 页内按序保存键和记录引用\nwhile (!leaf_page(page)) page = page.child_for(key); // 高扇出，降低树高/随机 I/O\nrecord = page.find_in_leaf(key); // 叶子有序，范围查询可顺序扫描相邻叶\n// 聚簇索引叶子包含整行；二级索引叶子保存主键，必要时回表。\ninsert_new_key_may_split_page_and_write_more_pages(); // 写入/空间开销\n// 哈希查找不天然支持排序/范围；B+ 树维护成本换范围能力。", lang: "cpp", block: true)
+  #raw("page = read_index_page(); // InnoDB 页内按序保存键和记录引用\nwhile (!leaf_page(page))\n    page = page.child_for(key); // 高扇出，降低树高/随机 I/O\nrecord = page.find_in_leaf(key); // 叶子有序，范围查询可顺序扫描相邻叶\n// 聚簇索引叶子包含整行；二级索引叶子保存主键，必要时回表。\ninsert_new_key_may_split_page_and_write_more_pages(); // 写入/空间开销\n// 哈希查找不天然支持排序/范围；B+ 树维护成本换范围能力。", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -2615,7 +2615,7 @@
   #text("参数绑定也让不同值复用同一语句结构，有助执行计划管理。输入校验和数据库最小权限是纵深防御；手工转义容易因字符集或上下文处理错误，不能替代参数化。应用还应限制查询范围和超时，防止合法但昂贵的输入耗尽资源。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("auto statement = db.prepare(\"SELECT id, name FROM users WHERE email = ?\");\nstatement.bind(1, user_email); auto rows = statement.execute(); // 输入作为值绑定\n// 动态列名使用白名单映射，不能把用户输入拼成SQL结构", lang: "cpp", block: true)
+  #raw("auto statement = db.prepare(\"SELECT id, name FROM users WHERE email = ?\");\nstatement.bind(1, user_email);\nauto rows = statement.execute(); // 输入作为值绑定\n// 动态列名使用白名单映射，不能把用户输入拼成SQL结构", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -2626,7 +2626,7 @@
   #text("ACID 不会自动修复错误业务规则，也不能脱离配置讨论耐久性：刷盘策略、复制确认、文件系统和存储设备都会影响故障后能否保留提交。业务还需明确哪些约束由数据库强制、哪些需要应用事务保障，并通过备份恢复演练验证承诺。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("Transaction tx(db);\nauto source = tx.select_for_update(account_a); if (source.balance < amount) tx.rollback();\ntx.update_balance(account_a, -amount); tx.update_balance(account_b, amount); tx.commit();", lang: "cpp", block: true)
+  #raw("Transaction tx(db);\nauto source = tx.select_for_update(account_a);\nif (source.balance < amount)\n    tx.rollback();\ntx.update_balance(account_a, -amount);\ntx.update_balance(account_b, amount);\ntx.commit();", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -2637,7 +2637,7 @@
   #text("还要定义副本故障、切主和写超时后的路由，以及重试是否幂等。强读后写策略也应有最长等待时间，超时后有明确回退，而不是无限等副本。不能只看复制线程“运行中”，还要监控接收和应用位置差。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("primary.commit(write); replica.apply_async(write); // 复制存在延迟\nread_from_replica(); // 可能读到旧值，读己之写不一定成立\nif (must_read_own_write) read_from_primary_or_wait_until_replica_lsn >= commit_lsn;\nif (failover_occurs) verify_acknowledged_write_was_replicated();\n// 还需处理复制中断、切换和读一致性目标；异步复制可能丢最近确认写。\n// 按业务在延迟、可用性、读写扩展间取舍。", lang: "cpp", block: true)
+  #raw("primary.commit(write);\nreplica.apply_async(write); // 复制存在延迟\nread_from_replica(); // 可能读到旧值，读己之写不一定成立\nif (must_read_own_write)\n    read_from_primary_or_wait_until_replica_lsn >= commit_lsn;\nif (failover_occurs)\n    verify_acknowledged_write_was_replicated();\n// 还需处理复制中断、切换和读一致性目标；异步复制可能丢最近确认写。\n// 按业务在延迟、可用性、读写扩展间取舍。", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -2648,7 +2648,7 @@
   #text("InnoDB RR 的一致性读通常复用首次读取建立的 ReadView；锁定读和 DML 则依据当前数据与锁处理。两种读不是同一个快照。事务自己的修改始终可见，所以快照先看不到他人新增行，随后 UPDATE 命中该行，再查便能看到自己的版本。快照视图与 next-key 锁分别处理不同场景，不能声称任意语句组合都绝无结果变化；需说明隔离级别、索引和读类型。〔S9、I61、I62〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("Transaction t1(db, Isolation::repeatable_read); auto snapshot = t1.select(stock_id);\nTransaction t2(db); t2.insert(new_product); t2.commit();\nt1.update_if_exists(new_product); // 快照读与当前读/DML要分别理解", lang: "cpp", block: true)
+  #raw("Transaction t1(db, Isolation::repeatable_read);\nauto snapshot = t1.select(stock_id);\nTransaction t2(db);\nt2.insert(new_product);\nt2.commit();\nt1.update_if_exists(new_product); // 快照读与当前读/DML要分别理解", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -2659,7 +2659,7 @@
   #text("三种情况的触发和治理不同。热点互斥粒度要落在单键，避免一把大锁让无关请求排队；重建请求也要有超时和失败回退。逻辑过期可在后台重建期间返回旧值，但只适合业务允许短暂陈旧的数据。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("value = cache.get(key);\nif (value == MISS) { // 穿透：键不存在；负缓存可短暂记住空结果\n    if (bloom.definitely_absent(key)) return NotFound; // Bloom 有假阳性，不会证明存在\n    if (try_singleflight_lock(key)) rebuild_from_database_with_ttl_jitter();\n    else serve_stale_or_wait_with_deadline(); // 单热点失效时避免并发回源\n}\nif (many_keys_expire_together || cache_cluster_down) rate_limit_and_degrade();\n// 雪崩用 TTL 抖动/限流保护 DB；重建锁粒度要小并限制等待\n// 对 Bloom 命中仍要查真实存储，过滤器不能代替数据源", lang: "cpp", block: true)
+  #raw("value = cache.get(key);\nif (value == MISS)\n{ // 穿透：键不存在；负缓存可短暂记住空结果\n    if (bloom.definitely_absent(key))\n        return NotFound; // Bloom 有假阳性，不会证明存在\n    if (try_singleflight_lock(key))\n        rebuild_from_database_with_ttl_jitter();\n    else\n        serve_stale_or_wait_with_deadline(); // 单热点失效时避免并发回源\n}\nif (many_keys_expire_together || cache_cluster_down)\n    rate_limit_and_degrade();\n// 雪崩用 TTL 抖动/限流保护 DB；重建锁粒度要小并限制等待\n// 对 Bloom 命中仍要查真实存储，过滤器不能代替数据源", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -2670,7 +2670,7 @@
   #text("普通持久表的 undo 页更新同样受 redo 保护。redo 是循环复用并受 checkpoint 限制，binlog 按保留策略清理，不是永久完整历史。ROW、STATEMENT、MIXED 分别记录行变更、语句或按规则切换。长事务会拖延 undo 清理，刷盘配置和设备会影响日志耐久性；三类日志不可互相替代。〔S9、N95、N104〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("old_value = undo_log.append_for_rollback_and_snapshot_visibility();\nredo_log.append_page_change_for_crash_recovery();\nbinlog.append_logical_server_change_for_replication_and_point_in_time_restore();\n// undo 服务回滚/MVCC 版本链；redo 服务 InnoDB 崩溃恢复；binlog 属 Server 层。\n// 日志格式、生命周期和持久化配置不同，不能相互替代。\nif (long_transaction) monitor_undo_history_cleanup_lag();", lang: "cpp", block: true)
+  #raw("old_value = undo_log.append_for_rollback_and_snapshot_visibility();\nredo_log.append_page_change_for_crash_recovery();\nbinlog.append_logical_server_change_for_replication_and_point_in_time_restore();\n// undo 服务回滚/MVCC 版本链；redo 服务 InnoDB 崩溃恢复；binlog 属 Server 层。\n// 日志格式、生命周期和持久化配置不同，不能相互替代。\nif (long_transaction)\n    monitor_undo_history_cleanup_lag();", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -2681,7 +2681,7 @@
   #text("这解决的是两套日志的逻辑协调，不能替代刷盘策略或硬件保证。若掉电前日志只在易失缓存中，是否保留仍受 innodb_flush_log_at_trx_commit、sync_binlog 和设备行为影响。应把提交顺序、复制语义和耐久窗口一起配置及测试。〔S9〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("engine.prepare(txn); // 引擎先 prepare，崩溃后可被协调\nserver.write_binlog(txn); flush_binlog_according_to_sync_policy();\nengine.commit(txn); // Server 确认日志后通知引擎提交\n// 崩溃恢复查看 prepare 状态与 binlog 记录，协调提交或回滚\n// 保持 InnoDB redo 与 Server binlog 的事务集合一致，服务恢复/复制\n// 刷盘频率影响掉电耐久窗口；两阶段协调不等于硬件已经持久化\n// 长事务/日志积压也会影响恢复与复制延迟", lang: "cpp", block: true)
+  #raw("engine.prepare(txn); // 引擎先 prepare，崩溃后可被协调\nserver.write_binlog(txn);\nflush_binlog_according_to_sync_policy();\nengine.commit(txn); // Server 确认日志后通知引擎提交\n// 崩溃恢复查看 prepare 状态与 binlog 记录，协调提交或回滚\n// 保持 InnoDB redo 与 Server binlog 的事务集合一致，服务恢复/复制\n// 刷盘频率影响掉电耐久窗口；两阶段协调不等于硬件已经持久化\n// 长事务/日志积压也会影响恢复与复制延迟", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -2692,7 +2692,7 @@
   #text("没有合适索引而全表扫描时，可能锁很多记录和间隙，不等于锁升级成表锁。RC 的搜索扫描通常不用间隙锁，但外键和重复键检查有例外。IS/IX 表级意向锁用于协调行级锁与表锁，不是插入意向锁。具体区间须看版本、执行计划及 data_locks/data_lock_waits，不能仅按 SQL 文本猜锁范围。〔S9、I62〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("auto rows = db.query(\"SELECT * FROM items WHERE id BETWEEN ? AND ? FOR UPDATE\", 12, 18);\nTransaction other(db); other.execute(\"INSERT INTO items(id) VALUES(?)\", 15); // 间隙可能使插入等待\n// 用索引、执行计划与锁视图确认实际锁范围", lang: "cpp", block: true)
+  #raw("auto rows = db.query(\"SELECT * FROM items WHERE id BETWEEN ? AND ? FOR UPDATE\", 12, 18);\nTransaction other(db);\nother.execute(\"INSERT INTO items(id) VALUES(?)\", 15); // 间隙可能使插入等待\n// 用索引、执行计划与锁视图确认实际锁范围", lang: "cpp", block: true)
 ]
 
 #heading(level: 2, outlined: true)[#text("9.3 热点与大键治理", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
@@ -2704,7 +2704,7 @@
   #text("--bigkeys 对集合主要看元素数，不等于按字节排行。拆分、分页和 UNLINK 可降低同步操作影响，但要考虑聚合、一致性和异步回收所需的内存余量。AOF write 仍可能占主线程，no/everysec 不保证完全无阻塞；fork 写时复制复制的是被修改的内存页，不是某次改键就必然复制整个键。〔S10、N116、N125、I87〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("sample_key_access_frequency_and_per_shard_cpu_network(); // 热 Key：请求集中\nmeasure_key_bytes_element_count_and_whole_key_operation_latency(); // 大 Key：单键操作重\nif (hot_and_read_only) add_bounded_local_cache_or_read_replicas();\nif (large_collection) split_by_bucket_and_page_operations();\n// 大 Key 的整键读/删/复制可能阻塞分片并放大内存峰值\n// 热 Key 拆读流量要考虑一致性；大 Key 拆分增加聚合和更新复杂度\n// 调整后继续监控分片 CPU、网络、延迟和内存峰值", lang: "cpp", block: true)
+  #raw("sample_key_access_frequency_and_per_shard_cpu_network(); // 热 Key：请求集中\nmeasure_key_bytes_element_count_and_whole_key_operation_latency(); // 大 Key：单键操作重\nif (hot_and_read_only)\n    add_bounded_local_cache_or_read_replicas();\nif (large_collection)\n    split_by_bucket_and_page_operations();\n// 大 Key 的整键读/删/复制可能阻塞分片并放大内存峰值\n// 热 Key 拆读流量要考虑一致性；大 Key 拆分增加聚合和更新复杂度\n// 调整后继续监控分片 CPU、网络、延迟和内存峰值", lang: "cpp", block: true)
 ]
 
 
@@ -2717,7 +2717,7 @@
   #text("RDB/AOF 管重启恢复和丢失窗口，副本与 Sentinel 管可用性，Cluster 把哈希槽分到多个主节点；这些是不同边界。客户端路由到单实例、副本组或集群时语义不同。热键、异步复制、长命令和故障切换都可能影响延迟或丢失写入，内存数据库不自动意味着持久或强一致。〔N77〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("while (running) { auto events = poller.wait(); for (auto& event : events) dispatch(event); }\nclient_a.send(\"GET key\"); client_b.send(\"SORT large_set\"); // 主执行路径上的慢命令会拖住后续命令", lang: "cpp", block: true)
+  #raw("while (running)\n{\n    auto events = poller.wait();\n    for (auto& event : events)\n        dispatch(event);\n}\nclient_a.send(\"GET key\");\nclient_b.send(\"SORT large_set\"); // 主执行路径上的慢命令会拖住后续命令", lang: "cpp", block: true)
 ]
 
 #heading(level: 2, outlined: true)[#text("9.5 SQL 基础与数据建模", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
@@ -2729,7 +2729,7 @@
   #text("先列出主要查询、数据规模、延迟目标、跨记录原子性及一致性要求，再比较索引、分片和运维成本。订单事实可放关系库，搜索视图或缓存可以用其他模型。不要仅因预期高并发就先放弃约束，也不要假设任何 NoSQL 都能无代价水平扩展。〔N78〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("Transaction tx(sql_db); tx.insert(order); tx.insert(order_lines); tx.commit(); // 关系库保存事务事实\nsearch_index.upsert(build_search_document(order)); // NoSQL/搜索视图可异步更新", lang: "cpp", block: true)
+  #raw("Transaction tx(sql_db);\ntx.insert(order);\ntx.insert(order_lines);\ntx.commit(); // 关系库保存事务事实\nsearch_index.upsert(build_search_document(order)); // NoSQL/搜索视图可异步更新", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -2740,7 +2740,7 @@
   #text("规范化能减少插入、修改和删除异常，但并不意味着表越拆越好。为了读性能，可以有意识地在读模型保存冗余字段，前提是定义更新来源、事务或事件同步机制及一致性成本。判断范式时要先明确候选键和函数依赖，而不只是看有没有重复字段。〔N79〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("struct Product { ProductId id; std::string name; }; // 商品属性依赖商品主键\nstruct OrderLine { OrderId order; ProductId product; int quantity; };\n// 拆分后改商品名只需更新Product；冗余读模型要明确同步与重建方式", lang: "cpp", block: true)
+  #raw("struct Product\n{\n    ProductId id;\n    std::string name;\n}; // 商品属性依赖商品主键\nstruct OrderLine\n{\n    OrderId order;\n    ProductId product;\n    int quantity;\n};\n// 拆分后改商品名只需更新Product；冗余读模型要明确同步与重建方式", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -2751,7 +2751,7 @@
   #text("外连接右表条件放在 WHERE 或 ON 会改变结果：WHERE right.col = 值会过滤掉补 NULL 的左行，ON 中条件则保留它们。连接前检查一对一或一对多基数、外键和索引；否则重复行可能来自错误连接键而不是数据重复。不要用 DISTINCT 掩盖连接条件错误，它会增加处理成本并丢失需要的行。〔N80、N81〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("auto rows = db.query(R\"(SELECT student.id, course.id FROM student\nLEFT JOIN course ON student.id = course.student_id AND course.id = ?)\", course_id);\n// EXISTS/NOT EXISTS表达存在性，避免一对多JOIN放大行数", lang: "cpp", block: true)
+  #raw("auto rows = db.query(R\"(SELECT student.id, course.id FROM student\nLEFT JOIN course ON student.id = course.student_id AND course.id = ?)\",\n                     course_id);\n// EXISTS/NOT EXISTS表达存在性，避免一对多JOIN放大行数", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -2762,7 +2762,7 @@
   #text("MySQL 65535 字节行大小限制还包括长度、NULL 等开销；BLOB/TEXT 在服务器行大小计算中计有限内部开销，不表示 VARCHAR 能装 65535 个字符。InnoDB 页内记录还有限制，变长值可能移到溢出页；页内外部指针大小与 SQL 层行大小计算不是同一个概念。设计时按字符语义选长度，再看索引、字符集和行格式。〔N82、N83、I67、I63〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("std::string text = \"猫A\";\nauto characters = utf8_character_count(text); auto bytes = text.size();\n// VARCHAR长度按字符定义，索引限制还要按字符集最大字节数计算", lang: "cpp", block: true)
+  #raw("std::string text = \"猫A\";\nauto characters = utf8_character_count(text);\nauto bytes = text.size();\n// VARCHAR长度按字符定义，索引限制还要按字符集最大字节数计算", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -2773,7 +2773,7 @@
   #text("需要约束业务值时选择 TINYINT、SMALLINT、INT 或 BIGINT，并说明是否允许负数，再用数据库约束和应用校验表达有效范围。若编号需要前导零，应把它当作格式化文本在输出层处理；不要依赖整数列显示属性存储编号格式，也不要把编号当可计算的数量。〔N84〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("int value = 12345; std::string display = format_with_zero_padding(value, 8); // 展示补零\n// INT(M)显示宽度不改变整数范围或本身占用的存储空间", lang: "cpp", block: true)
+  #raw("int value = 12345;\nstd::string display = format_with_zero_padding(value, 8); // 展示补零\n// INT(M)显示宽度不改变整数范围或本身占用的存储空间", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -2784,7 +2784,7 @@
   #text("数据库类型不能替业务决定税率精度、换汇时机和舍入方向。要定义币种、最大金额、小数位与舍入规则，验证溢出边界；跨服务传输也要保持单位和精度约定，避免先转为浮点再写回。〔N85〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("using Cents = std::int64_t;\nCents source_balance = 12345, transfer = 1050, target_balance = 2000;\nif (source_balance >= transfer) { source_balance -= transfer; target_balance += transfer; }", lang: "cpp", block: true)
+  #raw("using Cents = std::int64_t;\nCents source_balance = 12345, transfer = 1050, target_balance = 2000;\nif (source_balance >= transfer)\n{\n    source_balance -= transfer;\n    target_balance += transfer;\n}", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -2806,7 +2806,7 @@
   #text("跨库、跨分片或跨服务通常不能保留同样的数据库级约束，需要事件、补偿和定期对账。是否使用外键取决于数据归属、写入路径和运维方式；不能笼统说外键会拖慢所有查询，也不能在没有替代一致性机制时随意删除约束。〔N87〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("Transaction tx(db); tx.insert(\"customer\", customer_id);\ntx.insert(\"orders\", order_id, customer_id); // 外键保证父记录存在\n// RESTRICT策略下仍被引用的客户不能删除；跨服务可用事件加对账维护", lang: "cpp", block: true)
+  #raw("Transaction tx(db);\ntx.insert(\"customer\", customer_id);\ntx.insert(\"orders\", order_id, customer_id); // 外键保证父记录存在\n// RESTRICT策略下仍被引用的客户不能删除；跨服务可用事件加对账维护", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -2819,7 +2819,7 @@
   #text("例如学生选课表的课程号允许 NULL 时，用 NOT EXISTS 检查“没有课程 2”比 NOT IN 更容易审查。若能保证子查询列 NOT NULL，两种写法结果才可按该假设比较；仍要看执行计划，而不是机械改写。〔N81〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("auto unsafe = db.query(\"SELECT id FROM student WHERE course_id NOT IN (SELECT course_id FROM chosen)\");\nauto safe = db.query(\"SELECT s.id FROM student s WHERE NOT EXISTS (SELECT 1 FROM chosen c WHERE c.course_id=s.course_id)\");\n// NOT IN子查询含NULL时可能得到UNKNOWN；先确认列的空值语义", lang: "cpp", block: true)
+  #raw("auto unsafe =\n    db.query(\"SELECT id FROM student WHERE course_id NOT IN (SELECT course_id FROM chosen)\");\nauto safe = db.query(\"SELECT s.id FROM student s WHERE NOT EXISTS (SELECT 1 FROM chosen c WHERE \"\n                     \"c.course_id=s.course_id)\");\n// NOT IN子查询含NULL时可能得到UNKNOWN；先确认列的空值语义", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -2832,7 +2832,7 @@
   #text("COALESCE 只在值为空时取后续参数，不能用来掩盖必须拒绝的缺失数据；ROUND 的规则也应和财务约定一致。把函数用于 SELECT 展示和把它放进 WHERE 条件，对索引利用的影响不同。〔N88〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("auto start = to_utc(local_day_start); auto end = to_utc(next_local_day_start);\nauto rows = db.query(\"SELECT * FROM orders WHERE created_at >= ? AND created_at < ?\", start, end);\n// 半开区间可保留时间列上的索引范围扫描", lang: "cpp", block: true)
+  #raw("auto start = to_utc(local_day_start);\nauto end = to_utc(next_local_day_start);\nauto rows = db.query(\"SELECT * FROM orders WHERE created_at >= ? AND created_at < ?\", start, end);\n// 半开区间可保留时间列上的索引范围扫描", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -2854,7 +2854,7 @@
   #text("应先确认是否要保留结构、是否按条件清理、是否有引用及恢复方案，再选操作。大表清理可评估分批 DELETE，控制锁持有和日志增长。误执行 DDL 不能靠应用重试恢复，生产前要明确对象、备份和恢复点。〔N90〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("if (keep_recent_rows) db.execute(\"DELETE FROM test WHERE created_at < ?\", cutoff);\nelse if (clear_all_rows) db.execute(\"TRUNCATE TABLE test\"); // DDL通常隐式提交\n// DROP TABLE还会删除定义；破坏性操作前核对库表和恢复点", lang: "cpp", block: true)
+  #raw("if (keep_recent_rows)\n    db.execute(\"DELETE FROM test WHERE created_at < ?\", cutoff);\nelse if (clear_all_rows)\n    db.execute(\"TRUNCATE TABLE test\"); // DDL通常隐式提交\n// DROP TABLE还会删除定义；破坏性操作前核对库表和恢复点", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -2865,7 +2865,7 @@
   #text("这只是语义模型，不是优化器逐阶段执行的流水线。只要结果相同，优化器可以下推条件、重排内连接或改写子查询。要知道真实访问路径和成本，需要读 EXPLAIN，并按实际数据观察。〔N91、N92〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("std::erase_if(orders, [](const Order& x) { return x.status != Status::paid; });\nauto totals = group_by_user_and_sum(orders);\nstd::sort(totals.begin(), totals.end(), by_total_desc_then_user_id); // LIMIT最后作用于排序结果", lang: "cpp", block: true)
+  #raw("std::erase_if(orders,\n              [](const Order& x)\n              {\n                  return x.status != Status::paid;\n              });\nauto totals = group_by_user_and_sum(orders);\nstd::sort(totals.begin(), totals.end(), by_total_desc_then_user_id); // LIMIT最后作用于排序结果", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -2876,7 +2876,7 @@
   #text("窗口函数结果通常不能在同层 WHERE 中直接过滤，可放到 CTE 或子查询。还要明确 NULL 成绩、重复课程成绩、补考是否覆盖等计分规则，否则 SQL 写得再正确也可能产生错误名次。〔N92〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("std::sort(totals.begin(), totals.end(), [](const auto& a, const auto& b) {\n  return a.total != b.total ? a.total > b.total : a.student_id < b.student_id;\n});\nauto page = std::span(totals).subspan(4, 6); // ROW_NUMBER时用稳定次序定义第5到第10名", lang: "cpp", block: true)
+  #raw("std::sort(totals.begin(),\n          totals.end(),\n          [](const auto& a, const auto& b)\n          {\n              return a.total != b.total ? a.total > b.total : a.student_id < b.student_id;\n          });\nauto page = std::span(totals).subspan(4, 6); // ROW_NUMBER时用稳定次序定义第5到第10名", lang: "cpp", block: true)
 ]
 
 #heading(level: 2, outlined: true)[#text("9.6 MySQL 引擎与存储", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
@@ -2888,7 +2888,7 @@
   #text("连接池能摊薄建连和认证成本，但需限制总量及借用等待。Sleep 只表示当前没有执行语句，仍可能有未提交事务或会话状态。复用前要清理事务、autocommit、隔离级别、字符集、临时表和用户变量；mysql_reset_connection 可保留网络连接但回滚事务、重置会话并释放预处理语句等资源，应遵循驱动池约定。空闲连接受 wait_timeout 影响。排障分别看池、计划、Buffer Pool、事务锁和日志刷盘，不凭总耗时归因。〔N93、N94、N95、I70、I71〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("auto connection = pool.acquire(); auto plan = connection.prepare(update_sql);\nplan.bind(id, status); plan.execute(); connection.commit(); // Server解析/优化，InnoDB管理页、锁和日志\nconnection.reset_session(); pool.release(connection); // 归还前确认没有未提交事务", lang: "cpp", block: true)
+  #raw("auto connection = pool.acquire();\nauto plan = connection.prepare(update_sql);\nplan.bind(id, status);\nplan.execute();\nconnection.commit(); // Server解析/优化，InnoDB管理页、锁和日志\nconnection.reset_session();\npool.release(connection); // 归还前确认没有未提交事务", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -2899,7 +2899,7 @@
   #text("不要只因 MyISAM 的某类 COUNT 看起来快就迁移业务表。InnoDB 的“行锁”也不表示每条语句只锁一行，范围、索引和隔离级别决定锁范围。比较引擎时应一起看并发读写、故障恢复、一致性与备份方案。〔N93〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("Transaction first(db), second(db);\nfirst.update(\"orders\", 10, Status::shipped); second.update(\"orders\", 11, Status::paid);\nfirst.commit(); second.commit(); // InnoDB行级并发；引擎选择仍要看事务与恢复需求", lang: "cpp", block: true)
+  #raw("Transaction first(db), second(db);\nfirst.update(\"orders\", 10, Status::shipped);\nsecond.update(\"orders\", 11, Status::paid);\nfirst.commit();\nsecond.commit(); // InnoDB行级并发；引擎选择仍要看事务与恢复需求", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -2910,7 +2910,7 @@
   #text("排查前确认版本、datadir、引擎和表空间；表文件扩展名不能说明所有元数据和事务状态都在那里。备份迁移应使用受支持的一致性工具或流程，单独复制正在运行中的一个文件不能保证与字典、redo 和其他表空间匹配。〔N96、N97〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("auto version = query_mysql_version(); auto datadir = query_variable(\"datadir\");\nauto tablespace = inspect_tablespace(table_name, version); backup_consistently(datadir, tablespace);\n// 先核对版本、表空间归属和备份协议，不直接复制运行中的单个.ibd", lang: "cpp", block: true)
+  #raw("auto version = query_mysql_version();\nauto datadir = query_variable(\"datadir\");\nauto tablespace = inspect_tablespace(table_name, version);\nbackup_consistently(datadir, tablespace);\n// 先核对版本、表空间归属和备份协议，不直接复制运行中的单个.ibd", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -2921,7 +2921,7 @@
   #text("Buffer Pool 管理页时有几种不同视角：free list 是还没装内容的空位；LRU 按最近使用安排已缓存页；flush list 记录需要写回的脏页，同一脏页也同时属于 LRU。LRU 分 young/old，新页和预读页先放 old，短时间复用后才升到 young；innodb_old_blocks_time 可防一次性扫描挤掉热点。比如账户页改余额后先提交 redo，再稍后刷数据页，既能较快提交，也能在崩溃后重做。观察缓存命中、脏页和等待，并给其他进程留内存。〔N94、I68〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("buffer_pool.touch(hot_page); // 热页留在young区域\nfor (Page page : table_scan) buffer_pool.add_to_old(page);\nif (reused_within(page, old_blocks_time)) buffer_pool.promote(page); // 一次性扫描不污染热区", lang: "cpp", block: true)
+  #raw("buffer_pool.touch(hot_page); // 热页留在young区域\nfor (Page page : table_scan)\n    buffer_pool.add_to_old(page);\nif (reused_within(page, old_blocks_time))\n    buffer_pool.promote(page); // 一次性扫描不污染热区", lang: "cpp", block: true)
 ]
 
 #heading(level: 2, outlined: true)[#text("9.7 MySQL 索引补充", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
@@ -2933,7 +2933,7 @@
   #text("innodb_autoinc_lock_mode 决定插入语句怎样分配号码。模式 0 用传统语句级 AUTO-INC 锁；模式 1 对可预知行数的简单插入减少互斥，批量插入仍会串行分配；模式 2 允许不同语句交错取号，吞吐较好，但基于语句的复制应选 0/1 并保持主从设置一致。MySQL 8.4 默认模式 2。这个锁通常持有到当前插入语句结束，不是等整个事务提交。财务流水若要求连续编号，应另建编号协议，不要依赖主键。〔N98、N97〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("Transaction tx(db); auto id = tx.next_auto_increment(); tx.insert(id, row); tx.rollback();\nauto next_id = db.next_auto_increment(); // 回滚后可留下空洞，ID差值不等于行数", lang: "cpp", block: true)
+  #raw("Transaction tx(db);\nauto id = tx.next_auto_increment();\ntx.insert(id, row);\ntx.rollback();\nauto next_id = db.next_auto_increment(); // 回滚后可留下空洞，ID差值不等于行数", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -2955,7 +2955,7 @@
   #text("前缀索引未必能覆盖完整字符串输出或证明整列完全相等，排序、分组利用也取决于查询。唯一前缀只保证前缀唯一，会拒绝开头相同但后面不同的完整值，因此不能拿它替代完整列唯一性。〔N100〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("for (int prefix : {8, 16, 32, 64}) report(prefix, distinct_left(url_column, prefix) / total_rows);\nauto matches = db.query(\"SELECT url FROM files WHERE url LIKE ?\", prefix + \"%\");\n// 前缀索引命中后仍需比较完整字符串，选择前先测区分度", lang: "cpp", block: true)
+  #raw("for (int prefix : {8, 16, 32, 64})\n    report(prefix, distinct_left(url_column, prefix) / total_rows);\nauto matches = db.query(\"SELECT url FROM files WHERE url LIKE ?\", prefix + \"%\");\n// 前缀索引命中后仍需比较完整字符串，选择前先测区分度", lang: "cpp", block: true)
 ]
 
 #heading(level: 2, outlined: true)[#text("9.8 MySQL 锁与恢复", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
@@ -2967,7 +2967,7 @@
   #text("用 SHOW ENGINE INNODB STATUS、data_locks 和 data_lock_waits，结合完整语句、索引和执行计划取证。统一多表或多行访问顺序、缩短事务、补合适索引可减少概率。死锁错误与锁超时的默认回滚范围可能不同，失败后要明确回滚整个业务事务再重试。关闭死锁检测会改变失败等待方式，应理解其代价。〔N101、S9、I62〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("try { update_in_order({account_a, account_b}); }\ncatch (DeadlockError&) { rollback_entire_transaction(); retry_with_backoff(idempotency_key); }\n// 重试完整业务事务；统一锁顺序可减少死锁概率", lang: "cpp", block: true)
+  #raw("try\n{\n    update_in_order({account_a, account_b});\n}\ncatch (DeadlockError&)\n{\n    rollback_entire_transaction();\n    retry_with_backoff(idempotency_key);\n}\n// 重试完整业务事务；统一锁顺序可减少死锁概率", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -2978,7 +2978,7 @@
   #text("观察 performance_schema.metadata_locks、会话和事务状态，分清真正阻塞者、DDL 等待者及被队列挡住的查询。只杀排队查询不一定解除源头。上线前控制长事务并验证具体版本的 Online DDL 能力；LOCK=NONE 不表示完全不申请任何 MDL。〔N102〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("Transaction long_tx(db); long_tx.select(\"orders\", 1); // 保持MDL共享锁\nAsyncResult ddl = db.execute_async(\"ALTER TABLE orders ADD COLUMN note TEXT\");\n// 等待中的DDL可能让后续查询排队；检查metadata_locks并结束阻塞事务", lang: "cpp", block: true)
+  #raw("Transaction long_tx(db);\nlong_tx.select(\"orders\", 1); // 保持MDL共享锁\nAsyncResult ddl = db.execute_async(\"ALTER TABLE orders ADD COLUMN note TEXT\");\n// 等待中的DDL可能让后续查询排队；检查metadata_locks并结束阻塞事务", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -2989,7 +2989,7 @@
   #text("binlog 还要看 sync_binlog：0 交给系统控制，1 对每个提交组同步，N>1 累积提交组后同步，并非每 N 个事务。双 1 可加强事务与复制日志的耐久，但仍依赖存储设备诚实执行刷新。组提交可摊薄 fsync 成本，不替代备份和恢复演练；也要用相同的故障类型比较配置，而不是把进程崩溃等同掉电。〔N103、N95、I69〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("configure(\"innodb_flush_log_at_trx_commit\", 1); configure(\"sync_binlog\", 1);\nTransaction tx(db); tx.update(account_id, -10); tx.commit();\n// 故障注入后检查已确认事务；设备写缓存也必须兑现flush语义", lang: "cpp", block: true)
+  #raw("configure(\"innodb_flush_log_at_trx_commit\", 1);\nconfigure(\"sync_binlog\", 1);\nTransaction tx(db);\ntx.update(account_id, -10);\ntx.commit();\n// 故障注入后检查已确认事务；设备写缓存也必须兑现flush语义", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -3000,7 +3000,7 @@
   #text("应观察 redo 使用量、checkpoint age、存储吞吐和脏页压力。增大日志容量可缓冲短时峰值，却不能掩盖长期写入超过设备能力。WAL 把提交关键路径从随机写多个数据页转为顺序日志写，但数据页最终仍要落盘，并没有消除存储 I/O；因此要把日志和数据盘能力一起评估。〔N104〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("redo_generated_per_second = 500; dirty_pages_flushed_per_second = 200;\nif (redo_generated_per_second > dirty_pages_flushed_per_second) monitor_checkpoint_age();\n// 扩大redo空间只能缓冲峰值，长期写入超出刷盘能力仍会限流", lang: "cpp", block: true)
+  #raw("redo_generated_per_second = 500;\ndirty_pages_flushed_per_second = 200;\nif (redo_generated_per_second > dirty_pages_flushed_per_second)\n    monitor_checkpoint_age();\n// 扩大redo空间只能缓冲峰值，长期写入超出刷盘能力仍会限流", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -3011,7 +3011,7 @@
   #text("等待更多事务凑批可能提高吞吐，也可能让单个事务多等一会儿；低并发时未必受益。评估要同时看吞吐、P99 提交延迟、磁盘同步时间和耐久参数。关闭刷盘取得的高性能不能证明组提交自身的收益，应在相同耐久要求下比较。〔N95、N103〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("CommitGroup group = collect_ready_commits({tx_a, tx_b, tx_c});\nfsync(group.binlog); fsync(group.redo_log); publish_each_commit_result(group);\n// 多个并发提交共享同步开销；测吞吐时也比较排队延迟", lang: "cpp", block: true)
+  #raw("CommitGroup group = collect_ready_commits({tx_a, tx_b, tx_c});\nfsync(group.binlog);\nfsync(group.redo_log);\npublish_each_commit_result(group);\n// 多个并发提交共享同步开销；测吞吐时也比较排队延迟", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -3022,7 +3022,7 @@
   #text("双写保护页写完整性，redo 的提交日志保护事务恢复，两者互补。MySQL 版本和存储配置会演进，设备支持也要验证；不能因 SSD 快就假设数据库页原子写并随意关闭保护。恢复演练还要确认双写区与数据文件处于预期故障域。〔N105〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("write_doublewrite(page); fsync(doublewrite_file); write_data_page(page); // 防止崩溃造成页撕裂\nif (!valid_checksum(data_page)) restore_from_doublewrite(page);\napply_redo_records(page); // doublewrite修复页，redo重放逻辑修改", lang: "cpp", block: true)
+  #raw("write_doublewrite(page);\nfsync(doublewrite_file);\nwrite_data_page(page); // 防止崩溃造成页撕裂\nif (!valid_checksum(data_page))\n    restore_from_doublewrite(page);\napply_redo_records(page); // doublewrite修复页，redo重放逻辑修改", lang: "cpp", block: true)
 ]
 
 #heading(level: 2, outlined: true)[#text("9.9 MySQL 查询与复制补充", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
@@ -3034,7 +3034,7 @@
   #text("若必须跳到任意页，可考虑覆盖索引先取主键再回表、限制最大深度或预先计算排序结果，但这些不能自动消除偏移扫描。游标要包含全部排序字段并处理相同值、方向和筛选条件；不能仅按 ID 排序取代业务的真实排序。〔N106、N91〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("using Cursor = std::pair<TimePoint, OrderId>;\nauto rows = db.query(\"SELECT * FROM orders WHERE (created_at,id) > (?,?) ORDER BY created_at,id LIMIT ?\", cursor, 20);\nauto next_cursor = Cursor{rows.back().created_at, rows.back().id}; // 稳定翻页", lang: "cpp", block: true)
+  #raw("using Cursor = std::pair<TimePoint, OrderId>;\nauto rows =\n    db.query(\"SELECT * FROM orders WHERE (created_at,id) > (?,?) ORDER BY created_at,id LIMIT ?\",\n             cursor,\n             20);\nauto next_cursor = Cursor{rows.back().created_at, rows.back().id}; // 稳定翻页", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -3045,7 +3045,7 @@
   #text("GTID 给事务标识，可用已执行集合帮助重新定位复制起点；它不是 binlog 文件偏移，也不消除复制延迟。应一并设计确认条件、超时后退化方式、切主候选和读后写路由。监控复制接收与应用差距，并通过故障切换测试实际可能丢失的提交。〔N107、N108、N109〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("binlog.append(gtid, transaction); replica.receive_to_relay_log(gtid);\nif (semi_sync_acknowledged(gtid)) reply_commit_to_client();\nreplica.wait_until_executed(gtid); // 收到relay log确认不等于已应用，可读主库或等待GTID", lang: "cpp", block: true)
+  #raw("binlog.append(gtid, transaction);\nreplica.receive_to_relay_log(gtid);\nif (semi_sync_acknowledged(gtid))\n    reply_commit_to_client();\nreplica.wait_until_executed(gtid); // 收到relay log确认不等于已应用，可读主库或等待GTID", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -3056,7 +3056,7 @@
   #text("浅页全局排序可让每片返回 offset+limit 条，再汇总排序，成本随偏移和分片数增加；连续翻页更适合稳定复合游标。任意深页可建立独立排序或搜索索引。扩容需准备迁移批次、增量追平、路由版本、校验及回滚，并提前定义跨片聚合、对账和事务边界。〔N110〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("auto shard = router.for_key(order.buyer_id); shard.insert(order);\ncopy_shard_range(old_shard, new_shard, range); verify_count_and_hash(range);\nrouter.switch_version(range, new_shard); // 双写/追增量及回滚需在切流前准备", lang: "cpp", block: true)
+  #raw("auto shard = router.for_key(order.buyer_id);\nshard.insert(order);\ncopy_shard_range(old_shard, new_shard, range);\nverify_count_and_hash(range);\nrouter.switch_version(range, new_shard); // 双写/追增量及回滚需在切流前准备", lang: "cpp", block: true)
 ]
 
 #heading(level: 2, outlined: true)[#text("9.10 Redis 内部结构与执行模型", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
@@ -3068,7 +3068,7 @@
   #text("每层跨度记录跨过多少底层节点，累积跨度可算名次，避免从头遍历；插入也不需整体移动数组。多层指针和跨度需要额外内存，因此它是针对内存排名与范围访问的取舍，不保证在磁盘访问或所有负载中胜过平衡树或 B+ 树。编码阈值和层高常量要按目标版本核对。〔N111、N155〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("zset.add(90, \"Alice\"); zset.add(90, \"Bob\"); zset.add(70, \"Carol\");\nauto rank = zset.rank({90, \"Bob\"}); // 跳表按分数和成员顺序定位，字典负责成员查找", lang: "cpp", block: true)
+  #raw("zset.add(90, \"Alice\");\nzset.add(90, \"Bob\");\nzset.add(70, \"Carol\");\nauto rank = zset.rank({90, \"Bob\"}); // 跳表按分数和成员顺序定位，字典负责成员查找", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -3079,7 +3079,7 @@
   #text("实现随版本改变：Redis 6.2 的小 Hash/ZSet 常用 ziplist，7.0 改 listpack；quicklist 在 7.0 前串 ziplist，之后普通压缩节点用 listpack，大单元素可为 plain 节点；7.2 小 List 可直接 listpack，Set 也加入 listpack。小型整数 Set 可用 intset：有序数组二分查找 O(log n)，插入、删除或升级可 O(n)；升级时整体换成更宽整数编码，7.2 删除不自动降宽。超过阈值或加入非整数会按条件转 listpack/字典，这与 intset 内部位宽升级是两件事。用 OBJECT ENCODING 核对版本与配置，转换和搬移可能产生延迟。〔N112、I79、I80、I81、I82〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("IntSet values{16}; values.insert(100); values.insert(200);\nvalues.insert(70000); // 超出16位范围时整体升级编码\n// 紧凑编码省内存，但扩容/编码转换会搬移数据", lang: "cpp", block: true)
+  #raw("IntSet values{16};\nvalues.insert(100);\nvalues.insert(200);\nvalues.insert(70000); // 超出16位范围时整体升级编码\n// 紧凑编码省内存，但扩容/编码转换会搬移数据", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -3090,7 +3090,7 @@
   #text("每次迁少量桶可缩短单次停顿，但会增加暂时的内存和查找工作，碰撞严重时仍可能变慢。“渐进”不是零开销。这里说的是 Redis 实例内部字典扩容，不是把集群槽从一个节点迁到另一个节点。〔N113〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("Dictionary dict; dict.start_rehash(new_capacity);\nwhile (dict.rehashing()) dict.move_some_buckets(4); // 每条命令渐进搬迁\n// rehash期间查找新表，也查尚未迁移的旧表桶", lang: "cpp", block: true)
+  #raw("Dictionary dict;\ndict.start_rehash(new_capacity);\nwhile (dict.rehashing())\n    dict.move_some_buckets(4); // 每条命令渐进搬迁\n// rehash期间查找新表，也查尚未迁移的旧表桶", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -3112,7 +3112,7 @@
   #text("现代 Redis 会在线程中处理部分网络 I/O、异步释放和后台任务，RDB/AOF 还可能用子进程，所以“Redis 永远只有一个线程”不准确。增加 I/O 线程不会让任意慢命令并行，也不代表所有数据操作都由多个线程执行。判断性能要注明版本、命令、数据大小和持久化配置。〔N115、N116〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("EventLoop loop; loop.on_read(client, read_request); loop.run_one_iteration();\nexecute_command(\"SORT\", large_key); // 慢命令仍占用主命令执行路径并延迟其他客户端", lang: "cpp", block: true)
+  #raw("EventLoop loop;\nloop.on_read(client, read_request);\nloop.run_one_iteration();\nexecute_command(\"SORT\", large_key); // 慢命令仍占用主命令执行路径并延迟其他客户端", lang: "cpp", block: true)
 ]
 
 #heading(level: 2, outlined: true)[#text("9.11 Redis 事务与生命周期", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
@@ -3124,7 +3124,7 @@
   #text("Pipeline 只是批量发送以减少网络往返，本身不保证原子性或隔离；它可与事务组合。处理库存等共享状态时先决定使用原子脚本、事务或条件更新，再明确失败、重试和幂等语义，不能依赖客户端发送顺序。〔N117、N118〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("pipeline.send(\"GET\", key); pipeline.send(\"DECRBY\", key, amount); // Pipeline只减少往返\nif (watch(key) && exec_transaction(commands)) return success;\n// WATCH冲突后重读重试；Lua可把检查和更新放入原子脚本", lang: "cpp", block: true)
+  #raw("pipeline.send(\"GET\", key);\npipeline.send(\"DECRBY\", key, amount); // Pipeline只减少往返\nif (watch(key) && exec_transaction(commands))\n    return success;\n// WATCH冲突后重读重试；Lua可把检查和更新放入原子脚本", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -3135,7 +3135,7 @@
   #text("复制时由主节点过期并传播删除；副本即使暂时保存该键，普通读取也会把逻辑上已过期键视为不存在，升主后自行处理。INCR、HSET 等原地修改通常保留 TTL，普通 SET 覆盖会清掉旧 TTL；要显式带过期选项或 KEEPTTL。写入不会自动续期，滑动过期要由应用实现。〔N119、N120〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("redis.set(\"session\", value, expiry=60s); redis.hset(\"profile\", \"name\", \"Aki\");\nredis.set(\"session\", new_value, keep_ttl=true); // 是否保留TTL由命令选项决定\n// 过期是逻辑有效性；内存淘汰是容量策略", lang: "cpp", block: true)
+  #raw("redis.set(\"session\", value, expiry = 60s);\nredis.hset(\"profile\", \"name\", \"Aki\");\nredis.set(\"session\", new_value, keep_ttl = true); // 是否保留TTL由命令选项决定\n// 过期是逻辑有效性；内存淘汰是容量策略", lang: "cpp", block: true)
 ]
 
 #heading(level: 2, outlined: true)[#text("9.12 Redis 复制、集群与缓存", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
@@ -3147,7 +3147,7 @@
   #text("复制积压区留近期历史，副本输出缓冲保存尚待该副本消费的数据；超限可能断开连接，重连能否部分同步仍由 ID 和 offset 决定。Redis 7 的底层缓冲块可共享，不能机械认为每个副本一份独立字节副本。可按复制流速率乘可容忍断线时间并加突发余量规划 backlog。默认异步复制切主可能丢已确认写；WAIT 和 min-replicas 可降低部分风险，仍不提供线性一致，也不能替代持久化与备份。〔N120、I83〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("if (replica.offset_is_in_backlog(replid, offset)) send_partial_sync(replica);\nelse send_full_snapshot_then_backlog(replica);\n// 异步复制可能丢失未到副本的已确认写入，不提供强一致保证", lang: "cpp", block: true)
+  #raw("if (replica.offset_is_in_backlog(replid, offset))\n    send_partial_sync(replica);\nelse\n    send_full_snapshot_then_backlog(replica);\n// 异步复制可能丢失未到副本的已确认写入，不提供强一致保证", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -3158,7 +3158,7 @@
   #text("分区期间旧主可能仍为部分客户端服务，异步复制会让切主后丢写。min-replicas-to-write 和 max-lag 可以减少风险，但会牺牲可用性，不能保证零丢失。客户端仍要发现新地址、重建连接并以幂等方式重试。要区分故障判定、切换授权、候选提升和客户端更新四个阶段。〔N121、N120〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("if (sentinel_votes_down >= quorum) mark_objectively_down(master);\nif (sentinel_votes_down >= majority(sentinel_count)) authorize_failover();\n// 多数授权受网络分区影响；切换期间业务仍需幂等和防双主措施", lang: "cpp", block: true)
+  #raw("if (sentinel_votes_down >= quorum)\n    mark_objectively_down(master);\nif (sentinel_votes_down >= majority(sentinel_count))\n    authorize_failover();\n// 多数授权受网络分区影响；切换期间业务仍需幂等和防双主措施", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -3169,7 +3169,7 @@
   #text("多键原子命令和脚本通常要求所有键同槽，hash tag 可让键共槽，但可能制造热点。集群客户端可按节点拆 Pipeline，Pipeline 不要求所有键同槽，也不提供跨槽原子性。从副本读取要使用 READONLY 并接受复制延迟。故障副本要有资格且需持槽主节点多数授权提升；分片不消除热键、无副本时槽不可用或异步复制丢失窗口。〔N122、N118〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("auto slot = crc16(\"order:{42}:state\") % 16384;\nif (reply.is_moved()) { slot_map.update(reply.slot, reply.node); retry(); }\nif (reply.is_ask()) { send_asking(reply.node); retry_once(); } // ASK不更新永久槽表", lang: "cpp", block: true)
+  #raw("auto slot = crc16(\"order:{42}:state\") % 16384;\nif (reply.is_moved())\n{\n    slot_map.update(reply.slot, reply.node);\n    retry();\n}\nif (reply.is_ask())\n{\n    send_asking(reply.node);\n    retry_once();\n} // ASK不更新永久槽表", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -3180,7 +3180,7 @@
   #text("Redis 客户端缓存跟踪可辅助通知失效，连接中断后须按协议清理或重建可信状态，不能继续相信旧的本地项。权限、余额等要求强实时判断的数据不宜只靠本地副本。提升命中率要和陈旧容忍度、数据库保护效果及内存成本一起评估。〔N123、N124〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("if (local_cache.valid(key)) return local_cache.get(key);\nauto value = redis.get(key).value_or(database.load(key)); local_cache.set(key, value, short_ttl);\nif (tracking_connection_lost()) local_cache.clear(); // 余额校验仍读权威数据", lang: "cpp", block: true)
+  #raw("if (local_cache.valid(key))\n    return local_cache.get(key);\nauto value = redis.get(key).value_or(database.load(key));\nlocal_cache.set(key, value, short_ttl);\nif (tracking_connection_lost())\n    local_cache.clear(); // 余额校验仍读权威数据", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -3191,7 +3191,7 @@
   #text("遍历过程中一直存在的键有返回保证，但新增和删除中的键不能依赖精确覆盖；Cluster 还要逐个分片扫描并考虑迁槽。扫描后删除要分批限速，避免把 KEYS 的压力转成另一种批量写压力。〔N125〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("std::uint64_t cursor = 0;\ndo { auto page = redis.scan(cursor, \"cache:*\", 500); cursor = page.next; process_idempotently(page.keys); } while (cursor != 0);\n// 每批可以为空；集群场景还要遍历每个节点", lang: "cpp", block: true)
+  #raw("std::uint64_t cursor = 0;\ndo\n{\n    auto page = redis.scan(cursor, \"cache:*\", 500);\n    cursor = page.next;\n    process_idempotently(page.keys);\n} while (cursor != 0);\n// 每批可以为空；集群场景还要遍历每个节点", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -3202,7 +3202,7 @@
   #text("可靠失效事件可作为删除信号后回查数据库最新值；若事件携带新值，要按版本原子比较，避免乱序旧事件覆盖新值。TTL、可靠重试、版本校验和按键串行重建能缩短竞态窗口，延迟双删不能作为正确性证明。〔N124〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("CacheValue cached = cache.get(key); DatabaseValue fresh = db.read(key);\ncache.compare_and_set(key, cached.version, fresh); // 拒绝旧版本迟到回填覆盖新版本\n// 先提交数据库再删缓存仍需处理并发回填、失效通知丢失", lang: "cpp", block: true)
+  #raw("CacheValue cached = cache.get(key);\nDatabaseValue fresh = db.read(key);\ncache.compare_and_set(key, cached.version, fresh); // 拒绝旧版本迟到回填覆盖新版本\n// 先提交数据库再删缓存仍需处理并发回填、失效通知丢失", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -3213,7 +3213,7 @@
   #text("达到空闲阈值后，可用 XCLAIM 或 XAUTOCLAIM 转交给存活消费者；重新领取不证明旧消费者已停止，所以业务要按流名和消息 ID 幂等，防止重复副作用。流裁剪、删除、重试上限、持久化和复制保留也要协调，过早删消息可能令 PEL 只剩引用却无内容。可靠投递仍需要重试和对账设计。〔N126〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("auto messages = stream.read_group(\"orders\", \"worker-A\", \">\");\nfor (auto& message : messages) { if (!processed(message.id)) handle(message); stream.ack(\"orders\", message.id); }\nstream.claim_idle(\"orders\", \"worker-B\", 30s); // 重领后仍须按消息ID幂等", lang: "cpp", block: true)
+  #raw("auto messages = stream.read_group(\"orders\", \"worker-A\", \">\");\nfor (auto& message : messages)\n{\n    if (!processed(message.id))\n        handle(message);\n    stream.ack(\"orders\", message.id);\n}\nstream.claim_idle(\"orders\", \"worker-B\", 30s); // 重领后仍须按消息ID幂等", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -3224,7 +3224,7 @@
   #text("故障时不要反复跑 KEYS 或拉取全量数据扩大负载。按证据选拆键、限流、异步释放、限制批量大小或调整容量，并在相同负载下比较尾延迟和错误率。内存数据库仍可能受 CPU、网络和排队影响，不能因“数据在内存”就排除服务端瓶颈。〔N116〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("auto pool_wait = pool.acquire_time(); auto network = measure_round_trip();\nauto server = redis.slowlog_and_latency(command); auto p99 = percentile(latencies, 99);\n// 分开记录客户端排队、网络和服务端执行；按证据缩小瓶颈", lang: "cpp", block: true)
+  #raw("auto pool_wait = pool.acquire_time();\nauto network = measure_round_trip();\nauto server = redis.slowlog_and_latency(command);\nauto p99 = percentile(latencies, 99);\n// 分开记录客户端排队、网络和服务端执行；按证据缩小瓶颈", lang: "cpp", block: true)
 ]
 
 #heading(level: 2, outlined: true)[#text("9.13 MySQL 存储机制与运维补充", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
@@ -3237,7 +3237,7 @@
   #text("变长列长度可能用一或两字节编码，不能只按字符声明长度推断。记录过大时可把部分长值放到溢出页：COMPACT 通常保留 768 字节前缀和 20 字节指针；DYNAMIC 可把长列全部外置，页内只留指针。是否外置还取决于行大小、页大小和列内容。〔I63、S9〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("RecordHeader header{}; header.null_bitmap = build_null_bitmap(nullable_columns);\nheader.trx_id = transaction_id; header.rollback_ptr = undo_pointer;\nif (record_too_large(row)) store_external_page(long_column); // 具体布局依行格式与版本", lang: "cpp", block: true)
+  #raw("RecordHeader header{};\nheader.null_bitmap = build_null_bitmap(nullable_columns);\nheader.trx_id = transaction_id;\nheader.rollback_ptr = undo_pointer;\nif (record_too_large(row))\n    store_external_page(long_column); // 具体布局依行格式与版本", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -3248,7 +3248,7 @@
   #text("MyISAM、MEMORY 不受相同 MVCC 快照保护；导出中 ALTER、DROP、RENAME、TRUNCATE 等 DDL 仍可能让结果错误或失败。要做时间点恢复，还要记录与快照匹配的 binlog 坐标并保留后续日志，相关选项可能短暂加全局读锁。长快照也会推迟 undo 清理。备份是否可用最终要通过实际恢复演练确认。〔I74、S9〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("if (all_tables_are_innodb()) mysqldump_single_transaction(snapshot, binlog_position);\nelse lock_non_transactional_tables();\nrestore_into_isolated_instance(backup); verify_rows_and_foreign_keys(); // 备份必须做恢复演练", lang: "cpp", block: true)
+  #raw("if (all_tables_are_innodb())\n    mysqldump_single_transaction(snapshot, binlog_position);\nelse\n    lock_non_transactional_tables();\nrestore_into_isolated_instance(backup);\nverify_rows_and_foreign_keys(); // 备份必须做恢复演练", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -3259,7 +3259,7 @@
   #text("Change Buffer 占 Buffer Pool，合并仍会产生 I/O，也不能免除 redo 和持久化。MySQL 8.4 中 innodb_adaptive_hash_index 默认 OFF，innodb_change_buffering 默认 none，不能把旧版常见配置当当前默认。应按代表性读写负载及争用指标测量后决定是否启用。〔I75、I76、N103〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("if (secondary_page_not_in_buffer_pool(index_page)) change_buffer.merge_later(index_page, update);\nif (lookup_is_repeatedly_hot(key)) adaptive_hash_index.maybe_accelerate(key);\n// 两者优化目标不同，按目标版本和读写负载评估", lang: "cpp", block: true)
+  #raw("if (secondary_page_not_in_buffer_pool(index_page))\n    change_buffer.merge_later(index_page, update);\nif (lookup_is_repeatedly_hot(key))\n    adaptive_hash_index.maybe_accelerate(key);\n// 两者优化目标不同，按目标版本和读写负载评估", lang: "cpp", block: true)
 ]
 
 
@@ -3273,7 +3273,7 @@
   #text("偏 CP 的系统可能让少数派拒绝写入，避免互相冲突；偏 AP 的系统可继续响应，但允许暂时不一致并在恢复后收敛。CAP 不是说正常网络下永远只能二选一，也不替业务决定最终方案。先明确分区时允许拒绝什么请求、哪些数据可以短暂陈旧，再选一致性协议和恢复方式。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("if (network_partition) {\n    if (require_linearizable_reads_and_writes) reject_or_wait_on_minority(); // CP\n    else if (require_every_partition_to_respond) accept_writes_and_reconcile_later(); // AP\n}\n// CAP 约束故障分区期间的保证，不意味着正常网络下永远只能选 C 或 A。\ndefine_consistency_semantics_availability_slo_and_partition_cases_first();\n// AP 需要冲突解决/收敛；CP 多数派恢复后可继续服务。", lang: "cpp", block: true)
+  #raw("if (network_partition)\n{\n    if (require_linearizable_reads_and_writes)\n        reject_or_wait_on_minority(); // CP\n    else if (require_every_partition_to_respond)\n        accept_writes_and_reconcile_later(); // AP\n}\n// CAP 约束故障分区期间的保证，不意味着正常网络下永远只能选 C 或 A。\ndefine_consistency_semantics_availability_slo_and_partition_cases_first();\n// AP 需要冲突解决/收敛；CP 多数派恢复后可继续服务。", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -3284,7 +3284,7 @@
   #text("已知预计元素数 n 和目标误判率 p，可估算位数 m≈-n ln(p)/(ln2)^2，哈希数 k≈(m/n)ln2。实际数据超过容量，误判率会升高；要监控误判并扩容或分层，而不能把命中当作数据库事实。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("#include <cmath>\n#include <cstddef>\n#include <cstdint>\n#include <vector>\n// n > 0，0 < p < 1；容量超预估会提高误判率\nstd::size_t m = static_cast<std::size_t>(std::ceil(-n * std::log(p) / std::pow(std::log(2.0), 2)));\nstd::size_t k = static_cast<std::size_t>(std::round((static_cast<double>(m) / n) * std::log(2.0)));\nif (k == 0) k = 1; // 至少使用一个哈希位置\nstd::vector<std::uint8_t> bits((m + 7) / 8, 0);\nfor (auto h : k_hashes(key)) set_bit(bits, h % m); // 插入只置位\nfor (auto h : k_hashes(query)) if (!test_bit(bits, h % m)) return DefinitelyAbsent;\nreturn MaybePresent; // 无假阴性、有假阳性；命中仍查真实存储\n// 标准结构不能单键删除；监测误判率后扩容/分层", lang: "cpp", block: true)
+  #raw("#include <cmath>\n#include <cstddef>\n#include <cstdint>\n#include <vector>\n// n > 0，0 < p < 1；容量超预估会提高误判率\nstd::size_t m = static_cast<std::size_t>(std::ceil(-n * std::log(p) / std::pow(std::log(2.0), 2)));\nstd::size_t k = static_cast<std::size_t>(std::round((static_cast<double>(m) / n) * std::log(2.0)));\nif (k == 0)\n    k = 1; // 至少使用一个哈希位置\nstd::vector<std::uint8_t> bits((m + 7) / 8, 0);\nfor (auto h : k_hashes(key))\n    set_bit(bits, h % m); // 插入只置位\nfor (auto h : k_hashes(query))\n    if (!test_bit(bits, h % m))\n        return DefinitelyAbsent;\nreturn MaybePresent; // 无假阴性、有假阳性；命中仍查真实存储\n// 标准结构不能单键删除；监测误判率后扩容/分层", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -3295,7 +3295,7 @@
   #text("这种哈希只解决映射和部分迁移，并不自动处理热点、复制或故障恢复。虚拟节点数量和权重会影响负载方差，扩缩容要渐进搬迁，限速并设置读写转发、双读校验或版本检查。否则迁移窗口可能读不到数据或覆盖新写入。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("for (Node node : nodes) for (int v = 0; v < virtual_nodes(node); ++v)\n    ring[hash(node.id, v)] = node; // 虚拟节点帮助均衡区间，也可按容量加权\nauto it = ring.lower_bound(hash(key)); if (it == ring.end()) it = ring.begin();\nowner = it->second; // 键映射到顺时针后继，增删节点主要移动相邻区间\n// 变更节点后限速迁移，可双读/转发并校验版本后切流\n// 一致性哈希不解决热点、复制和故障恢复；虚拟节点数需按负载调优\n// 监控分片负载方差，不能只凭“节点均匀”假设均衡", lang: "cpp", block: true)
+  #raw("for (Node node : nodes)\n    for (int v = 0; v < virtual_nodes(node); ++v)\n        ring[hash(node.id, v)] = node; // 虚拟节点帮助均衡区间，也可按容量加权\nauto it = ring.lower_bound(hash(key));\nif (it == ring.end())\n    it = ring.begin();\nowner = it->second; // 键映射到顺时针后继，增删节点主要移动相邻区间\n// 变更节点后限速迁移，可双读/转发并校验版本后切流\n// 一致性哈希不解决热点、复制和故障恢复；虚拟节点数需按负载调优\n// 监控分片负载方差，不能只凭“节点均匀”假设均衡", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -3306,7 +3306,7 @@
   #text("Snowflake 类把时间、节点号和序列组合，需保证节点号不冲突，并处理时钟回拨和单毫秒序列耗尽。UUID 易于独立生成但较长且排序局部性有限。分片键还需匹配常见查询：若按买家分片却只凭订单 ID 查详情，要么维护路由，要么把分片信息编码进 ID，否则需要广播。严格全局单调通常要协调器，会牺牲部分可用性。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("id = database_allocated_range(); // 简单；需分配服务、缓存段和故障恢复\nid = UUID_random(); // 易分布式生成但较长，通常不按生成时间顺序聚集\nid = (timestamp_ms << (node_bits + seq_bits)) | (node_id << seq_bits) | sequence;\nif (node_id_conflicts) reject_configuration();\nif (clock_moves_backwards || sequence_exhausted) wait_or_reject_or_use_new_epoch();\n// 明确唯一/大致有序/紧凑/不可预测等要求；严格全局单调需协调，降低可用性。", lang: "cpp", block: true)
+  #raw("id = database_allocated_range(); // 简单；需分配服务、缓存段和故障恢复\nid = UUID_random(); // 易分布式生成但较长，通常不按生成时间顺序聚集\nid = (timestamp_ms << (node_bits + seq_bits)) | (node_id << seq_bits) | sequence;\nif (node_id_conflicts)\n    reject_configuration();\nif (clock_moves_backwards || sequence_exhausted)\n    wait_or_reject_or_use_new_epoch();\n// 明确唯一/大致有序/紧凑/不可预测等要求；严格全局单调需协调，降低可用性。", lang: "cpp", block: true)
 ]
 
 #heading(level: 2, outlined: true)[#text("10.2 数据处理与在线服务设计", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
@@ -3318,7 +3318,7 @@
   #text("文件大到无法装入内存时，可按稳定哈希把相同键分到同一桶，逐桶统计，再把每桶的前 K 个候选汇总。频率 Top K 必须先定义是否是全局聚合；稳定分桶保证同键计数不被拆开。若近似算法节省资源，要说明误差和置信范围。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("std::priority_queue<int, std::vector<int>, std::greater<int>> top_k; // 最小堆\nfor (value : stream) { if (top_k.size() < K) top_k.push(value);\n    else if (value > top_k.top()) { top_k.pop(); top_k.push(value); } }\n// 内存可容纳时 O(N log K)、O(K)；堆顶是候选里最小项。\n// 超大文件先稳定哈希分桶相同 key，再逐桶统计/取候选并归并。\n// 频率 Top K 要定义跨桶全局计数；近似算法应给误差/置信度。", lang: "cpp", block: true)
+  #raw("std::priority_queue<int, std::vector<int>, std::greater<int>> top_k; // 最小堆\nfor (value : stream)\n{\n    if (top_k.size() < K)\n        top_k.push(value);\n    else if (value > top_k.top())\n    {\n        top_k.pop();\n        top_k.push(value);\n    }\n}\n// 内存可容纳时 O(N log K)、O(K)；堆顶是候选里最小项。\n// 超大文件先稳定哈希分桶相同 key，再逐桶统计/取候选并归并。\n// 频率 Top K 要定义跨桶全局计数；近似算法应给误差/置信度。", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -3329,7 +3329,7 @@
   #text("TCC 显式分 Try 预留资源、Confirm 确认、Cancel 释放，控制力强，但每一步要幂等并处理空回滚、悬挂和超时。Saga 把多个本地事务串成流程，失败后执行补偿；补偿是新的业务动作，不保证精确还原，中间状态可能被看到。能用本地事务加 Outbox 时通常更简单；按隔离要求和补偿能力决定。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// TCC：Try 预留；各阶段按 transaction_id 幂等，并记录事务状态\nif (!inventory.try_reserve(txn_id)) return Failed;\nif (payment.try_charge(txn_id)) inventory.confirm(txn_id);\nelse { inventory.cancel_if_reserved(txn_id); payment.cancel_if_charged(txn_id); }\n// 空回滚：Try 未发生也可能收到 Cancel；悬挂：迟到 Try 不能复活已取消事务\n// Saga 则串本地事务，失败执行逆序业务补偿；补偿不保证精确还原\n// 能避免跨服务强事务时，用本地事务 + Outbox 降低协调复杂度", lang: "cpp", block: true)
+  #raw("// TCC：Try 预留；各阶段按 transaction_id 幂等，并记录事务状态\nif (!inventory.try_reserve(txn_id))\n    return Failed;\nif (payment.try_charge(txn_id))\n    inventory.confirm(txn_id);\nelse\n{\n    inventory.cancel_if_reserved(txn_id);\n    payment.cancel_if_charged(txn_id);\n}\n// 空回滚：Try 未发生也可能收到 Cancel；悬挂：迟到 Try 不能复活已取消事务\n// Saga 则串本地事务，失败执行逆序业务补偿；补偿不保证精确还原\n// 能避免跨服务强事务时，用本地事务 + Outbox 降低协调复杂度", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -3340,7 +3340,7 @@
   #text("Kafka 的 PID/sequence 或 Broker 去重可减少协议范围内生产重试的重复，但 ACK 丢失仍可能重投，不能替代消费者用全局业务 ID 原子去重。MySQL 可用 ON DUPLICATE KEY UPDATE；8.0.19 起插入行可用别名，VALUES(col) 从 8.0.20 起弃用。INSERT IGNORE 可能把截断等数据问题变成 warning，不是只忽略重复键；唯一索引允许多条 NULL，缺值也要冲突时应 NOT NULL。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("auto inserted = db.insert_if_absent(\"payment_request\", request_id, Processing);\nif (!inserted) return db.load_saved_result(request_id); // 唯一约束裁决并发重试\nprocess_payment_and_store_result_in_same_transaction(request_id, amount);", lang: "cpp", block: true)
+  #raw("auto inserted = db.insert_if_absent(\"payment_request\", request_id, Processing);\nif (!inserted)\n    return db.load_saved_result(request_id); // 唯一约束裁决并发重试\nprocess_payment_and_store_result_in_same_transaction(request_id, amount);", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -3351,7 +3351,7 @@
   #text("Lucene/Elasticsearch 的 segment 常不可变，新数据形成新段，后台 merge 合并并清理已删除文档，所以索引构建和合并会消耗磁盘、CPU。压缩和列式存储减少 I/O，但仍要解压和维护索引。查询需限制时间范围、并发、返回量和敏感字段权限，避免检索本身拖垮集群。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("partitions = narrow_by_time_service_tenant_and_region(query);\nif (frequent_full_text_search) candidates = inverted_index.lookup(keyword);\nelse candidates = parallel_scan_compressed_partitions(partitions, keyword);\n// 列式/压缩可减少 I/O，但有解压和索引维护成本。\napply_time_range_concurrency_result_limit_and_field_acl();\n// 防止无范围查询拖垮集群；对敏感字段做访问控制和审计。", lang: "cpp", block: true)
+  #raw("partitions = narrow_by_time_service_tenant_and_region(query);\nif (frequent_full_text_search)\n    candidates = inverted_index.lookup(keyword);\nelse\n    candidates = parallel_scan_compressed_partitions(partitions, keyword);\n// 列式/压缩可减少 I/O，但有解压和索引维护成本。\napply_time_range_concurrency_result_limit_and_field_acl();\n// 防止无范围查询拖垮集群；对敏感字段做访问控制和审计。", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -3362,7 +3362,7 @@
   #text("标准 Bloom Filter 不支持删除；若业务必须删除，可考虑计数型变体，但要付出更多内存。它适合在昂贵数据库查询前筛掉确定不存在的请求；正向命中仍需查真实数据，不能把 Bloom 命中当成数据存在的证明。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("for (key : indexed_keys) bloom.insert(hash_positions(key));\nif (!bloom.maybe_contains(query)) return NotFound; // 任意一位为 0 可确定不存在\nrecord = primary_storage.lookup(query); // 位全为 1 也只是可能存在\nif (measured_false_positive_rate > target) resize_or_layer_filter();\n// 正确构造下标准 Bloom 无假阴性，但有假阳性，命中仍查真实数据\n// 标准 Bloom 不支持删除；Counting Bloom 支持删除但内存更高\n// n 和目标误判率 p 决定 m/k；超容量后需扩容或分层", lang: "cpp", block: true)
+  #raw("for (key : indexed_keys)\n    bloom.insert(hash_positions(key));\nif (!bloom.maybe_contains(query))\n    return NotFound; // 任意一位为 0 可确定不存在\nrecord = primary_storage.lookup(query); // 位全为 1 也只是可能存在\nif (measured_false_positive_rate > target)\n    resize_or_layer_filter();\n// 正确构造下标准 Bloom 无假阴性，但有假阳性，命中仍查真实数据\n// 标准 Bloom 不支持删除；Counting Bloom 支持删除但内存更高\n// n 和目标误判率 p 决定 m/k；超容量后需扩容或分层", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -3373,7 +3373,7 @@
   #text("普通 LRU 容易被一次性扫描挤掉热点。可在准入阶段过滤、使用冷/热队列，或要求重复访问后再晋升，区分刚进入与反复命中。晋升次数和时间窗口是具体算法策略，不是所有 LRU 的定义。〔N94〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("std::list<std::pair<Key, Value>> lru; // 头最近，尾最久未用\nstd::unordered_map<Key, decltype(lru.begin())> index;\nif (index.contains(key)) { lru.splice(lru.begin(), lru, index[key]); return index[key]->second; }\nif (lru.size() == capacity) { index.erase(lru.back().first); lru.pop_back(); }\nlru.emplace_front(key, value); index[key] = lru.begin(); // 查/移/淘汰平均 O(1)\n// 并发需保护 map 与 list 原子一致；分片锁会变为局部/近似 LRU。", lang: "cpp", block: true)
+  #raw("std::list<std::pair<Key, Value>> lru; // 头最近，尾最久未用\nstd::unordered_map<Key, decltype(lru.begin())> index;\nif (index.contains(key))\n{\n    lru.splice(lru.begin(), lru, index[key]);\n    return index[key]->second;\n}\nif (lru.size() == capacity)\n{\n    index.erase(lru.back().first);\n    lru.pop_back();\n}\nlru.emplace_front(key, value);\nindex[key] = lru.begin(); // 查/移/淘汰平均 O(1)\n// 并发需保护 map 与 list 原子一致；分片锁会变为局部/近似 LRU。", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -3384,7 +3384,7 @@
   #text("要定义热点分片、持久恢复、重置周期和跨分片快照一致性。随机后缀可把热点写分到多个桶，代价是读取时要聚合，并允许一定延迟。若业务要精确财务统计，不能用最终一致的缓存计数取代事实账本。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("shard = hash(request_id) % shard_count; // 分散热点写入\nshards[shard].apply_once(request_id, +1); // 单分片原子去重并递增，重试不重复计数\nif (read_total) sum = aggregate_all_shards(); // 汇总可能有短暂延迟\npersist_shard_checkpoints_and_dedup_ids(); // 恢复时既不漏计也不重计\n// 明确计数是否精确、读延迟与跨分片快照一致性\n// 热点可拆多个随机后缀分桶；扩缩分片需迁移去重状态/计数", lang: "cpp", block: true)
+  #raw("shard = hash(request_id) % shard_count; // 分散热点写入\nshards[shard].apply_once(request_id, +1); // 单分片原子去重并递增，重试不重复计数\nif (read_total)\n    sum = aggregate_all_shards(); // 汇总可能有短暂延迟\npersist_shard_checkpoints_and_dedup_ids(); // 恢复时既不漏计也不重计\n// 明确计数是否精确、读延迟与跨分片快照一致性\n// 热点可拆多个随机后缀分桶；扩缩分片需迁移去重状态/计数", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -3395,7 +3395,7 @@
   #text("超高写入可按用户或榜单分区，再周期合并各片候选；全局精确排名需要协调，不能只把各分片名次拼起来。榜单规模、查询 Top N 还是任意名次、更新频率都会影响数据结构和成本，应先用目标负载测量。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("ZADD(board, score, user_id); // 分数与排序索引一起更新\nrank = ZREVRANK(board, user_id); top = ZREVRANGE(board, 0, K - 1);\n// 先定义同分排序、迟到更新、窗口过期和读延迟目标\nif (single_shard_capacity_exceeded) write_to_partitioned_boards_then_merge_candidates();\n// 分区候选汇总可扩展；全局精确 rank 仍需协调\nif (sliding_window_board) remove_expired_scores_or_events();\n// 还要考虑持久化/重启恢复、排行榜规模和查询频率", lang: "cpp", block: true)
+  #raw("ZADD(board, score, user_id); // 分数与排序索引一起更新\nrank = ZREVRANK(board, user_id);\ntop = ZREVRANGE(board, 0, K - 1);\n// 先定义同分排序、迟到更新、窗口过期和读延迟目标\nif (single_shard_capacity_exceeded)\n    write_to_partitioned_boards_then_merge_candidates();\n// 分区候选汇总可扩展；全局精确 rank 仍需协调\nif (sliding_window_board)\n    remove_expired_scores_or_events();\n// 还要考虑持久化/重启恢复、排行榜规模和查询频率", lang: "cpp", block: true)
 ]
 
 #heading(level: 2, outlined: true)[#text("10.3 高并发、消息与容错", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
@@ -3407,7 +3407,7 @@
   #text("还要处理消息失败、超时订单释放和库存对账，并压测热库存键和队列积压。入口尽量先过滤无资格请求，减少它们争抢库存。库存预扣、订单创建和支付之间需有明确状态机，失败时按唯一订单号补偿，不能因排队接口返回“受理”就谎称下单成功。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("if (!authorized(user) || !rate_limiter.allow(user)) reject();\nif (!inventory.decrement_if_positive(product_id)) return sold_out();\nbroker.publish({request_id, user_id, product_id}); // 消费者按request_id幂等建单", lang: "cpp", block: true)
+  #raw("if (!authorized(user) || !rate_limiter.allow(user))\n    reject();\nif (!inventory.decrement_if_positive(product_id))\n    return sold_out();\nbroker.publish({request_id, user_id, product_id}); // 消费者按request_id幂等建单", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -3418,7 +3418,7 @@
   #text("负载均衡还要结合健康检查、区域成本、连接池及重试放大。健康探针应区分进程存活和业务就绪，恢复中的实例不宜立刻接满流量。发现实例故障后，安全重试需有限次数和幂等键，避免把剩余实例也压垮。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("if (instances_have_similar_capacity) choose_round_robin();\nelse if (capacity_weights_known) choose_weighted_round_robin();\nelse if (request_durations_vary) choose_least_connections();\nif (session_or_cache_locality_matters) choose_consistent_hash();\nexclude_if_unhealthy_or_not_ready(); // 活着不等于业务就绪\n// 同时控制重试放大、连接池和跨区成本；策略按实际延迟/负载验证。", lang: "cpp", block: true)
+  #raw("if (instances_have_similar_capacity)\n    choose_round_robin();\nelse if (capacity_weights_known)\n    choose_weighted_round_robin();\nelse if (request_durations_vary)\n    choose_least_connections();\nif (session_or_cache_locality_matters)\n    choose_consistent_hash();\nexclude_if_unhealthy_or_not_ready(); // 活着不等于业务就绪\n// 同时控制重试放大、连接池和跨区成本；策略按实际延迟/负载验证。", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -3429,7 +3429,7 @@
   #text("拆分前先明确数据所有权、故障边界和团队职责，并配套超时、有限重试、熔断、版本兼容及调用链观测。跨服务事务也会变成事件、补偿或一致性问题。拆分应按真实独立扩缩容、发布和隔离需求，而不是因为“微服务更先进”。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("if (team_is_small_and_domain_boundaries_unclear) start_with_modular_monolith();\n// 单体进程内调用快、事务清楚、部署简单。\nif (service_boundary_owned_by_team && independent_release_or_scale_needed) split_service();\n// 微服务引入网络超时、部分失败、数据一致性、观测/发布治理成本。\nadd_deadlines_bounded_retries_circuit_breakers_and_version_compatibility();\n// 按领域与团队所有权拆分，避免按技术层切成大量小服务。", lang: "cpp", block: true)
+  #raw("if (team_is_small_and_domain_boundaries_unclear)\n    start_with_modular_monolith();\n// 单体进程内调用快、事务清楚、部署简单。\nif (service_boundary_owned_by_team && independent_release_or_scale_needed)\n    split_service();\n// 微服务引入网络超时、部分失败、数据一致性、观测/发布治理成本。\nadd_deadlines_bounded_retries_circuit_breakers_and_version_compatibility();\n// 按领域与团队所有权拆分，避免按技术层切成大量小服务。", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -3440,7 +3440,7 @@
   #text("至少一次投递通常会重试，因此消费者要按消息 ID 幂等，并配置退避、死信和积压监控。可在消息中维护 producer 与 partition 维度的递增序号来发现缺口，但多个生产者各有序列，不能拼成一条全局连续流。确认先后决定故障时偏向重复还是丢失，需按目标选择。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("producer.send(message); await broker_durable_replica_ack(); // 持久化确认后再报成功\nconsumer_result = apply_business_idempotently(message.id, message.payload);\nif (consumer_result.durable) consumer.ack_or_commit_offset(message);\n// 先 ACK 再持久处理会丢业务；先处理后 ACK 崩溃会重放\nretry_with_limit_and_dead_letter_after_policy(); monitor_lag_and_replica_health();\n// 按消息 ID 幂等，监控复制健康/积压；Broker ACK 语义要核对配置\n// 保证边界还依赖副本数、刷盘策略和故障类型", lang: "cpp", block: true)
+  #raw("producer.send(message);\nawait broker_durable_replica_ack(); // 持久化确认后再报成功\nconsumer_result = apply_business_idempotently(message.id, message.payload);\nif (consumer_result.durable)\n    consumer.ack_or_commit_offset(message);\n// 先 ACK 再持久处理会丢业务；先处理后 ACK 崩溃会重放\nretry_with_limit_and_dead_letter_after_policy();\nmonitor_lag_and_replica_health();\n// 按消息 ID 幂等，监控复制健康/积压；Broker ACK 语义要核对配置\n// 保证边界还依赖副本数、刷盘策略和故障类型", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -3451,7 +3451,7 @@
   #text("限流可放网关、独立服务或进程内：集中额度容易统一但依赖网络；本地快且隔离，但多副本总额度需协调。共享桶的读改写必须原子执行，热点额度可按用户或资源分片。规则更新要带版本可靠传播；限流器故障时选择 fail-open 还是 fail-closed，关键写路径通常不能默默放行。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("#include <algorithm>\n// 固定窗口易实现，但边界前后短时间内可接近两倍限额\nif (fixed_window_count(key, now) < limit) allow();\n// 令牌桶按 rate 补充，最多 burst_capacity，允许短突发\ntokens = std::min(capacity, tokens + elapsed * rate);\nif (tokens >= 1) { tokens -= 1; allow(); }\n// 滑动日志更精确但状态多；漏桶适合较匀速处理后台任务\n// 分布式还要定义原子更新、公平性和状态丢失时的降级", lang: "cpp", block: true)
+  #raw("#include <algorithm>\n// 固定窗口易实现，但边界前后短时间内可接近两倍限额\nif (fixed_window_count(key, now) < limit)\n    allow();\n// 令牌桶按 rate 补充，最多 burst_capacity，允许短突发\ntokens = std::min(capacity, tokens + elapsed * rate);\nif (tokens >= 1)\n{\n    tokens -= 1;\n    allow();\n}\n// 滑动日志更精确但状态多；漏桶适合较匀速处理后台任务\n// 分布式还要定义原子更新、公平性和状态丢失时的降级", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -3462,7 +3462,7 @@
   #text("关键依赖要明确 RTO（多久恢复）和 RPO（可接受的数据丢失范围）。备份必须定期恢复演练，监控告警、故障演练和回滚也要证明能在目标时间内起效。多副本不自动解决数据一致性或区域级故障；可用性数字要结合观察窗口和业务请求口径计算。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("replicate_across_processes_and_failure_domains(); health_check_readiness_and_fail_over();\ncall_dependency_with_deadline(); retry_with_bounded_jittered_backoff();\nif (failure_rate_high) circuit_break_and_serve_degraded_result();\nbackup_data(); periodically_restore_test_and_measure_RTO_RPO();\n// RTO 是恢复所需时间，RPO 是可接受的数据丢失窗口\n// 监控告警、回滚和故障演练验证冗余可恢复，而非只看副本数\n// 备份需定期实测恢复，才能证明目标满足", lang: "cpp", block: true)
+  #raw("replicate_across_processes_and_failure_domains();\nhealth_check_readiness_and_fail_over();\ncall_dependency_with_deadline();\nretry_with_bounded_jittered_backoff();\nif (failure_rate_high)\n    circuit_break_and_serve_degraded_result();\nbackup_data();\nperiodically_restore_test_and_measure_RTO_RPO();\n// RTO 是恢复所需时间，RPO 是可接受的数据丢失窗口\n// 监控告警、回滚和故障演练验证冗余可恢复，而非只看副本数\n// 备份需定期实测恢复，才能证明目标满足", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -3473,7 +3473,7 @@
   #text("直播广播若让每个实时节点处理所有房间消息，会浪费带宽和 CPU；可按 liveVideoId 分区并将房间路由到负责节点。评论发布前应做权限和内容审核，明显风险可同步拦截，边界内容可异步复核。网关故障后客户端应指数退避重连，避免所有用户同时冲击认证和路由服务。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("gateway.accept_long_connection(); authenticate_and_heartbeat();\nroute = presence_service.locate_user_gateway(user_id);\nmessage_store.persist_with_sequence_and_ttl(message); queue.deliver(route, message);\nif (client_ack(message.id)) mark_delivered_idempotently();\nif (reconnect) backoff_with_jitter(); fetch_messages_after(last_acked_sequence);\n// 设计多端、离线存储、重复投递、顺序和路由状态过期语义。", lang: "cpp", block: true)
+  #raw("gateway.accept_long_connection();\nauthenticate_and_heartbeat();\nroute = presence_service.locate_user_gateway(user_id);\nmessage_store.persist_with_sequence_and_ttl(message);\nqueue.deliver(route, message);\nif (client_ack(message.id))\n    mark_delivered_idempotently();\nif (reconnect)\n    backoff_with_jitter();\nfetch_messages_after(last_acked_sequence);\n// 设计多端、离线存储、重复投递、顺序和路由状态过期语义。", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -3484,7 +3484,7 @@
   #text("日志可记录请求 ID、时间和线程信息以便排查，但要过滤密码、凭证和个人数据。监控队列深度、写入失败及丢弃数量；高峰期若选择丢日志，要保证关键审计事件另有可靠路径。异步写降低业务等待，并不代表日志已经持久化。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("if (pending.size() == capacity) apply_block_drop_low_level_or_sample_policy(record);\nelse pending.push(record); // 业务线程只排入有界异步队列\nbackground_worker.batch_format_and_write_file_or_remote();\nrotate_logs_and_flush_by_durability_policy();\non_shutdown_flush_then_join_worker();\n// 记录 request ID/时间/线程但脱敏；监控队列深度、丢弃量和写入错误。", lang: "cpp", block: true)
+  #raw("if (pending.size() == capacity)\n    apply_block_drop_low_level_or_sample_policy(record);\nelse\n    pending.push(record); // 业务线程只排入有界异步队列\nbackground_worker.batch_format_and_write_file_or_remote();\nrotate_logs_and_flush_by_durability_policy();\non_shutdown_flush_then_join_worker();\n// 记录 request ID/时间/线程但脱敏；监控队列深度、丢弃量和写入错误。", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -3495,7 +3495,7 @@
   #text("若事件循环里做同步磁盘 I/O 或无界计算，同一循环上的其他连接都会停等。线程数和进程模型应通过压测、profiling 后选择，不要先堆线程。接收缓冲区、业务队列和工作池要共同限流，避免把网络背压藏成内存增长。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("while (running) { auto ready = poller.wait(deadline);\n    for (event : ready) handle_nonblocking_socket(event); // I/O 线程保持轻量\n    submit_cpu_or_blocking_work_to_bounded_pool(); // 防止磁盘/业务阻塞事件循环\n    apply_backpressure_to_connection_and_task_queues(); expire_slow_requests(); }\n// 限连接、缓冲与执行时长；优雅关闭时停止接入、排空任务并回收线程。\n// 压测/profiling 后再调线程数、进程模型与 CPU 亲和性。", lang: "cpp", block: true)
+  #raw("while (running)\n{\n    auto ready = poller.wait(deadline);\n    for (event : ready)\n        handle_nonblocking_socket(event); // I/O 线程保持轻量\n    submit_cpu_or_blocking_work_to_bounded_pool(); // 防止磁盘/业务阻塞事件循环\n    apply_backpressure_to_connection_and_task_queues();\n    expire_slow_requests();\n}\n// 限连接、缓冲与执行时长；优雅关闭时停止接入、排空任务并回收线程。\n// 压测/profiling 后再调线程数、进程模型与 CPU 亲和性。", lang: "cpp", block: true)
 ]
 
 #heading(level: 2, outlined: true)[#text("10.4 共识与消息一致性", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
@@ -3507,7 +3507,7 @@
   #text("分区时失去多数派的一侧无法提交新写入，可能仍能提供受限读取；多数派条件不是说每个节点时时刻刻都有相同的最新状态。提交还取决于任期和前序日志匹配，不能只看当前副本数量就认定任意条目已安全提交。〔S11〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("leader = elect_by_term_and_timeout(); // 领导者接收命令\nleader.append_log(entry); replicate_to_followers(entry);\nif (replicated_to_majority && raft_term_and_prefix_rules_hold) commit(entry);\napply_committed_entries_to_state_machine();\n// 多数派交集让新领导者能继承已提交日志；少数派不能提交新写。\n// 多数不代表每个节点总有最新状态，提交还受任期/日志匹配规则约束。", lang: "cpp", block: true)
+  #raw("leader = elect_by_term_and_timeout(); // 领导者接收命令\nleader.append_log(entry);\nreplicate_to_followers(entry);\nif (replicated_to_majority && raft_term_and_prefix_rules_hold)\n    commit(entry);\napply_committed_entries_to_state_machine();\n// 多数派交集让新领导者能继承已提交日志；少数派不能提交新写。\n// 多数不代表每个节点总有最新状态，提交还受任期/日志匹配规则约束。", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -3518,7 +3518,7 @@
   #text("发送后、标记已发布前也可能崩溃，所以事件可能重复投递；消费者按 event ID 幂等处理。还要安排旧记录清理、发布顺序、积压告警和数据库到 Broker 的延迟。Outbox 不会自动把消费者的数据库也纳入同一个原子事务。〔S13〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("Transaction tx(db); tx.insert(order); tx.insert(outbox_event(order.id, \"OrderCreated\")); tx.commit();\nfor (auto event : outbox.pending()) { broker.publish(event); outbox.mark_sent(event.id); }\n// 发送后崩溃会重发，消费者按event_id幂等", lang: "cpp", block: true)
+  #raw("Transaction tx(db);\ntx.insert(order);\ntx.insert(outbox_event(order.id, \"OrderCreated\"));\ntx.commit();\nfor (auto event : outbox.pending())\n{\n    broker.publish(event);\n    outbox.mark_sent(event.id);\n}\n// 发送后崩溃会重发，消费者按event_id幂等", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -3529,7 +3529,7 @@
   #text("若业务还写外部数据库，Kafka 本身不能把两边纳入同一原子操作。可用事务性 Sink、Outbox 或业务幂等键处理；还要考虑消费者提交进度与数据库提交之间的失败窗口。端到端只有在所有副作用边界都纳入设计时才能谈“恰好一次”。〔S12〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("producer.enable_idempotence(); // 去除生产重试带来的同分区重复记录\nbegin_broker_transaction(); write_output_records(); commit_consumed_offsets_atomically();\nconsumer.read_committed(); // 只读已提交事务数据\n// 若还写外部数据库，Kafka 事务不能把 DB 副作用纳入同一原子提交。\nuse_transactional_sink_or_outbox_or_idempotency_key_for_external_effect();\n// 先说清“一次”覆盖生产、Broker 内消费，还是端到端业务副作用。", lang: "cpp", block: true)
+  #raw("producer.enable_idempotence(); // 去除生产重试带来的同分区重复记录\nbegin_broker_transaction();\nwrite_output_records();\ncommit_consumed_offsets_atomically();\nconsumer.read_committed(); // 只读已提交事务数据\n// 若还写外部数据库，Kafka 事务不能把 DB 副作用纳入同一原子提交。\nuse_transactional_sink_or_outbox_or_idempotency_key_for_external_effect();\n// 先说清“一次”覆盖生产、Broker 内消费，还是端到端业务副作用。", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -3540,7 +3540,7 @@
   #text("熔断不是重试：重试会增加调用，熔断在持续故障时减少调用。降级要按业务价值定义，例如读缓存、暂停非核心功能，但不能把未完成的写伪装成功。Half-Open 探测也须限制并发，防止冷却结束后一次性涌入造成反复过载。〔S15〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("switch (state) { // 每次请求只执行当前状态的一条路径\ncase Closed: forward_call_and_record_result();\n    if (failure_rate() > threshold) state = Open; break;\ncase Open: fail_fast_or_degrade();\n    if (now >= cooldown_end) state = HalfOpen; break;\ncase HalfOpen:\n    if (allow_limited_probe()) state = probe_succeeds() ? Closed : Open;\n    break;\n}\n// Open 降低持续故障时的下游调用；Half-Open 限量探测恢复情况\n// 熔断不是重试；失败可延长冷却，并配合超时、降级和指标告警", lang: "cpp", block: true)
+  #raw("switch (state)\n{ // 每次请求只执行当前状态的一条路径\ncase Closed:\n    forward_call_and_record_result();\n    if (failure_rate() > threshold)\n        state = Open;\n    break;\ncase Open:\n    fail_fast_or_degrade();\n    if (now >= cooldown_end)\n        state = HalfOpen;\n    break;\ncase HalfOpen:\n    if (allow_limited_probe())\n        state = probe_succeeds() ? Closed : Open;\n    break;\n}\n// Open 降低持续故障时的下游调用；Half-Open 限量探测恢复情况\n// 熔断不是重试；失败可延长冷却，并配合超时、降级和指标告警", lang: "cpp", block: true)
 ]
 
 
@@ -3553,7 +3553,7 @@
   #text("数据库事务锁在事务结束时释放，业务锁记录可能仍需保留，这两者不是一回事。分布式锁还要有租约、续租和恢复流程；协调服务会话过期后，旧客户端也可能恢复运行。下游应校验递增 fencing token 或版本，拒绝迟到旧持有者的写入。〔N127、N128、N129〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("if (lock.owner == caller) ++lock.depth;\nelse if (lock.owner.empty()) { lock.owner = caller; lock.depth = 1; ++lock.fence; }\nif (request.fence < resource.last_fence) reject_stale_owner(); // Lua原子更新租期与持有者", lang: "cpp", block: true)
+  #raw("if (lock.owner == caller)\n    ++lock.depth;\nelse if (lock.owner.empty())\n{\n    lock.owner = caller;\n    lock.depth = 1;\n    ++lock.fence;\n}\nif (request.fence < resource.last_fence)\n    reject_stale_owner(); // Lua原子更新租期与持有者", lang: "cpp", block: true)
 ]
 
 #heading(level: 2, outlined: true)[#text("10.6 系统设计补充", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
@@ -3565,7 +3565,7 @@
   #text("过载时先准入、限流、降级并设有界队列，避免无界线程或重试把系统压垮。随后按瓶颈选缓存、批处理、副本、分片或异步化，逐层验证扩容后的新瓶颈和尾延迟。容量规划还要覆盖切换、积压恢复和成本，不能只看短时峰值吞吐。〔N130〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("for (int qps = 1000; qps <= target; qps = static_cast<int>(qps * 1.2)) {\n  auto result = load_test(qps); if (result.p99 > slo || result.errors > limit) break;\n}\nmeasure_recovery_and_backlog_drain(); // 记录拐点，再决定扩容或限流", lang: "cpp", block: true)
+  #raw("for (int qps = 1000; qps <= target; qps = static_cast<int>(qps * 1.2))\n{\n    auto result = load_test(qps);\n    if (result.p99 > slo || result.errors > limit)\n        break;\n}\nmeasure_recovery_and_backlog_drain(); // 记录拐点，再决定扩容或限流", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -3576,7 +3576,7 @@
   #text("指标看总体与尾延迟，日志看单事件细节，trace 串起因果，三者需统一采样并脱敏。客户端超时不代表服务端没执行，写请求重试可能造成重复副作用，应使用幂等键和状态查询。先限流或降级止血，再依证据调整资源、依赖或预算，不要单纯延长 timeout 掩盖问题。〔N148、N146、N130〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("Deadline total = Clock::now() + 300ms;\nauto reply = inventory.call(request, total - 50ms); // 给入口处理留出余量\nif (reply.timed_out()) query_status_or_retry_with_same_id(request.id);\n// 超时只说明调用方停止等待，不说明服务端没执行", lang: "cpp", block: true)
+  #raw("Deadline total = Clock::now() + 300ms;\nauto reply = inventory.call(request, total - 50ms); // 给入口处理留出余量\nif (reply.timed_out())\n    query_status_or_retry_with_same_id(request.id);\n// 超时只说明调用方停止等待，不说明服务端没执行", lang: "cpp", block: true)
 ]
 
 #heading(level: 2, outlined: true)[#text("10.7 消息队列模型与运行", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
@@ -3588,7 +3588,7 @@
   #text("自研持久队列至少要定义消息 ID、主题/队列、存储恢复、确认重投、消费位点、保留清理及配额，再决定分区复制。引入 MQ 也增加端到端延迟、重复投递和运维成本，不适合所有需要立即确定结果的接口。先定义失败语义，再判断异步解耦的收益。〔N131、N132、N133〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("publish(topic, event); // 主题中的同一事件可由不同消费组各自处理\ngroup_a.dispatch_to_one_consumer(event); group_b.dispatch_to_one_consumer(event);\nif (produced_rate > consumed_rate) apply_backpressure_or_scale_consumers();", lang: "cpp", block: true)
+  #raw("publish(topic, event); // 主题中的同一事件可由不同消费组各自处理\ngroup_a.dispatch_to_one_consumer(event);\ngroup_b.dispatch_to_one_consumer(event);\nif (produced_rate > consumed_rate)\n    apply_backpressure_or_scale_consumers();", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -3599,7 +3599,7 @@
   #text("对比吞吐、尾延迟、消息大小、保留周期、路由和重放、顺序范围、消费组、事务边界、运维成本与团队经验，再按目标版本压测。可靠性还取决于持久化、副本、确认和业务幂等；支持事务消息不等于能把任意外部数据库副作用原子化。〔N133、N131、N132〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("Benchmark kafka = measure(kafka_config, workload); Benchmark rabbit = measure(rabbit_config, workload);\nBenchmark rocket = measure(rocket_config, workload);\nchoose_by(p99, recovery, ordering, replay, routing, operations_cost); // 同负载同确认级别比较", lang: "cpp", block: true)
+  #raw("Benchmark kafka = measure(kafka_config, workload);\nBenchmark rabbit = measure(rabbit_config, workload);\nBenchmark rocket = measure(rocket_config, workload);\nchoose_by(p99, recovery, ordering, replay, routing, operations_cost); // 同负载同确认级别比较", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -3610,7 +3610,7 @@
   #text("重试、切换和多生产者可能造成重复、迟到或断序。业务状态机还应校验事件版本及合法迁移。毒消息要决定阻塞后续、隔离还是补偿；跳过可能破坏因果关系，不能静默丢弃。〔N133、N134〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("auto partition = hash(order.id) % partition_count;\nproducer.send(partition, order_created); producer.send(partition, inventory_reserved);\n// 同订单按同键进同分区，其他分区仍可并行消费", lang: "cpp", block: true)
+  #raw("auto partition = hash(order.id) % partition_count;\nproducer.send(partition, order_created);\nproducer.send(partition, inventory_reserved);\n// 同订单按同键进同分区，其他分区仍可并行消费", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -3621,7 +3621,7 @@
   #text("盲目加线程会放大下游压力，扩实例也受分区数量和顺序要求约束。短期可以限产、隔离失败消息并保护关键依赖；长期优化批处理和瓶颈资源。恢复后核对业务延迟、重复处理和保留期限，不要为了让监控归零就丢弃积压。〔N135、N136〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("for (const auto& partition : topic.partitions()) report(partition.lag(), partition.oldest_age());\nif (one_partition_grows()) inspect_hot_key_and_consumer_latency();\nif (all_partitions_grow() && database_slow()) throttle_producer();", lang: "cpp", block: true)
+  #raw("for (const auto& partition : topic.partitions())\n    report(partition.lag(), partition.oldest_age());\nif (one_partition_grows())\n    inspect_hot_key_and_consumer_latency();\nif (all_partitions_grow() && database_slow())\n    throttle_producer();", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -3632,7 +3632,7 @@
   #text("RabbitMQ 可用拒绝且不重入队、TTL 和队列限制等方式把消息路由到死信交换机，但死信不是自动安全永久保存的保证。TTL 配合死信可构建延迟处理，顺序、到期精度和重发布安全须核对队列类型及版本。最终还要通过业务状态对账确认没有遗失。〔N136、N137〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("if (temporary(error) && message.attempts < 5) retry_after(backoff(message.attempts) + jitter());\nelse dead_letter(message, error.reason());\n// 死信要告警并支持按原消息ID修复后重放", lang: "cpp", block: true)
+  #raw("if (temporary(error) && message.attempts < 5)\n    retry_after(backoff(message.attempts) + jitter());\nelse\n    dead_letter(message, error.reason());\n// 死信要告警并支持按原消息ID修复后重放", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -3643,7 +3643,7 @@
   #text("无论用哪种，定时消息只表示“该检查了”，消费者仍要验证状态与截止时间，并用条件更新原子迁移；支付回调和关单需共享状态机，库存释放按订单键幂等。保留数据库扫描对账。RocketMQ 定时精度和范围随大版本而异，不是硬实时定时器。〔N138、N127〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("auto changed = db.execute(\"UPDATE orders SET status='closed' WHERE id=? AND status='unpaid' AND deadline<=NOW()\", order_id);\nif (changed == 1) release_inventory_idempotently(order_id);\n// 延迟消息到达时仍要以数据库状态为准", lang: "cpp", block: true)
+  #raw("auto changed = db.execute(\n    \"UPDATE orders SET status='closed' WHERE id=? AND status='unpaid' AND deadline<=NOW()\",\n    order_id);\nif (changed == 1)\n    release_inventory_idempotently(order_id);\n// 延迟消息到达时仍要以数据库状态为准", lang: "cpp", block: true)
 ]
 
 #heading(level: 2, outlined: true)[#text("10.8 RocketMQ、Kafka 与 RabbitMQ", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
@@ -3655,7 +3655,7 @@
   #text("这一机制帮助本地事务结果与消息可见性最终一致，并未把消费者数据库纳入同一个原子事务。必须设计事务状态记录、回查服务可用性、重试和超时；消费者仍需幂等与失败恢复，不能把半消息说成任意多服务强隔离事务。〔N139〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("broker.send_half_message(event);\nif (database.commit_order_and_tx_state(order, \"committed\")) broker.commit_half_message(event.id);\nelse broker.rollback_half_message(event.id);\n// 回查读取持久化事务状态；消费者仍需按事件ID幂等", lang: "cpp", block: true)
+  #raw("broker.send_half_message(event);\nif (database.commit_order_and_tx_state(order, \"committed\"))\n    broker.commit_half_message(event.id);\nelse\n    broker.rollback_half_message(event.id);\n// 回查读取持久化事务状态；消费者仍需按事件ID幂等", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -3666,7 +3666,7 @@
   #text("Kafka 则围绕分区日志段及其索引组织数据，不能因为都有 Broker 就假设文件布局相同。索引重建、文件清理和复制模式影响恢复及可用性，要按部署版本检查。RocketMQ 5.x 的代理和 Controller 也不能完全套用旧版主从示意图。〔N140、N131、N133〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("auto entry = consume_queue.read(topic, queue, offset);\nauto message = commit_log.read(entry.file_offset, entry.length);\nif (lookup_by_key) index_file.find_commit_log_position(key);", lang: "cpp", block: true)
+  #raw("auto entry = consume_queue.read(topic, queue, offset);\nauto message = commit_log.read(entry.file_offset, entry.length);\nif (lookup_by_key)\n    index_file.find_commit_log_position(key);", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -3677,7 +3677,7 @@
   #text("因此“完全没事”和“消息立刻全部中断”都不准确。应分别监控注册、路由发现、真实生产消费，设计客户端重试和 Broker 故障策略。按目标版本区分 NameServer、Controller 与 Proxy 的角色。〔N140、N131〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("if (client.has_cached_route(topic)) client.send_using_cache(topic, message);\nelse client.query_name_server(topic); // 发现面故障与Broker消息面故障要分开监控", lang: "cpp", block: true)
+  #raw("if (client.has_cached_route(topic))\n    client.send_using_cache(topic, message);\nelse\n    client.query_name_server(topic); // 发现面故障与Broker消息面故障要分开监控", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -3688,7 +3688,7 @@
   #text("RocketMQ 集群消费也做组内分工；经典客户端广播消费则让每个实例各自收取副本，支持范围须查客户端版本。增加消费者前要看分区数、热键和下游容量。消费线程数、进程实例数和独立订阅组数是不同概念，不能简单用数量乘出吞吐。〔N133、N131〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("std::vector<Consumer> consumers = assign_partitions(partitions, group_members);\n// 消费者实例数超过分区数后不会增加分区级并行度\nrebalance_on_membership_change(); monitor_downstream_capacity();", lang: "cpp", block: true)
+  #raw("std::vector<Consumer> consumers = assign_partitions(partitions, group_members);\n// 消费者实例数超过分区数后不会增加分区级并行度\nrebalance_on_membership_change();\nmonitor_downstream_capacity();", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -3699,7 +3699,7 @@
   #text("Broker、控制器负责存储协调；Connect 接外部数据源，Streams 处理流与 KStream/KTable 状态。控制面由 ZooKeeper 向 KRaft 迁移，能用哪种模式要按部署版本确认。更多分区增加并行度，也增加文件和重平衡成本。批量会引入等待，所以高吞吐不等于每条消息都低延迟；大消息、历史随机读和副本同步都会改变表现。〔N133〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("producer.append_batch(partition, {message_a, message_b, message_c});\nauto records = consumer.fetch(partition, next_offset);\nif (process(records)) consumer.commit(next_offset + records.size()); // 不同组可独立重放", lang: "cpp", block: true)
+  #raw("producer.append_batch(partition, {message_a, message_b, message_c});\nauto records = consumer.fetch(partition, next_offset);\nif (process(records))\n    consumer.commit(next_offset + records.size()); // 不同组可独立重放", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -3710,7 +3710,7 @@
   #text("同分区并行处理时要维护“连续完成水位”：后面的记录已完成，也不能越过前面未完成项提交，否则重启会漏前项。限制在途量、必要时暂停分区，并处理重平衡交接。Kafka 事务可原子提交 Kafka 输入位点和输出；外部数据库副作用仍需单独协调。〔N141、N133〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("completed.insert(11); completed.insert(12); // 10尚未完成，不能提交到13\nwhile (completed.contains(next_offset)) ++next_offset;\nconsumer.commit(next_offset); // 只推进连续完成水位，崩溃后可安全恢复", lang: "cpp", block: true)
+  #raw("completed.insert(11);\ncompleted.insert(12); // 10尚未完成，不能提交到13\nwhile (completed.contains(next_offset))\n    ++next_offset;\nconsumer.commit(next_offset); // 只推进连续完成水位，崩溃后可安全恢复", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -3721,7 +3721,7 @@
   #text("生产者超时不证明 Broker 没写入：Broker 可能已接收，响应却丢失。启用幂等生产者并让业务消息携带去重键，以安全处理重试。副本选举行为随版本发展，安全结论应依据实际版本、配置和故障模型，而不能只凭“acks=all”口号。〔N133〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("producer.set_acks(\"all\"); broker.set_min_insync_replicas(2);\nif (isr.size() < 2) reject_write(); else append_and_wait_for_isr(record);\n// ISR少于阈值会牺牲写可用性；结合重试和幂等配置验证", lang: "cpp", block: true)
+  #raw("producer.set_acks(\"all\");\nbroker.set_min_insync_replicas(2);\nif (isr.size() < 2)\n    reject_write();\nelse\n    append_and_wait_for_isr(record);\n// ISR少于阈值会牺牲写可用性；结合重试和幂等配置验证", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -3732,7 +3732,7 @@
   #text("限制每批和在途任务，正确设置存活、轮询和会话参数；目标版本支持时可用稳定成员身份和更平滑协议。优化目标是交接有界、恢复正确，不是把超时设得极大来隐藏失联。〔N133、N141〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("void on_partition_revoked(Partition p) {\n  stop_fetching(p); wait_for_inflight_until(deadline); commit_contiguous_offset(p);\n} // 晚提交可能重放；提前提交可能漏消息，消费仍应幂等", lang: "cpp", block: true)
+  #raw("void on_partition_revoked(Partition p)\n{\n    stop_fetching(p);\n    wait_for_inflight_until(deadline);\n    commit_contiguous_offset(p);\n} // 晚提交可能重放；提前提交可能漏消息，消费仍应幂等", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -3743,7 +3743,7 @@
   #text("同一队列上的消费者通常竞争分工；若多个订阅者都要收到消息，应绑定到各自队列。路由成功只表示找到队列，不代表业务完成。未匹配的消息还要明确是否丢弃、退回或备份；持久化、副本、确认和权限都要分别配置。〔N132〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("exchange.bind(\"orders\", \"order.*\"); exchange.bind(\"payments\", \"payment.#\");\nexchange.publish(\"order.created\", message); // 只路由至匹配绑定的队列\nexchange.publish(\"payment.success\", message); // 每个独立订阅者需自己的队列", lang: "cpp", block: true)
+  #raw("exchange.bind(\"orders\", \"order.*\");\nexchange.bind(\"payments\", \"payment.#\");\nexchange.publish(\"order.created\", message); // 只路由至匹配绑定的队列\nexchange.publish(\"payment.success\", message); // 每个独立订阅者需自己的队列", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -3754,7 +3754,7 @@
   #text("业务提交前 ACK，崩溃会漏处理；业务提交后 ACK 丢失会重投，所以消费者应幂等。Confirm 与 delivery tag 属于不同方向和 channel，不能混用。生产者要跟踪待确认消息并安全重试，TCP 写成功不等于 Broker 落地。〔N142〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("publisher.publish(exchange, routing_key, message, mandatory=true);\nif (basic_return_received()) handle_unroutable(message);\nif (publisher_confirmed()) record_broker_acceptance(message.id);", lang: "cpp", block: true)
+  #raw("publisher.publish(exchange, routing_key, message, mandatory = true);\nif (basic_return_received())\n    handle_unroutable(message);\nif (publisher_confirmed())\n    record_broker_acceptance(message.id);", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -3765,7 +3765,7 @@
   #text("按并发处理数、消息大小、单条耗时和下游容量逐步调整，并观察吞吐与尾延迟。ACK 必须在业务完成后发送；提前 ACK 只是把 Broker 积压转移到应用内存，崩溃时更难恢复。〔N143、N142〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("channel.basic_qos(4); // 每个消费者最多四条未确认消息\nfor (auto delivery : channel.consume(queue)) { process(delivery); channel.ack(delivery.tag); }\n// 预取过大可让慢消费者长时间占有未确认消息", lang: "cpp", block: true)
+  #raw("channel.basic_qos(4); // 每个消费者最多四条未确认消息\nfor (auto delivery : channel.consume(queue))\n{\n    process(delivery);\n    channel.ack(delivery.tag);\n}\n// 预取过大可让慢消费者长时间占有未确认消息", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -3776,7 +3776,7 @@
   #text("失去多数派时可用性会受限；队列数、副本数和跨节点网络都会增加成本。应按当前支持的队列类型规划副本、确认与恢复演练，不能把旧版经典镜像队列当作新版本默认实践。多副本保护 Broker 故障环节，不替代业务 ACK、幂等和备份。〔N144〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("quorum_queue.append(message); quorum_queue.wait_for_majority();\nif (!has_majority()) return unavailable(); // 少数派停止写以保护一致性\n// 多节点集群不代表每个队列都有多副本，需显式配置队列类型", lang: "cpp", block: true)
+  #raw("quorum_queue.append(message);\nquorum_queue.wait_for_majority();\nif (!has_majority())\n    return unavailable(); // 少数派停止写以保护一致性\n// 多节点集群不代表每个队列都有多副本，需显式配置队列类型", lang: "cpp", block: true)
 ]
 
 #heading(level: 2, outlined: true)[#text("10.9 分布式理论与一致性", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
@@ -3788,7 +3788,7 @@
   #text("软状态意味着复制期间可继续变化，不能因此允许业务随意出错；中间态要可观测，失败要有重试、冲突处理或补偿。读己之写、单调读、会话一致性是更弱但实用的保证。接口契约需写明陈旧时长、冲突合并和故障时可用性。数据库 ACID 的 C 是约束保持，不可直接等同分布式线性一致。〔N145〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("if (consistency == Consistency::linearizable) wait_until_replica_applied(version);\nelse if (consistency == Consistency::eventual) return possibly_stale_value();\nif (client_needs_read_your_writes) route_to_replica_at_least(version);", lang: "cpp", block: true)
+  #raw("if (consistency == Consistency::linearizable)\n    wait_until_replica_applied(version);\nelse if (consistency == Consistency::eventual)\n    return possibly_stale_value();\nif (client_needs_read_your_writes)\n    route_to_replica_at_least(version);", lang: "cpp", block: true)
 ]
 
 #heading(level: 2, outlined: true)[#text("10.10 分布式组件与服务治理", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
@@ -3800,7 +3800,7 @@
   #text("还要定义序列化兼容、认证、deadline、取消、错误码、重试资格和幂等键。gRPC deadline 可向下游传播，重试只针对明确瞬时错误并受预算和退避约束。客户端超时无法断言服务端没执行，写操作需靠状态查询或幂等键收敛。SPI 可扩展序列化或负载策略，但扩展不能改变核心失败语义。〔N62、N146〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("Frame request{.version=2, .type=Call, .length=payload.size(), .id=87};\nif (work_queue.full()) return overload_response(request.id);\nworker.execute(request); pending_futures.complete(request.id, make_response(request.id));\n// 有界帧长、截止时间和幂等键属于协议失败语义", lang: "cpp", block: true)
+  #raw("Frame request{.version = 2, .type = Call, .length = payload.size(), .id = 87};\nif (work_queue.full())\n    return overload_response(request.id);\nworker.execute(request);\npending_futures.complete(request.id, make_response(request.id));\n// 有界帧长、截止时间和幂等键属于协议失败语义", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -3811,7 +3811,7 @@
   #text("Watch 是一次性变更通知，收到后应重新读取状态并重新注册；它不是可永久消费的消息队列。用来选主、服务发现或锁时，要处理会话抖动、重复回调和羊群效应。旧客户端恢复后可能仍以为自己持锁，资源端须用 fencing token 或版本校验，不能只信本地状态。〔N147、N129〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("auto candidate = zk.create_ephemeral_sequential(\"/candidate-\");\nwatch(predecessor(candidate), [&] { reread_leader_and_register_watch(); });\nif (session.expired()) discard_local_leadership(); // Watch通知后重新读取，旧主还要检查fencing token", lang: "cpp", block: true)
+  #raw("auto candidate = zk.create_ephemeral_sequential(\"/candidate-\");\nwatch(predecessor(candidate),\n      [&]\n      {\n          reread_leader_and_register_watch();\n      });\nif (session.expired())\n    discard_local_leadership(); // Watch通知后重新读取，旧主还要检查fencing token", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -3822,7 +3822,7 @@
   #text("发布期间需支持新旧版本共存和回滚。健康探针只证明探测时刻可达，不保证业务依赖正常；调用端仍须超时和隔离错误。使用 ZooKeeper、DNS、控制面或服务网格时，分别检查一致性、传播延迟、权限、证书和数据面断联行为。〔N147、N148〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("if (registry.unavailable() && cache.age() < max_staleness) call(healthy_cached_instance());\nelse if (cache.age() >= max_staleness) return service_discovery_unavailable();\n// 缓存路由设置陈旧上限；健康检查应覆盖业务就绪状态", lang: "cpp", block: true)
+  #raw("if (registry.unavailable() && cache.age() < max_staleness)\n    call(healthy_cached_instance());\nelse if (cache.age() >= max_staleness)\n    return service_discovery_unavailable();\n// 缓存路由设置陈旧上限；健康检查应覆盖业务就绪状态", lang: "cpp", block: true)
 ]
 
 #heading(level: 2, outlined: true)[#text("10.11 分布式事务与一致性", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
@@ -3834,7 +3834,7 @@
   #text("TCC 由业务显式实现预留、确认、取消，需处理幂等、空回滚、悬挂和超时；Saga 用补偿动作串起长流程，补偿可能被其他人观察且不一定精确逆转。框架不替代本地约束、Outbox、幂等和对账。按所需隔离、补偿能力、延迟及参与者类型选择。〔N149〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("Transaction tx(db); tx.decrement_inventory(sku); tx.insert_undo_log(); tx.commit();\nif (global_rollback) apply_undo_log();\n// 外部邮件不能靠数据库undo撤回；通过Outbox或TCC协调外部副作用", lang: "cpp", block: true)
+  #raw("Transaction tx(db);\ntx.decrement_inventory(sku);\ntx.insert_undo_log();\ntx.commit();\nif (global_rollback)\n    apply_undo_log();\n// 外部邮件不能靠数据库undo撤回；通过Outbox或TCC协调外部副作用", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -3845,7 +3845,7 @@
   #text("节点重启、数据中心漂移、时钟变化及位宽升级都要测试。多节点 ID 不保证严格全局顺序，也会暴露大致业务规模；若向外公开需考虑可枚举性。〔N98〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("if (now_ms < last_ms) wait_or_fail_on_clock_rollback();\nsequence = (now_ms == last_ms) ? sequence + 1 : 0;\nif (sequence > sequence_mask) wait_for_next_millisecond();\nauto id = ((now_ms - epoch) << (node_bits + sequence_bits)) | (node_id << sequence_bits) | sequence;", lang: "cpp", block: true)
+  #raw("if (now_ms < last_ms)\n    wait_or_fail_on_clock_rollback();\nsequence = (now_ms == last_ms) ? sequence + 1 : 0;\nif (sequence > sequence_mask)\n    wait_for_next_millisecond();\nauto id = ((now_ms - epoch) << (node_bits + sequence_bits)) | (node_id << sequence_bits) | sequence;", lang: "cpp", block: true)
 ]
 
 #heading(level: 2, outlined: true)[#text("10.12 高并发业务系统设计", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
@@ -3857,7 +3857,7 @@
   #text("过期短码通常不回收：旧链接、浏览器缓存的 301 或他人保存的内容可能还指向旧目标，复用会让老链接跳到新地址。点击统计要过滤爬虫和短信预览；短码还应防枚举，只允许 HTTP(S) 等受控协议，并支持恶意链接下架和监控。规模增长后可以按短码路由分片。〔N110、N98、N124〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("auto code = base62(next_distributed_id());\ndb.insert(code, validate_http_url(target), expires_at);\nif (cache.contains(code) && cache[code].expires_at > now()) redirect(cache[code].target);\n// 永不复用旧码，防止历史收藏链接指向新目标", lang: "cpp", block: true)
+  #raw("auto code = base62(next_distributed_id());\ndb.insert(code, validate_http_url(target), expires_at);\nif (cache.contains(code) && cache[code].expires_at > now())\n    redirect(cache[code].target);\n// 永不复用旧码，防止历史收藏链接指向新目标", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -3868,7 +3868,7 @@
   #text("Redis 改状态与发 MQ 之间可能崩溃，不能简单先写 Redis 再发送。可在一个 Lua 脚本中原子更新状态并写 Stream，或用 MySQL 事务 Outbox 发可重放事件。每个状态带递增版本，乱序事件只接受更高版本；消费端仅在状态真实变化时增减计数。热点计数可拆桶后汇总，并定期对账修复；本人状态和总数分别定义陈旧时间。〔N110、N124、N133〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("if (likes.insert_if_absent(user_id, post_id)) outbox.append({event_id, user_id, post_id, version});\nif (consumer.mark_once(event_id)) counters.increment(post_id); // 重复事件不重复计数\n// 周期性用关系表重算派生计数，修复漏发或重放", lang: "cpp", block: true)
+  #raw("if (likes.insert_if_absent(user_id, post_id))\n    outbox.append({event_id, user_id, post_id, version});\nif (consumer.mark_once(event_id))\n    counters.increment(post_id); // 重复事件不重复计数\n// 周期性用关系表重算派生计数，修复漏发或重放", lang: "cpp", block: true)
 ]
 
 #heading(level: 1, outlined: true)[#text("第11章 自动驾驶与实时数据", size: 15pt, weight: "bold", fill: rgb("#000000"))]
@@ -3881,7 +3881,7 @@
   #text("高频相机或点云常更关心最新一帧，可用 BestEffort 和较浅队列，避免网络波动时处理很久以前的数据；关键控制指令可能需要 Reliable，但重试会占用时间和资源，必须检查是否仍满足截止时间。最终要在目标 DDS 实现、网络和负载下测量延迟、丢帧及队列积压。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("camera_qos = {BestEffort, KeepLast, depth=1, deadline=frame_period}; // 保新帧\ncontrol_qos = {Reliable, KeepLast, bounded_depth}; // 关键指令要可靠但受时限约束\nif (!publisher_qos_compatible_with(subscriber_qos)) no_samples_are_delivered();\n// History/Depth、Reliability、Durability、Deadline 策略须兼容\n// 队列太深会积压旧图像；Reliable 重试也会增加时延和资源占用\n// 在目标 DDS、网络和负载下测延迟/丢帧，再按数据重要性定配置", lang: "cpp", block: true)
+  #raw("camera_qos = {BestEffort, KeepLast, depth = 1, deadline = frame_period}; // 保新帧\ncontrol_qos = {Reliable, KeepLast, bounded_depth}; // 关键指令要可靠但受时限约束\nif (!publisher_qos_compatible_with(subscriber_qos))\n    no_samples_are_delivered();\n// History/Depth、Reliability、Durability、Deadline 策略须兼容\n// 队列太深会积压旧图像；Reliable 重试也会增加时延和资源占用\n// 在目标 DDS、网络和负载下测延迟/丢帧，再按数据重要性定配置", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -3892,7 +3892,7 @@
   #text("体素越大，输出点越少，但细小结构、障碍边界和表面精度损失也越明显。平均值生成的质心不一定是原始点；若后续算法依赖真实边缘，可保留距离格中心最近的原始点或根据局部细节自适应格长。处理负坐标时使用 floor 一类向下取整规则，避免简单截断把负坐标分到错误体素。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("#include <cmath>\n#include <unordered_map>\nstd::unordered_map<Cell, SumAndCount, CellHash> voxels;\nfor (const Point& p : cloud) {\n    Cell c{std::floor(p.x / size), std::floor(p.y / size), std::floor(p.z / size)};\n    voxels[c].add(p); // 相同体素累计坐标和计数，floor 也正确处理负坐标\n}\nfor (const auto& [cell, aggregate] : voxels) output.push_back(aggregate.centroid());\n// 平均 O(n)，内存随非空体素数增长；体素越大细节/边缘精度损失越明显\n// 质心不是原始点；依赖表面边缘时可保留代表点或自适应叶尺寸", lang: "cpp", block: true)
+  #raw("#include <cmath>\n#include <unordered_map>\nstd::unordered_map<Cell, SumAndCount, CellHash> voxels;\nfor (const Point& p : cloud)\n{\n    Cell c{std::floor(p.x / size), std::floor(p.y / size), std::floor(p.z / size)};\n    voxels[c].add(p); // 相同体素累计坐标和计数，floor 也正确处理负坐标\n}\nfor (const auto& [cell, aggregate] : voxels)\n    output.push_back(aggregate.centroid());\n// 平均 O(n)，内存随非空体素数增长；体素越大细节/边缘精度损失越明显\n// 质心不是原始点；依赖表面边缘时可保留代表点或自适应叶尺寸", lang: "cpp", block: true)
 ]
 
 #heading(level: 2, outlined: true)[#text("11.2 共享内存与时钟同步", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
@@ -3904,7 +3904,7 @@
   #text("共享槽读写状态要有跨进程同步协议，并考虑进程崩溃后的安全回收。仅因租约超时就覆盖内存可能撞上仍在访问的进程。不同进程的映射地址不保证相同，因此句柄应使用相对偏移或索引，而不是裸虚拟地址。还需验证步长、格式、对齐、NUMA 放置和后续是否发生隐式复制。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("slot = shared_pool.acquire(); producer.write_frame(slot); // 跨进程只传句柄而非复制大帧\npublish({slot.index, slot.generation, length, timestamp, stride});\nconsumer.map_own_address_and_validate_layout(handle); consumer.retain(slot);\nif (consumer_done) release_reference(slot); // 引用归零/所有权归还前不能复用\nif (owner_crashed_or_lease_expired) reclaim_after_safe_recovery();\n// 共享槽位状态需原子同步；检查步长、缓存对齐、NUMA 和隐式复制。", lang: "cpp", block: true)
+  #raw("slot = shared_pool.acquire();\nproducer.write_frame(slot); // 跨进程只传句柄而非复制大帧\npublish({slot.index, slot.generation, length, timestamp, stride});\nconsumer.map_own_address_and_validate_layout(handle);\nconsumer.retain(slot);\nif (consumer_done)\n    release_reference(slot); // 引用归零/所有权归还前不能复用\nif (owner_crashed_or_lease_expired)\n    reclaim_after_safe_recovery();\n// 共享槽位状态需原子同步；检查步长、缓存对齐、NUMA 和隐式复制。", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -3927,7 +3927,7 @@
   #text("每帧应携带时间戳和截止时间，超时后不再把过期结果继续推给下游。监控各阶段耗时、队列深度、端到端 P95/P99 延迟和丢帧，才能看出瓶颈位于采集还是计算。控制链路还要依据安全要求处理丢弃和失联，不能把“更低延迟”当作唯一目标。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("capture -> bounded_queue -> timestamp_and_preprocess -> fusion_or_inference -> output;\nif (queue.full()) drop_oldest_or_newest_or_apply_backpressure_by_data_type();\nif (now - frame.timestamp > deadline) discard_expired_frame();\nrecord_each_stage_timestamp_and_queue_depth();\nalert_on_p95_p99_latency_drops_and_backlog();\n// 实时感知常优先新鲜度，不能无限排旧帧；策略按链路安全要求设定。", lang: "cpp", block: true)
+  #raw("capture->bounded_queue->timestamp_and_preprocess->fusion_or_inference->output;\nif (queue.full())\n    drop_oldest_or_newest_or_apply_backpressure_by_data_type();\nif (now - frame.timestamp > deadline)\n    discard_expired_frame();\nrecord_each_stage_timestamp_and_queue_depth();\nalert_on_p95_p99_latency_drops_and_backlog();\n// 实时感知常优先新鲜度，不能无限排旧帧；策略按链路安全要求设定。", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -3938,7 +3938,7 @@
   #text("每帧要验证像素格式、步长、分辨率和缓冲生命周期。队列满或处理超时后按策略丢弃过期帧，并分别记录相机设备端丢帧计数与处理队列丢帧，才能区分采集故障和算法跟不上。运行期间监控 CPU/GPU、内存、队列深度、丢帧率及 P99 延迟；过大的无界缓冲只会增加延迟。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("frame = camera_sdk.acquire_buffer(); timestamp = frame.hardware_timestamp();\nif (!bounded_queue.try_push({frame_handle, timestamp, format, stride, dimensions})) count_drop();\nworker_demosaic_rectify_and_detect(frame_handle); // 句柄复用可减少大帧复制\nvalidate_pixel_format_stride_dimensions_and_buffer_lifetime();\nif (processing_is_late) drop_expired_frame_and_record_stage_latency();\n// 分开采集/处理线程，避免耗时算法阻塞 SDK 取帧\n// 记录设备端丢帧计数，区分采集丢失与处理积压\n// 监控 CPU/GPU、内存、丢帧和 P99；队列有界避免无界缓存", lang: "cpp", block: true)
+  #raw("frame = camera_sdk.acquire_buffer();\ntimestamp = frame.hardware_timestamp();\nif (!bounded_queue.try_push({frame_handle, timestamp, format, stride, dimensions}))\n    count_drop();\nworker_demosaic_rectify_and_detect(frame_handle); // 句柄复用可减少大帧复制\nvalidate_pixel_format_stride_dimensions_and_buffer_lifetime();\nif (processing_is_late)\n    drop_expired_frame_and_record_stage_latency();\n// 分开采集/处理线程，避免耗时算法阻塞 SDK 取帧\n// 记录设备端丢帧计数，区分采集丢失与处理积压\n// 监控 CPU/GPU、内存、丢帧和 P99；队列有界避免无界缓存", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -3949,7 +3949,7 @@
   #text("多消费者要分别记录读位置或引用计数，不能只靠一个“已读”标志。槽内容必须先写完，再以合适的 release 状态发布，消费者用 acquire 读取状态后才访问内容。固定槽避免大帧复制，但无锁实现仍需处理序号回绕、ABA、进程崩溃及映射生命周期；超时回收前要确认进程不再访问。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("slot = fixed_pool.acquire_without_wait(); if (!slot) return DropAndCount;\nwrite_frame(slot.buffer); slot.sequence = next_sequence.fetch_add(1);\nslot.state.store(Ready, std::memory_order_release); // 内容写完再发布 ready\nconsumer.load_state(std::memory_order_acquire); verify_generation_and_sequence();\nif (reader_finished) release_slot(); // 槽位回收前确认无消费者仍持有\n// 固定槽避免大帧复制，生产者不等待；消费者靠序号发现覆盖/丢帧\n// 多消费者要追踪每个读位置或引用数；序号回绕需防 ABA\n// 超时回收需确认进程已不再访问映射，不能仅因租约过期就覆盖", lang: "cpp", block: true)
+  #raw("slot = fixed_pool.acquire_without_wait();\nif (!slot)\n    return DropAndCount;\nwrite_frame(slot.buffer);\nslot.sequence = next_sequence.fetch_add(1);\nslot.state.store(Ready, std::memory_order_release); // 内容写完再发布 ready\nconsumer.load_state(std::memory_order_acquire);\nverify_generation_and_sequence();\nif (reader_finished)\n    release_slot(); // 槽位回收前确认无消费者仍持有\n// 固定槽避免大帧复制，生产者不等待；消费者靠序号发现覆盖/丢帧\n// 多消费者要追踪每个读位置或引用数；序号回绕需防 ABA\n// 超时回收需确认进程已不再访问映射，不能仅因租约过期就覆盖", lang: "cpp", block: true)
 ]
 
 #heading(level: 1, outlined: true)[#text("第12章 C++ 进阶与工程", size: 15pt, weight: "bold", fill: rgb("#000000"))]
@@ -3962,7 +3962,7 @@
   #text("一致性解决的是同一位置的副本如何协调，不保证多个位置访问的整体顺序，也不能替代 C++ 原子与锁；非原子并发冲突仍是数据竞争。false sharing 是不同线程修改不同变量，但变量恰好落在同一缓存行，导致行的写权限来回转移。可对热点变量分离或按目标硬件对齐，不过会增加空间，且缓存行大小依平台；先用 profiler 验证。〔I55、I56、S2〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("#include <atomic>\n#include <cstdint>\n#include <thread>\nstruct alignas(64) PaddedCounter { std::atomic<std::uint64_t> value{0}; };\nPaddedCounter counters[2];\nstd::jthread a([&] { ++counters[0].value; });\nstd::jthread b([&] { ++counters[1].value; });\n// 逻辑独立但同缓存行会反复转移，形成 false sharing 性能损失\n// 64 是平台假设；对齐会增加内存，应先用 profiler/硬件常量验证", lang: "cpp", block: true)
+  #raw("#include <atomic>\n#include <cstdint>\n#include <thread>\nstruct alignas(64) PaddedCounter\n{\n    std::atomic<std::uint64_t> value{0};\n};\nPaddedCounter counters[2];\nstd::jthread a(\n    [&]\n    {\n        ++counters[0].value;\n    });\nstd::jthread b(\n    [&]\n    {\n        ++counters[1].value;\n    });\n// 逻辑独立但同缓存行会反复转移，形成 false sharing 性能损失\n// 64 是平台假设；对齐会增加内存，应先用 profiler/硬件常量验证", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -3973,7 +3973,7 @@
   #text("std::atomic 为特定对象提供原子操作和内存序，适合线程间共享状态；release/acquire 等可发布普通数据。但一个 atomic 只保护自身对象，两个字段共同满足的业务不变量仍要用锁或经过证明的协议。要在正确性需求上区分硬件 I/O 访问和线程同步，不要把 volatile 与 atomic 当成不同“速度档”的同一工具。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("#include <atomic>\n#include <cstdint>\nvolatile std::uint32_t* device_register = platform_mapped_register();\n*device_register = command; // volatile 用于平台定义的设备访问语义\nstd::atomic<bool> ready{false}; // 线程共享状态需要原子同步\nready.store(true, std::memory_order_release);\nif (ready.load(std::memory_order_acquire)) consume_published_data();\n// volatile 不保证原子性、线程可见性或 happens-before；atomic 也不保护多字段", lang: "cpp", block: true)
+  #raw("#include <atomic>\n#include <cstdint>\nvolatile std::uint32_t* device_register = platform_mapped_register();\n*device_register = command; // volatile 用于平台定义的设备访问语义\nstd::atomic<bool> ready{false}; // 线程共享状态需要原子同步\nready.store(true, std::memory_order_release);\nif (ready.load(std::memory_order_acquire))\n    consume_published_data();\n// volatile 不保证原子性、线程可见性或 happens-before；atomic 也不保护多字段", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -3984,7 +3984,7 @@
   #text("没有 happens-before 关系的冲突非原子读写会构成数据竞争并导致未定义行为。只看线程启动顺序或“写线程先执行了”不足以证明其他线程能看到更新。设计时要指出具体哪个同步操作把读写连接起来，并确保生命周期也正确；join 可以同步线程完成，但不替代其他需要并发通信的同步协议。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("#include <atomic>\n#include <thread>\nint payload = 0; std::atomic<bool> published{false};\nstd::thread producer([&] { payload = 42; published.store(true, std::memory_order_release); });\nwhile (!published.load(std::memory_order_acquire)) {} // 观察到发布值\nint value = payload; // 写入 happens-before 此读取\nproducer.join(); // acquire/release 同步普通数据访问；join 回收线程", lang: "cpp", block: true)
+  #raw("#include <atomic>\n#include <thread>\nint payload = 0;\nstd::atomic<bool> published{false};\nstd::thread producer(\n    [&]\n    {\n        payload = 42;\n        published.store(true, std::memory_order_release);\n    });\nwhile (!published.load(std::memory_order_acquire))\n{\n} // 观察到发布值\nint value = payload; // 写入 happens-before 此读取\nproducer.join(); // acquire/release 同步普通数据访问；join 回收线程", lang: "cpp", block: true)
 ]
 
 #heading(level: 2, outlined: true)[#text("12.2 模板、容器与线程安全", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
@@ -3996,7 +3996,7 @@
   #text("替换失败规则适用于特定的模板替换阶段，不是函数体里任意编译错误都能被吞掉；若模板函数体实例化后访问不存在的成员，通常仍会报错。传统 SFINAE 错误信息可能难懂，C++20 concepts 可用 requires 更直接描述约束。维护旧代码时仍需理解其候选选择和重载行为。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("#include <type_traits>\n#include <utility>\n#include <vector>\ntemplate<class T, class = void> struct has_size : std::false_type {};\ntemplate<class T> struct has_size<T, std::void_t<decltype(std::declval<T>().size())>> : std::true_type {};\nstatic_assert(has_size<std::vector<int>>::value); // 无 size() 的类型选主模板\n// 替换失败才会从候选集中移除；函数体实例化失败不自动算 SFINAE\n// C++20 requires/concepts 更直观表达约束，但旧代码仍会遇到 SFINAE", lang: "cpp", block: true)
+  #raw("#include <type_traits>\n#include <utility>\n#include <vector>\ntemplate <class T, class = void> struct has_size : std::false_type\n{\n};\ntemplate <class T>\nstruct has_size<T, std::void_t<decltype(std::declval<T>().size())>> : std::true_type\n{\n};\nstatic_assert(has_size<std::vector<int>>::value); // 无 size() 的类型选主模板\n// 替换失败才会从候选集中移除；函数体实例化失败不自动算 SFINAE\n// C++20 requires/concepts 更直观表达约束，但旧代码仍会遇到 SFINAE", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -4007,7 +4007,7 @@
   #text("会改变容器结构的操作，如 vector 的 push_back、resize、erase 或 unordered 容器 rehash，可能使迭代器和引用失效；这些操作与遍历或访问通常需要外部同步。不同元素写入的允许范围也不代表容器可一边结构修改一边读取。要共享容器，应锁住完整结构操作，并将锁覆盖迭代器使用期。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("#include <thread>\n#include <vector>\nstd::vector<int> values{1, 2, 3, 4};\nstd::jthread a([&] { values[0] = 10; });\nstd::jthread b([&] { values[1] = 20; }); // 修改不同普通元素\n// 两个线程不应同时 push_back/resize 与遍历：结构和迭代器会改变\n// 写同一元素需同步；vector<bool> 位打包有特殊风险\n// 并发 const 访问也不能与未同步结构修改同时进行", lang: "cpp", block: true)
+  #raw("#include <thread>\n#include <vector>\nstd::vector<int> values{1, 2, 3, 4};\nstd::jthread a(\n    [&]\n    {\n        values[0] = 10;\n    });\nstd::jthread b(\n    [&]\n    {\n        values[1] = 20;\n    }); // 修改不同普通元素\n// 两个线程不应同时 push_back/resize 与遍历：结构和迭代器会改变\n// 写同一元素需同步；vector<bool> 位打包有特殊风险\n// 并发 const 访问也不能与未同步结构修改同时进行", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -4018,7 +4018,7 @@
   #text("若多个线程会同时对同一个 shared_ptr 变量赋值或重置，仍要用锁保护该变量，或在支持的标准库接口中使用 atomic<shared_ptr>。所指对象的成员状态也需要自己的同步设计：shared_ptr 只管理生命周期，不自动保护 Widget 内容。若所有权关系形成环，计数同样无法归零，需考虑 weak_ptr。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("#include <memory>\n#include <thread>\nstd::shared_ptr<Widget> shared = std::make_shared<Widget>();\nstd::shared_ptr<Widget> left = shared, right = shared;\nstd::jthread a([copy = left] { use(copy); }); // 独立 shared_ptr 实例\nstd::jthread b([copy = right] { use(copy); }); // 共享控制块计数可并发更新\n// 同一个 shared_ptr 变量若同时读写仍需同步；Widget 内部也要自行保护", lang: "cpp", block: true)
+  #raw("#include <memory>\n#include <thread>\nstd::shared_ptr<Widget> shared = std::make_shared<Widget>();\nstd::shared_ptr<Widget> left = shared, right = shared;\nstd::jthread a(\n    [copy = left]\n    {\n        use(copy);\n    }); // 独立 shared_ptr 实例\nstd::jthread b(\n    [copy = right]\n    {\n        use(copy);\n    }); // 共享控制块计数可并发更新\n// 同一个 shared_ptr 变量若同时读写仍需同步；Widget 内部也要自行保护", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -4029,7 +4029,7 @@
   #text("模板回调保留传入对象的具体类型，编译器容易内联并在编译期检查操作，但每种类型可能生成独立实例，接口实现通常必须对调用方可见。局部算法或一次性调用常用模板；需要异构的长期存储时 std::function 更方便。选择时考虑复制能力、生命周期、运行时替换和分配成本，而不是把其中一种当作总是更快。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("#include <functional>\n#include <utility>\nstd::function<void(Event)> callback = [state](Event e) { state.handle(e); };\nregistry.add(callback); // 固定签名，可运行时存不同闭包类型\n// 类型擦除带间接调用；目标可能分配，SBO 依具体实现\nauto templated_call = [](auto&& f, auto&& value) {\n  std::forward<decltype(f)>(f)(\n      std::forward<decltype(value)>(value));\n};\ntemplated_call([](Event e) { handle(e); }, event); // 具体类型利于内联\n// 异构长期存储用 function；局部泛型算法通常用模板", lang: "cpp", block: true)
+  #raw("#include <functional>\n#include <utility>\nstd::function<void(Event)> callback = [state](Event e)\n{\n    state.handle(e);\n};\nregistry.add(callback); // 固定签名，可运行时存不同闭包类型\n// 类型擦除带间接调用；目标可能分配，SBO 依具体实现\nauto templated_call = [](auto&& f, auto&& value)\n{\n    std::forward<decltype(f)>(f)(std::forward<decltype(value)>(value));\n};\ntemplated_call(\n    [](Event e)\n    {\n        handle(e);\n    },\n    event); // 具体类型利于内联\n// 异构长期存储用 function；局部泛型算法通常用模板", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -4052,7 +4052,7 @@
   #text("例如 read 加 write 通常把数据先放用户缓冲区；mmap 可省去读入用户缓冲这一步，但普通 write 仍可能复制到 socket 路径，mmap 也不保证立即从磁盘读入。sendfile 可让内核连接文件与 socket 数据路径，降低 CPU 搬运，但要处理短传输、EAGAIN 和源缓冲寿命。系统调用切换到内核态不必然引发线程调度切换，不能凭固定“复制次数”推断性能翻倍。〔I24、N44〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("#include <cstddef>\n#include <span>\n#include <vector>\nvoid checksum(std::span<const std::byte> bytes) { consume(bytes); }\nstd::vector<std::byte> buffer = read_once(); checksum(buffer); // 借用缓冲，不复制字节\n// mmap/sendfile/共享内存可减少特定路径 memcpy，但页表/DMA 仍有成本\n// 仍须保证 buffer 生命周期、所有权移交、并发访问和背压", lang: "cpp", block: true)
+  #raw("#include <cstddef>\n#include <span>\n#include <vector>\nvoid checksum(std::span<const std::byte> bytes)\n{\n    consume(bytes);\n}\nstd::vector<std::byte> buffer = read_once();\nchecksum(buffer); // 借用缓冲，不复制字节\n// mmap/sendfile/共享内存可减少特定路径 memcpy，但页表/DMA 仍有成本\n// 仍须保证 buffer 生命周期、所有权移交、并发访问和背压", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -4063,7 +4063,7 @@
   #text("RAII 管理资源可以避免异常路径泄漏。先构造一个临时完整结果，再通过不抛异常的交换提交新状态，常能提供强保证，例如 copy-and-swap。noexcept 是调用者可依赖的承诺，若异常逃出，运行时会调用 terminate；只有实现真实不会抛时才能标记，不能只为让容器看起来更快。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("class Value { public:\n  Value& operator=(const Value& other) {\n    Value temp(other); // 强保证：复制失败时当前状态不变\n    swap(*this, temp); return *this; // ADL 选本类的非抛出 friend swap\n  }\n  friend void swap(Value&, Value&) noexcept;\n};\n// 基本保证：对象有效且无泄漏；不抛出保证：异常不外传\n// noexcept 只有操作真实不抛时才能承诺", lang: "cpp", block: true)
+  #raw("class Value\n{\n  public:\n    Value& operator=(const Value& other)\n    {\n        Value temp(other); // 强保证：复制失败时当前状态不变\n        swap(*this, temp);\n        return *this; // ADL 选本类的非抛出 friend swap\n    }\n    friend void swap(Value&, Value&) noexcept;\n};\n// 基本保证：对象有效且无泄漏；不抛出保证：异常不外传\n// noexcept 只有操作真实不抛时才能承诺", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -4074,7 +4074,7 @@
   #text("把版本号和指针一起比较可检测一部分 ABA；版本回绕仍需评估。hazard pointer 或 epoch 可以避免其他线程还在访问时释放节点，但这些回收方案需要完整的并发设计。解决 ABA 不能只给指针加计数，还要证明节点内容发布、访问和回收的内存序与寿命都正确。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("#include <atomic>\n#include <cstdint>\nstruct TaggedHead { Node* ptr; std::uint64_t version; };\nstd::atomic<TaggedHead> head; // CAS 同比地址和版本，部分检测 ABA\nbool replace(TaggedHead old, Node* next) {\n  TaggedHead desired{next, old.version + 1};\n  return head.compare_exchange_strong(old, desired);\n}\n// 仍需 hazard pointer/epoch 确保 Node 未提前释放；版本会回绕且未必 lock-free", lang: "cpp", block: true)
+  #raw("#include <atomic>\n#include <cstdint>\nstruct TaggedHead\n{\n    Node* ptr;\n    std::uint64_t version;\n};\nstd::atomic<TaggedHead> head; // CAS 同比地址和版本，部分检测 ABA\nbool replace(TaggedHead old, Node* next)\n{\n    TaggedHead desired{next, old.version + 1};\n    return head.compare_exchange_strong(old, desired);\n}\n// 仍需 hazard pointer/epoch 确保 Node 未提前释放；版本会回绕且未必 lock-free", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -4085,7 +4085,7 @@
   #text("这不是给移动构造加速的装饰。若函数标 noexcept 却让异常逸出，会调用 terminate。标记前要检查成员的移动操作是否也不抛，并确认源对象转移后仍可安全析构。若资源移动失败语义复杂，保留可抛移动并让容器复制回退，可能比做出错误承诺更安全。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("#include <utility>\n#include <vector>\nstruct Item { std::vector<int> data;\n  Item(Item&& other) noexcept : data(std::move(other.data)) {} // 移动确实不抛\n};\nstd::vector<Item> items; items.reserve(100); // 降低扩容搬移次数\n// move 可能抛而 copy 可用时，vector 为强保证可能选择 copy\n// noexcept 错误标注会让逃逸异常调用 terminate", lang: "cpp", block: true)
+  #raw("#include <utility>\n#include <vector>\nstruct Item\n{\n    std::vector<int> data;\n    Item(Item&& other) noexcept\n        : data(std::move(other.data))\n    {\n    } // 移动确实不抛\n};\nstd::vector<Item> items;\nitems.reserve(100); // 降低扩容搬移次数\n// move 可能抛而 copy 可用时，vector 为强保证可能选择 copy\n// noexcept 错误标注会让逃逸异常调用 terminate", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -4096,7 +4096,7 @@
   #text("成员顺序也是对象布局的一部分。重排会改变成员偏移、sizeof、二进制兼容性，可能破坏与外部模块或文件的约定。若结构是公开 ABI 类型，先评估兼容影响；网络和持久化格式则明确字段编码和版本，不要直接把本机结构体原始字节写出去。优化布局还要平衡访问方式和可读性。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("#include <cstddef>\nstruct Before { char tag; double value; int count; };\nstruct After { double value; int count; char tag; };\nstd::size_t a = sizeof(Before), b = sizeof(After); // 只比较当前 ABI\n// 成员对齐会插入填充；将高对齐成员前置有时能减少空隙\n// 重排会改变成员偏移/sizeof 并破坏 ABI\n// 网络或持久化数据应显式序列化，不能依赖本机内存布局", lang: "cpp", block: true)
+  #raw("#include <cstddef>\nstruct Before\n{\n    char tag;\n    double value;\n    int count;\n};\nstruct After\n{\n    double value;\n    int count;\n    char tag;\n};\nstd::size_t a = sizeof(Before), b = sizeof(After); // 只比较当前 ABI\n// 成员对齐会插入填充；将高对齐成员前置有时能减少空隙\n// 重排会改变成员偏移/sizeof 并破坏 ABI\n// 网络或持久化数据应显式序列化，不能依赖本机内存布局", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -4107,7 +4107,7 @@
   #text("不能只记一个“插入是否失效”的通用结论，应查具体容器和操作。erase 常返回下一个有效迭代器，遍历删除时用返回值继续；若调用会让存储重分配的操作，需重新获取迭代器。对保存很久的引用和指针也要检查同样的生命周期，reserve 只能改变某些 vector 操作使其失效的概率。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("#include <vector>\nfor (auto it = values.begin(); it != values.end(); ) {\n  if (should_remove(*it)) it = values.erase(it); else ++it;\n}\n// erase 返回下一个有效迭代器，删除后不要再用旧 it\n// vector 扩容使所有迭代器失效；list 插入通常不影响其他节点迭代器\n// unordered_map rehash 会使迭代器失效；具体规则按容器和操作查文档", lang: "cpp", block: true)
+  #raw("#include <vector>\nfor (auto it = values.begin(); it != values.end();)\n{\n    if (should_remove(*it))\n        it = values.erase(it);\n    else\n        ++it;\n}\n// erase 返回下一个有效迭代器，删除后不要再用旧 it\n// vector 扩容使所有迭代器失效；list 插入通常不影响其他节点迭代器\n// unordered_map rehash 会使迭代器失效；具体规则按容器和操作查文档", lang: "cpp", block: true)
 ]
 
 #heading(level: 1, outlined: true)[#text("第13章 数据结构与算法", size: 15pt, weight: "bold", fill: rgb("#000000"))]
@@ -4122,7 +4122,7 @@
   #text("共有 n 件物品、容量上限为 W 时，时间为 O(nW)，额外空间为 O(W)。这是依赖容量数值的算法，容量极大时并不便宜。若题目要求“恰好装满”，不能把所有状态初始化为零，应把不可达状态标记出来。零重量物品在本题也只能计入一次。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// dp[c] 只由已经处理的物品决定，容量倒序是 0/1 约束的关键。\n// dp[c]：已处理物品在容量不超过 c 时的最大价值；允许不选物品\nstd::vector<long long> dp(W + 1, 0);\nfor (const auto& item : items) {\n    for (int c = W; c >= item.weight; --c) // 倒序保证本轮不会重复用同件物品\n        dp[c] = std::max(dp[c], dp[c - item.weight] + item.value);\n}\nreturn dp[W]; // O(nW) 时间、O(W) 空间；重量为 0 时需按约束处理", lang: "cpp", block: true)
+  #raw("// dp[c] 只由已经处理的物品决定，容量倒序是 0/1 约束的关键。\n// dp[c]：已处理物品在容量不超过 c 时的最大价值；允许不选物品\nstd::vector<long long> dp(W + 1, 0);\nfor (const auto& item : items)\n{\n    for (int c = W; c >= item.weight; --c) // 倒序保证本轮不会重复用同件物品\n        dp[c] = std::max(dp[c], dp[c - item.weight] + item.value);\n}\nreturn dp[W]; // O(nW) 时间、O(W) 空间；重量为 0 时需按约束处理", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -4135,7 +4135,7 @@
   #text("最容易出错的是反转时丢掉下一组的入口。因此组后节点必须提前单独保存，不能边修改组尾的 next 边把它当循环终点。每个节点只经过有限次探测和修改，总时间 O(n)，只用几个指针，额外空间 O(1)。原链表会被改变，需要保留输入时应先复制。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// prev/cur/next 维护组内反转；组外连接点必须先保存。\n// dummy 统一处理首组；不足 k 个的尾段不反转\nNode dummy{0, head}; Node* before = &dummy;\nwhile (true) { Node* end = before; for (int i = 0; i < k && end; ++i) end = end->next;\n    if (!end) break; Node* oldFirst = before->next; Node* prev = end->next; Node* cur = oldFirst;\n    while (cur != end->next) { Node* next = cur->next; cur->next = prev; prev = cur; cur = next; }\n    before->next = end; before = oldFirst;\n}\nreturn dummy.next; // 每个节点只改指针，O(n) 时间、O(1) 额外空间", lang: "cpp", block: true)
+  #raw("// prev/cur/next 维护组内反转；组外连接点必须先保存。\n// dummy 统一处理首组；不足 k 个的尾段不反转\nNode dummy{0, head};\nNode* before = &dummy;\nwhile (true)\n{\n    Node* end = before;\n    for (int i = 0; i < k && end; ++i)\n        end = end->next;\n    if (!end)\n        break;\n    Node* oldFirst = before->next;\n    Node* prev = end->next;\n    Node* cur = oldFirst;\n    while (cur != end->next)\n    {\n        Node* next = cur->next;\n        cur->next = prev;\n        prev = cur;\n        cur = next;\n    }\n    before->next = end;\n    before = oldFirst;\n}\nreturn dummy.next; // 每个节点只改指针，O(n) 时间、O(1) 额外空间", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -4148,7 +4148,7 @@
   #text("排序之后，每次固定一个数，左右指针总共最多走过数组一次，所以主体时间为 O(n²)，保存结果的空间另算。求和时要先提升到足够宽的整数类型，避免三个合法整数相加却溢出。一般目标值下不能随意套用“当前数大于零就结束”的剪枝，它只适用于零目标等满足条件的场景。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// 固定首数后双指针单调逼近目标，排序后同值结果要去重。\nstd::sort(a.begin(), a.end());\nfor (int i = 0; i + 2 < a.size(); ++i) { if (i && a[i] == a[i - 1]) continue;\n    int l = i + 1, r = a.size() - 1;\n    while (l < r) { long long sum = (long long)a[i] + a[l] + a[r];\n        if (sum < target) ++l; else if (sum > target) --r;\n        else { out.emplace_back(a[i], a[l], a[r]); int x = a[l], y = a[r];\n            while (l < r && a[l] == x) ++l;\n            while (l < r && a[r] == y) --r;\n        }\n    }\n} // O(n²)；求和先扩为 64 位，避免整数溢出", lang: "cpp", block: true)
+  #raw("// 固定首数后双指针单调逼近目标，排序后同值结果要去重。\nstd::sort(a.begin(), a.end());\nfor (int i = 0; i + 2 < a.size(); ++i)\n{\n    if (i && a[i] == a[i - 1])\n        continue;\n    int l = i + 1, r = a.size() - 1;\n    while (l < r)\n    {\n        long long sum = (long long)a[i] + a[l] + a[r];\n        if (sum < target)\n            ++l;\n        else if (sum > target)\n            --r;\n        else\n        {\n            out.emplace_back(a[i], a[l], a[r]);\n            int x = a[l], y = a[r];\n            while (l < r && a[l] == x)\n                ++l;\n            while (l < r && a[r] == y)\n                --r;\n        }\n    }\n} // O(n²)；求和先扩为 64 位，避免整数溢出", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -4161,7 +4161,7 @@
   #text("例如没有障碍的二行三列网格共有三种走法；起点或终点被堵则为零。空网格要先单独处理，路径数量较大时应使用宽整数，必要时用大整数或按题目要求取模。总时间为行数乘列数，即 O(mn)，额外空间为 O(n)，其中 n 是列数。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// 一维 dp[c] 在本行代表左侧，尚未覆盖时代表上方。\n// dp[c]：当前行到列 c 的路径数；障碍格状态为 0\nstd::vector<long long> dp(n, 0);\nfor (int r = 0; r < m; ++r) for (int c = 0; c < n; ++c) {\n    if (grid[r][c] == '#') dp[c] = 0;\n    else if (r == 0 && c == 0) dp[c] = 1;\n    else dp[c] += c ? dp[c - 1] : 0; // 旧 dp[c] 是上方，已更新 dp[c-1] 是左方\n}\nreturn dp[n - 1]; // O(mn) 时间、O(n) 空间；路径数大时选宽整数", lang: "cpp", block: true)
+  #raw("// 一维 dp[c] 在本行代表左侧，尚未覆盖时代表上方。\n// dp[c]：当前行到列 c 的路径数；障碍格状态为 0\nstd::vector<long long> dp(n, 0);\nfor (int r = 0; r < m; ++r)\n    for (int c = 0; c < n; ++c)\n    {\n        if (grid[r][c] == '#')\n            dp[c] = 0;\n        else if (r == 0 && c == 0)\n            dp[c] = 1;\n        else\n            dp[c] += c ? dp[c - 1] : 0; // 旧 dp[c] 是上方，已更新 dp[c-1] 是左方\n    }\nreturn dp[n - 1]; // O(mn) 时间、O(n) 空间；路径数大时选宽整数", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -4174,7 +4174,7 @@
   #text("不交易也是合法选择，因此最大利润从零开始；如果价格一直下降，结果就是零，而不是一个负数。空数组或只有一天时也无法完成交易。整个算法只扫描一次，时间 O(n)，额外空间 O(1)。若允许多次买卖、收手续费或卖出后冷冻，状态和规则都要重新设计，不能继续只用这两个变量。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// lowest 始终是当前卖出日之前的最低价格。\nif (prices.empty()) return 0;\nint lowest = prices[0], best = 0;\nfor (int p : prices) {\n    best = std::max(best, p - lowest); // 先卖出计算，再把当天纳入未来买入价\n    lowest = std::min(lowest, p);\n}\nreturn best; // 一次遍历、O(1) 空间；下跌行情返回 0", lang: "cpp", block: true)
+  #raw("// lowest 始终是当前卖出日之前的最低价格。\nif (prices.empty())\n    return 0;\nint lowest = prices[0], best = 0;\nfor (int p : prices)\n{\n    best = std::max(best, p - lowest); // 先卖出计算，再把当天纳入未来买入价\n    lowest = std::min(lowest, p);\n}\nreturn best; // 一次遍历、O(1) 空间；下跌行情返回 0", lang: "cpp", block: true)
 ]
 
 #heading(level: 2, outlined: true)[#text("13.2 树与图的遍历", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
@@ -4188,7 +4188,7 @@
   #text("图可能由互不连通的几块组成，所以只从第一个顶点搜索不够，必须对每个尚未染色的顶点重新启动。孤立点不会造成冲突，自环则必然冲突。邻接表表示下，每个点和每条边只处理有限次，时间 O(V+E)，颜色表与队列需要 O(V) 空间；邻接矩阵的扫描成本会更大。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// 相邻点必须异色；每个连通分量都要独立启动染色。\nstd::vector<int> color(n, -1); std::queue<int> q;\nfor (int start = 0; start < n; ++start) if (color[start] < 0) { color[start] = 0; q.push(start);\n    while (!q.empty()) { int u = q.front(); q.pop();\n        for (int v : graph[u]) {\n            if (color[v] < 0) { color[v] = color[u] ^ 1; q.push(v); }\n            else if (color[v] == color[u]) return false; // 自环也会冲突\n        }\n    }\n}\nreturn true; // 每个分量染色通过即为二分图，O(V+E) 时间、O(V) 空间", lang: "cpp", block: true)
+  #raw("// 相邻点必须异色；每个连通分量都要独立启动染色。\nstd::vector<int> color(n, -1);\nstd::queue<int> q;\nfor (int start = 0; start < n; ++start)\n    if (color[start] < 0)\n    {\n        color[start] = 0;\n        q.push(start);\n        while (!q.empty())\n        {\n            int u = q.front();\n            q.pop();\n            for (int v : graph[u])\n            {\n                if (color[v] < 0)\n                {\n                    color[v] = color[u] ^ 1;\n                    q.push(v);\n                }\n                else if (color[v] == color[u])\n                    return false; // 自环也会冲突\n            }\n        }\n    }\nreturn true; // 每个分量染色通过即为二分图，O(V+E) 时间、O(V) 空间", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -4201,7 +4201,7 @@
   #text("通常 k 从一开始，必须检查非正数和超过节点总数的情况。重复值按节点计数还是按不同数值计数，应先与题意一致。能提前停止时，时间通常为 O(h+k)，h 为树高；退化树最坏仍为 O(n)。递归额外空间 O(h)，树很深时可用显式栈替代。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// 右根左顺序形成降序访问，计数到 k 后可提前终止。\n// 反向中序为降序；假设 k 从 1 开始且 1 <= k <= 节点数\nvoid visit(Node* p) { if (!p || found) return; visit(p->right);\n    if (!found && --k == 0) { answer = p->value; found = true; }\n    visit(p->left);\n}\nvisit(root); // O(h+k) 量级的提前停止遍历，递归栈 O(h)\n// 若 k 越界由 found=false 表示未找到；极斜树可改显式栈", lang: "cpp", block: true)
+  #raw("// 右根左顺序形成降序访问，计数到 k 后可提前终止。\n// 反向中序为降序；假设 k 从 1 开始且 1 <= k <= 节点数\nvoid visit(Node* p)\n{\n    if (!p || found)\n        return;\n    visit(p->right);\n    if (!found && --k == 0)\n    {\n        answer = p->value;\n        found = true;\n    }\n    visit(p->left);\n}\nvisit(root); // O(h+k) 量级的提前停止遍历，递归栈 O(h)\n// 若 k 越界由 found=false 表示未找到；极斜树可改显式栈", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -4214,7 +4214,7 @@
   #text("每种遍历都会访问每个节点一次，时间 O(n)。不计算输出数组时，递归调用占 O(h) 空间，h 是树高。若树退化成长链，递归太深可能耗尽调用栈，可改用自己维护的栈。迭代前序中要先压右孩子再压左孩子，因为栈是后进先出；层序遍历则应使用队列。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// 递归位置决定根左右三种访问次序，空节点是递归边界。\nvoid preorder(Node* p) { if (!p) return; out.push_back(p->value); preorder(p->left); preorder(p->right); }\nvoid inorder(Node* p) { if (!p) return; inorder(p->left); out.push_back(p->value); inorder(p->right); }\nvoid postorder(Node* p) { if (!p) return; postorder(p->left); postorder(p->right); out.push_back(p->value); }\n// 分别按根左右、左根右、左右根访问；每次遍历 O(n)，递归栈 O(h)\n// 极深退化树可用显式栈避免递归深度过大", lang: "cpp", block: true)
+  #raw("// 递归位置决定根左右三种访问次序，空节点是递归边界。\nvoid preorder(Node* p)\n{\n    if (!p)\n        return;\n    out.push_back(p->value);\n    preorder(p->left);\n    preorder(p->right);\n}\nvoid inorder(Node* p)\n{\n    if (!p)\n        return;\n    inorder(p->left);\n    out.push_back(p->value);\n    inorder(p->right);\n}\nvoid postorder(Node* p)\n{\n    if (!p)\n        return;\n    postorder(p->left);\n    postorder(p->right);\n    out.push_back(p->value);\n}\n// 分别按根左右、左根右、左右根访问；每次遍历 O(n)，递归栈 O(h)\n// 极深退化树可用显式栈避免递归深度过大", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -4227,7 +4227,7 @@
   #text("空树直接返回空列表。普通树没有环，每个节点只入队一次，时间 O(n)，队列所需空间与最大层宽 w 同阶，为 O(w)，最坏可以达到 O(n)。如果把相同方法用于一般图，必须额外维护已访问集合，并在入队时标记，避免环或多条路径造成重复入队。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// 每轮固定队列长度，保证本层节点与新入队孩子不混淆。\nif (!root) return levels; // 空树返回空列表\nstd::queue<Node*> q; q.push(root);\nwhile (!q.empty()) { int width = q.size(); std::vector<int> level;\n    while (width-- > 0) { Node* p = q.front(); q.pop(); level.push_back(p->value);\n        if (p->left) q.push(p->left); if (p->right) q.push(p->right); }\n    levels.push_back(std::move(level)); // 本轮固定 width，孩子留到下一层\n}\n// 每节点入队一次：O(n) 时间，队列最多 O(w) 个节点", lang: "cpp", block: true)
+  #raw("// 每轮固定队列长度，保证本层节点与新入队孩子不混淆。\nif (!root)\n    return levels; // 空树返回空列表\nstd::queue<Node*> q;\nq.push(root);\nwhile (!q.empty())\n{\n    int width = q.size();\n    std::vector<int> level;\n    while (width-- > 0)\n    {\n        Node* p = q.front();\n        q.pop();\n        level.push_back(p->value);\n        if (p->left)\n            q.push(p->left);\n        if (p->right)\n            q.push(p->right);\n    }\n    levels.push_back(std::move(level)); // 本轮固定 width，孩子留到下一层\n}\n// 每节点入队一次：O(n) 时间，队列最多 O(w) 个节点", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -4240,7 +4240,7 @@
   #text("每个节点只计算一次，所以时间 O(n)。递归调用最多同时保留一条根到叶子的路径，空间为 O(h)，其中 h 是树高。长链状的输入可能让递归调用过深，应改为显式栈或按层遍历。还要确认题目按节点数还是边数定义深度：非空树按边计时比按节点计少一，空树则需单独约定。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// 深度按节点数定义，空子树返回 0。\nint depth(Node* p) {\n    if (!p) return 0; // 按节点数计深度，空树为 0\n    int left = depth(p->left), right = depth(p->right);\n    return 1 + std::max(left, right);\n}\n// 每节点访问一次，O(n) 时间、O(h) 递归空间；按边计时定义会不同", lang: "cpp", block: true)
+  #raw("// 深度按节点数定义，空子树返回 0。\nint depth(Node* p)\n{\n    if (!p)\n        return 0; // 按节点数计深度，空树为 0\n    int left = depth(p->left), right = depth(p->right);\n    return 1 + std::max(left, right);\n}\n// 每节点访问一次，O(n) 时间、O(h) 递归空间；按边计时定义会不同", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -4253,7 +4253,7 @@
   #text("全局最大值必须从负无穷开始，不能从零开始，因为题目通常要求路径至少包含一个节点。全负树应返回最大的那个负数，而不是不存在的空路径。空树的结果要由接口另行约定。后序遍历每节点一次，时间 O(n)，额外栈空间 O(h)；数值之和可能溢出时应使用宽整数。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// best 是路径可在当前节点拐弯的答案，返回值只能向父节点单边延伸。\nlong long gain(Node* p) { if (!p) return 0;\n    long long left = std::max(0LL, gain(p->left));\n    long long right = std::max(0LL, gain(p->right));\n    best = std::max(best, p->value + left + right); // 以 p 为拐点的完整路径\n    return p->value + std::max(left, right); // 向父节点只能延伸一侧\n}\nlong long best = std::numeric_limits<long long>::lowest(); gain(root);\n// 全负树不能把 best 初始化成 0；时间 O(n)、栈 O(h)", lang: "cpp", block: true)
+  #raw("// best 是路径可在当前节点拐弯的答案，返回值只能向父节点单边延伸。\nlong long gain(Node* p)\n{\n    if (!p)\n        return 0;\n    long long left = std::max(0LL, gain(p->left));\n    long long right = std::max(0LL, gain(p->right));\n    best = std::max(best, p->value + left + right); // 以 p 为拐点的完整路径\n    return p->value + std::max(left, right); // 向父节点只能延伸一侧\n}\nlong long best = std::numeric_limits<long long>::lowest();\ngain(root);\n// 全负树不能把 best 初始化成 0；时间 O(n)、栈 O(h)", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -4266,7 +4266,7 @@
   #text("也可以用递归，但一侧为空时只能选择非空子树；只有两侧都存在时，才取左右深度的较小值再加一。最坏仍要遍历所有节点，时间 O(n)。队列占用与树宽有关，最坏 O(n)；递归实现占 O(h) 栈空间。不要把最大深度公式里的 max 直接机械地改成 min。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// 只有左右孩子均空才是叶子；BFS 按深度递增弹出。\nif (!root) return 0;\nstd::queue<std::pair<Node*, int>> q; q.push({root, 1});\nwhile (!q.empty()) { auto [p, d] = q.front(); q.pop();\n    if (!p->left && !p->right) return d; // BFS 首个叶子就是最近叶子\n    if (p->left) q.push({p->left, d + 1}); if (p->right) q.push({p->right, d + 1});\n}\n// 只有一个孩子时必须沿非空孩子走，不能把空子树当叶子；O(n) 时间", lang: "cpp", block: true)
+  #raw("// 只有左右孩子均空才是叶子；BFS 按深度递增弹出。\nif (!root)\n    return 0;\nstd::queue<std::pair<Node*, int>> q;\nq.push({root, 1});\nwhile (!q.empty())\n{\n    auto [p, d] = q.front();\n    q.pop();\n    if (!p->left && !p->right)\n        return d; // BFS 首个叶子就是最近叶子\n    if (p->left)\n        q.push({p->left, d + 1});\n    if (p->right)\n        q.push({p->right, d + 1});\n}\n// 只有一个孩子时必须沿非空孩子走，不能把空子树当叶子；O(n) 时间", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -4279,7 +4279,7 @@
   #text("原地交换只改变链接，不新建节点，时间 O(n)，递归栈空间 O(h)。如果其他对象也引用这棵树，它们看到的结构也会变化；需要同时保留原树和镜像树时，应新建节点或先深拷贝，空间会增加到 O(n)。树非常深时可以使用显式栈遍历，避免调用栈过深。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// 交换左右孩子后递归，原地镜像会修改输入树。\nNode* invert(Node* p) { if (!p) return nullptr;\n    std::swap(p->left, p->right); // 先交换，再递归处理两侧\n    invert(p->left); invert(p->right); return p;\n}\n// 每个节点访问一次，O(n) 时间、O(h) 递归栈；原地修改，需保留原树时先深拷贝\n// 极深树可换显式栈，避免递归栈深度受限", lang: "cpp", block: true)
+  #raw("// 交换左右孩子后递归，原地镜像会修改输入树。\nNode* invert(Node* p)\n{\n    if (!p)\n        return nullptr;\n    std::swap(p->left, p->right); // 先交换，再递归处理两侧\n    invert(p->left);\n    invert(p->right);\n    return p;\n}\n// 每个节点访问一次，O(n) 时间、O(h) 递归栈；原地修改，需保留原树时先深拷贝\n// 极深树可换显式栈，避免递归栈深度受限", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -4292,7 +4292,7 @@
   #text("通常要求节点值互不重复，否则同一个根值可能对应多个分割位置，原树未必能唯一恢复。先建立“值到中序下标”的哈希表，平均总时间 O(n)，额外空间 O(n)，其中还包括递归栈。输入需校验长度、元素及递归区间一致性；仅集合相同也不能保证任意两种顺序都合法。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// 前序当前首项给根，中序根位置给左子树长度。\n// pos[value] 为中序下标；唯一值，区间均为左闭右开\nNode* build(int pl, int il, int ir) { if (il == ir) return nullptr;\n    int root = pre[pl], k = pos[root], leftSize = k - il;\n    Node* left = build(pl + 1, il, k);\n    Node* right = build(pl + 1 + leftSize, k + 1, ir);\n    return new Node(root, left, right);\n}\n// 预建哈希表后 O(n) 时间、O(n) 空间；先校验两遍历元素一致", lang: "cpp", block: true)
+  #raw("// 前序当前首项给根，中序根位置给左子树长度。\n// pos[value] 为中序下标；唯一值，区间均为左闭右开\nNode* build(int pl, int il, int ir)\n{\n    if (il == ir)\n        return nullptr;\n    int root = pre[pl], k = pos[root], leftSize = k - il;\n    Node* left = build(pl + 1, il, k);\n    Node* right = build(pl + 1 + leftSize, k + 1, ir);\n    return new Node(root, left, right);\n}\n// 预建哈希表后 O(n) 时间、O(n) 空间；先校验两遍历元素一致", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -4305,7 +4305,7 @@
   #text("用哈希表定位中序下标，平均时间 O(n)，额外空间 O(n)。用下标范围传参能省去重复复制子数组的开销。该方法通常要求节点值唯一，而且两份序列要彼此一致；查到的根如果不在当前中序区间，说明输入非法，不能继续构造或越界访问。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// 后序当前末项给根，中序根位置分割左右子树。\n// pos[value] 为中序下标；后序末项为根，节点值唯一\nNode* build(int pl, int pr, int il, int ir) { if (il == ir) return nullptr;\n    int root = post[pr - 1], k = pos[root], leftSize = k - il;\n    Node* left = build(pl, pl + leftSize, il, k);\n    Node* right = build(pl + leftSize, pr - 1, k + 1, ir);\n    return new Node(root, left, right);\n}\n// 用区间避免复制子数组；哈希定位后 O(n) 时间、O(n) 空间", lang: "cpp", block: true)
+  #raw("// 后序当前末项给根，中序根位置分割左右子树。\n// pos[value] 为中序下标；后序末项为根，节点值唯一\nNode* build(int pl, int pr, int il, int ir)\n{\n    if (il == ir)\n        return nullptr;\n    int root = post[pr - 1], k = pos[root], leftSize = k - il;\n    Node* left = build(pl, pl + leftSize, il, k);\n    Node* right = build(pl + leftSize, pr - 1, k + 1, ir);\n    return new Node(root, left, right);\n}\n// 用区间避免复制子数组；哈希定位后 O(n) 时间、O(n) 空间", lang: "cpp", block: true)
 ]
 
 #heading(level: 2, outlined: true)[#text("13.3 排序、查找与有序结构", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
@@ -4319,7 +4319,7 @@
   #text("只在严格大于时交换，值相同的元素不会互相越过，因此冒泡排序是稳定排序；原地交换只需 O(1) 额外空间。带提前结束的版本在本来有序时只扫一轮，最好时间 O(n)，平均和最坏 O(n²)。它适合理解排序或处理很小的数据，规模较大时交换次数太多，应选择更高效的方法。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// 每轮把最大值沉到未排序区末端，无交换表示已有序。\nfor (int end = n - 1; end > 0; --end) { bool changed = false;\n    for (int i = 0; i < end; ++i) if (a[i] > a[i + 1]) { std::swap(a[i], a[i + 1]); changed = true; }\n    if (!changed) break; // 已有序时提前结束\n}\n// 相等元素不交换所以稳定；原地，最好 O(n)，平均/最坏 O(n²)", lang: "cpp", block: true)
+  #raw("// 每轮把最大值沉到未排序区末端，无交换表示已有序。\nfor (int end = n - 1; end > 0; --end)\n{\n    bool changed = false;\n    for (int i = 0; i < end; ++i)\n        if (a[i] > a[i + 1])\n        {\n            std::swap(a[i], a[i + 1]);\n            changed = true;\n        }\n    if (!changed)\n        break; // 已有序时提前结束\n}\n// 相等元素不交换所以稳定；原地，最好 O(n)，平均/最坏 O(n²)", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -4332,7 +4332,7 @@
   #text("默认采用严格大小关系，也就是不允许重复值。若题目允许相同键放在某一侧，必须统一调整对应边界的开闭，不能两边都随意放。每节点只检查一次，时间 O(n)，递归空间 O(h)。另一种做法是检查中序序列是否严格递增，但也要处理初值及重复值的约定。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// 祖先上下界同时约束节点，检查远端子树是否越界。\nbool valid(Node* p, long long low, long long high) {\n    if (!p) return true;\n    if (p->value <= low || p->value >= high) return false; // 严格 BST 边界\n    return valid(p->left, low, p->value) && valid(p->right, p->value, high);\n}\nbool isBst = valid(root, std::numeric_limits<long long>::lowest(), std::numeric_limits<long long>::max());\n// 若允许重复键，需按约定改开闭边界；O(n) 时间、O(h) 栈", lang: "cpp", block: true)
+  #raw("// 祖先上下界同时约束节点，检查远端子树是否越界。\nbool valid(Node* p, long long low, long long high)\n{\n    if (!p)\n        return true;\n    if (p->value <= low || p->value >= high)\n        return false; // 严格 BST 边界\n    return valid(p->left, low, p->value) && valid(p->right, p->value, high);\n}\nbool isBst =\n    valid(root, std::numeric_limits<long long>::lowest(), std::numeric_limits<long long>::max());\n// 若允许重复键，需按约定改开闭边界；O(n) 时间、O(h) 栈", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -4345,7 +4345,7 @@
   #text("如果对每个节点都重新递归计算左右高度，相同子树会被反复扫描，长链输入可能需要 O(n²) 时间。合并计算后，每节点最多处理一次，时间 O(n)，递归空间 O(h)。高度差阈值是这个定义的约定；二叉搜索树与平衡树是不同性质，判断平衡本身不要求节点值有序。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// 后序返回高度，-1 作为失衡哨兵向上短路。\nint heightOrBad(Node* p) { if (!p) return 0;\n    int left = heightOrBad(p->left); if (left < 0) return -1;\n    int right = heightOrBad(p->right); if (right < 0) return -1;\n    if (std::abs(left - right) > 1) return -1; // -1 表示子树已失衡\n    return 1 + std::max(left, right);\n}\nbool balanced = heightOrBad(root) >= 0;\n// 后序一次算高度，O(n) 时间、O(h) 栈；空树平衡", lang: "cpp", block: true)
+  #raw("// 后序返回高度，-1 作为失衡哨兵向上短路。\nint heightOrBad(Node* p)\n{\n    if (!p)\n        return 0;\n    int left = heightOrBad(p->left);\n    if (left < 0)\n        return -1;\n    int right = heightOrBad(p->right);\n    if (right < 0)\n        return -1;\n    if (std::abs(left - right) > 1)\n        return -1; // -1 表示子树已失衡\n    return 1 + std::max(left, right);\n}\nbool balanced = heightOrBad(root) >= 0;\n// 后序一次算高度，O(n) 时间、O(h) 栈；空树平衡", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -4358,7 +4358,7 @@
   #text("当前指针变空时，所有节点都已处理，前驱指针就是新头。空链表会直接返回空，单节点链表也能自然处理。每节点只改一次链接，时间 O(n)，额外空间 O(1)。原链表的方向会被永久改变；如果调用方还需保留旧结构，应复制节点，空间随之增加到 O(n)。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// 反转前保存 next，避免改写链接后丢掉未处理后缀。\nNode* previous = nullptr; Node* current = head;\nwhile (current) {\n    Node* next = current->next; // 改链前先保存后继\n    current->next = previous; previous = current; current = next;\n}\nhead = previous; // 原尾成为新头\n// 原地 O(n) 时间、O(1) 额外空间；空链表也返回 nullptr", lang: "cpp", block: true)
+  #raw("// 反转前保存 next，避免改写链接后丢掉未处理后缀。\nNode* previous = nullptr;\nNode* current = head;\nwhile (current)\n{\n    Node* next = current->next; // 改链前先保存后继\n    current->next = previous;\n    previous = current;\n    current = next;\n}\nhead = previous; // 原尾成为新头\n// 原地 O(n) 时间、O(1) 额外空间；空链表也返回 nullptr", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -4371,7 +4371,7 @@
   #text("例如 [1,1,1]、K 为二，共有两段 [1,1]。方法适用于包含负数或零的数组，不能随意换成只适合某些非负输入的滑动窗口。哈希表操作平均为常数时，总时间 O(n)，额外空间 O(n)。累计和与区间个数都可能远大于单个元素，应使用足够宽的整数。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// prefix-k 的旧频次就是以当前位置结尾的合法子数组数。\nstd::unordered_map<long long, long long> seen{{0, 1}};\nlong long prefix = 0, count = 0;\nfor (int x : a) { prefix += x;\n    count += seen[prefix - k]; // 先查旧前缀，涵盖负数与从下标 0 开始的段\n    ++seen[prefix];\n}\nreturn count; // 平均 O(n) 时间、O(n) 空间；和与答案使用 64 位", lang: "cpp", block: true)
+  #raw("// prefix-k 的旧频次就是以当前位置结尾的合法子数组数。\nstd::unordered_map<long long, long long> seen{{0, 1}};\nlong long prefix = 0, count = 0;\nfor (int x : a)\n{\n    prefix += x;\n    count += seen[prefix - k]; // 先查旧前缀，涵盖负数与从下标 0 开始的段\n    ++seen[prefix];\n}\nreturn count; // 平均 O(n) 时间、O(n) 空间；和与答案使用 64 位", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -4384,7 +4384,7 @@
   #text("有向图可用三种状态：未访问、正在搜索、已经完成。沿边遇到“正在搜索”的点，说明存在回到当前路径的边，因此构成有向环；遇到已完成节点则不一定有环。图不连通时，必须从每个未访问节点启动搜索。用邻接表时总时间 O(V+E)，状态和递归栈需 O(V) 空间。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// 有向图灰色回边与无向图非父返边的判环条件不同。\n// 有向图看灰色回边；无向图忽略父边，平行边用 edgeId 区分。\nbool directedCycle(int u) { state[u] = 1;\n    for (int v : graph[u]) if (state[v] == 1 || (state[v] == 0 && directedCycle(v))) return true;\n    state[u] = 2; return false; }\nbool undirectedCycle(int u, int parentEdge) { seen[u] = true;\n    for (auto [v, edgeId] : graph[u]) if (edgeId != parentEdge && (seen[v] || undirectedCycle(v, edgeId))) return true;\n    return false; }\nbool hasCycle(bool directed) {\n    if (directed) { for (int u = 0; u < n; ++u) if (state[u] == 0 && directedCycle(u)) return true; return false; }\n    std::fill(seen.begin(), seen.end(), false);\n    for (int u = 0; u < n; ++u) if (!seen[u] && undirectedCycle(u, -1)) return true;\n    return false;\n} // 遍历全部连通分量，邻接表 O(V+E)", lang: "cpp", block: true)
+  #raw("// 有向图灰色回边与无向图非父返边的判环条件不同。\n// 有向图看灰色回边；无向图忽略父边，平行边用 edgeId 区分。\nbool directedCycle(int u)\n{\n    state[u] = 1;\n    for (int v : graph[u])\n        if (state[v] == 1 || (state[v] == 0 && directedCycle(v)))\n            return true;\n    state[u] = 2;\n    return false;\n}\nbool undirectedCycle(int u, int parentEdge)\n{\n    seen[u] = true;\n    for (auto [v, edgeId] : graph[u])\n        if (edgeId != parentEdge && (seen[v] || undirectedCycle(v, edgeId)))\n            return true;\n    return false;\n}\nbool hasCycle(bool directed)\n{\n    if (directed)\n    {\n        for (int u = 0; u < n; ++u)\n            if (state[u] == 0 && directedCycle(u))\n                return true;\n        return false;\n    }\n    std::fill(seen.begin(), seen.end(), false);\n    for (int u = 0; u < n; ++u)\n        if (!seen[u] && undirectedCycle(u, -1))\n            return true;\n    return false;\n} // 遍历全部连通分量，邻接表 O(V+E)", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -4397,7 +4397,7 @@
   #text("邻接表下每个顶点和边至多扫描有限次，时间 O(V+E)，队列、访问状态和前驱表需要 O(V) 空间。BFS 找到的是无权图的最短边数路径；如果每条边有不同费用，就不能因为第一次遇到节点而停止，应改用 Dijkstra 等算法。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// 首次入队即固定无权最短距离，并可记录 parent 重建路径。\nstd::queue<int> q; distance[start] = 0; q.push(start);\nwhile (!q.empty()) { int u = q.front(); q.pop(); order.push_back(u);\n    for (int v : graph[u]) if (distance[v] == -1) {\n        distance[v] = distance[u] + 1; parent[v] = u; q.push(v); // 入队即标记\n    }\n}\n// 无权图首次发现即为最少边数；邻接表 O(V+E)，带权图不适用", lang: "cpp", block: true)
+  #raw("// 首次入队即固定无权最短距离，并可记录 parent 重建路径。\nstd::queue<int> q;\ndistance[start] = 0;\nq.push(start);\nwhile (!q.empty())\n{\n    int u = q.front();\n    q.pop();\n    order.push_back(u);\n    for (int v : graph[u])\n        if (distance[v] == -1)\n        {\n            distance[v] = distance[u] + 1;\n            parent[v] = u;\n            q.push(v); // 入队即标记\n        }\n}\n// 无权图首次发现即为最少边数；邻接表 O(V+E)，带权图不适用", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -4410,7 +4410,7 @@
   #text("需要保存原图、反图、完成顺序和访问标记，因此邻接表下时间 O(V+E)，空间 O(V+E)。递归 DFS 的最大深度可能等于 V，大图中可能耗尽调用栈；可以改用显式栈，或者使用同样 O(V+E) 的 Tarjan 算法。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// 第一遍完成次序决定第二遍在反图搜索的 SCC 边界。\nvoid finishDfs(int u) { seen[u] = true; for (int v : graph[u]) if (!seen[v]) finishDfs(v); order.push_back(u); }\nvoid collect(int u) { seen[u] = true; component.push_back(u); for (int v : reverseGraph[u]) if (!seen[v]) collect(v); }\nfor (int u = 0; u < n; ++u) if (!seen[u]) finishDfs(u);\nstd::fill(seen.begin(), seen.end(), false);\nfor (auto it = order.rbegin(); it != order.rend(); ++it) if (!seen[*it]) {\n    component.clear(); collect(*it); groups.push_back(component);\n}\n// 反图保存边方向反转；总 O(V+E) 时间、O(V+E) 空间", lang: "cpp", block: true)
+  #raw("// 第一遍完成次序决定第二遍在反图搜索的 SCC 边界。\nvoid finishDfs(int u)\n{\n    seen[u] = true;\n    for (int v : graph[u])\n        if (!seen[v])\n            finishDfs(v);\n    order.push_back(u);\n}\nvoid collect(int u)\n{\n    seen[u] = true;\n    component.push_back(u);\n    for (int v : reverseGraph[u])\n        if (!seen[v])\n            collect(v);\n}\nfor (int u = 0; u < n; ++u)\n    if (!seen[u])\n        finishDfs(u);\nstd::fill(seen.begin(), seen.end(), false);\nfor (auto it = order.rbegin(); it != order.rend(); ++it)\n    if (!seen[*it])\n    {\n        component.clear();\n        collect(*it);\n        groups.push_back(component);\n    }\n// 反图保存边方向反转；总 O(V+E) 时间、O(V+E) 空间", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -4423,7 +4423,7 @@
   #text("邻接表下每个顶点和边扫描一次，时间 O(V+E)，访问标记及栈需要 O(V) 空间。不连通图要通过外层循环从每个未访问顶点启动。无向图判断环时还要忽略沿原边返回父节点的情况；若只需要避免重复遍历，普通 visited 就够。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// visited 必须在递归前设置，并从未访问节点覆盖所有分量。\nvoid dfs(int u) { seen[u] = true; order.push_back(u); // 首次发现即标记，防止环中重复递归\n    for (int v : graph[u]) if (!seen[v]) dfs(v);\n}\nfor (int u = 0; u < n; ++u) if (!seen[u]) dfs(u); // 覆盖非连通分量\n// 邻接表 O(V+E) 时间、O(V) 访问标记；递归深度最坏 O(V)", lang: "cpp", block: true)
+  #raw("// visited 必须在递归前设置，并从未访问节点覆盖所有分量。\nvoid dfs(int u)\n{\n    seen[u] = true;\n    order.push_back(u); // 首次发现即标记，防止环中重复递归\n    for (int v : graph[u])\n        if (!seen[v])\n            dfs(v);\n}\nfor (int u = 0; u < n; ++u)\n    if (!seen[u])\n        dfs(u); // 覆盖非连通分量\n// 邻接表 O(V+E) 时间、O(V) 访问标记；递归深度最坏 O(V)", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -4436,7 +4436,7 @@
   #text("邻接表实现时，每个顶点和边只访问有限次，时间 O(V+E)，额外空间 O(V)。对于有向图，“从一个点能到达所有点”只说明单向可达，不代表强连通；反方向也必须能到达，通常用强连通分量算法或对原图和反图分别检查。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// 连通性由从起点可达的节点数与顶点总数比较。\nif (n == 0) return true; // 空图是否连通按题意定义\nstd::queue<int> q; seen[0] = true; q.push(0);\nwhile (!q.empty()) { int u = q.front(); q.pop();\n    for (int v : graph[u]) if (!seen[v]) { seen[v] = true; q.push(v); }\n}\nbool connected = std::all_of(seen.begin(), seen.end(), [](bool x) { return x; });\n// 无向图邻接表 O(V+E)；有向图强连通不能只做一次可达遍历", lang: "cpp", block: true)
+  #raw("// 连通性由从起点可达的节点数与顶点总数比较。\nif (n == 0)\n    return true; // 空图是否连通按题意定义\nstd::queue<int> q;\nseen[0] = true;\nq.push(0);\nwhile (!q.empty())\n{\n    int u = q.front();\n    q.pop();\n    for (int v : graph[u])\n        if (!seen[v])\n        {\n            seen[v] = true;\n            q.push(v);\n        }\n}\nbool connected = std::all_of(seen.begin(),\n                             seen.end(),\n                             [](bool x)\n                             {\n                                 return x;\n                             });\n// 无向图邻接表 O(V+E)；有向图强连通不能只做一次可达遍历", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -4449,7 +4449,7 @@
   #text("无重复元素时，每轮区间减半，时间 O(log n)，只用 O(1) 额外空间。重复值会让端点、中点看起来一样，无法判断旋转点在哪边；此时可以从边界收缩一格，但最坏退化到 O(n)。空数组要直接返回未找到，并留意比较端点时不要漏掉本身就是目标的中点。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// 每轮先识别一侧有序区间，只保留目标可能所在半区。\nint left = 0, right = static_cast<int>(a.size()) - 1;\nwhile (left <= right) { int mid = left + (right - left) / 2;\n    if (a[mid] == target) return mid;\n    if (a[left] <= a[mid]) { if (a[left] <= target && target < a[mid]) right = mid - 1; else left = mid + 1; }\n    else { if (a[mid] < target && target <= a[right]) left = mid + 1; else right = mid - 1; }\n}\nreturn -1; // 无重复时 O(log n)；有重复且端点相等需收缩，最坏 O(n)", lang: "cpp", block: true)
+  #raw("// 每轮先识别一侧有序区间，只保留目标可能所在半区。\nint left = 0, right = static_cast<int>(a.size()) - 1;\nwhile (left <= right)\n{\n    int mid = left + (right - left) / 2;\n    if (a[mid] == target)\n        return mid;\n    if (a[left] <= a[mid])\n    {\n        if (a[left] <= target && target < a[mid])\n            right = mid - 1;\n        else\n            left = mid + 1;\n    }\n    else\n    {\n        if (a[mid] < target && target <= a[right])\n            left = mid + 1;\n        else\n            right = mid - 1;\n    }\n}\nreturn -1; // 无重复时 O(log n)；有重复且端点相等需收缩，最坏 O(n)", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -4462,7 +4462,7 @@
   #text("每位计数排序时，n 是元素数、d 是位数、k 是每位可能值的个数，时间 O(d(n+k))，额外空间 O(n+k)。当数值范围有限且位数不大时有优势；键范围很大或位数很多时未必比比较排序划算。负数需另外安排符号顺序或做有序映射，不能直接把它们当作非负数处理。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// 低位到高位逐位稳定排序，稳定性传递低位顺序。\n// 假设键均为非负整数；每一位必须稳定排序\nstd::vector<int> out(a.size());\nfor (long long exp = 1; maxValue / exp > 0; exp *= 10) {\n    std::array<int, 10> count{}; for (int x : a) ++count[(x / exp) % 10];\n    for (int d = 1; d < 10; ++d) count[d] += count[d - 1];\n    for (auto it = a.rbegin(); it != a.rend(); ++it) out[--count[(*it / exp) % 10]] = *it;\n    std::swap(a, out); // exp 从低位到高位，稳定性保留低位次序\n}\n// d 位、基数 10：O(d(n+10)) 时间、O(n+10) 空间；负数需另处理", lang: "cpp", block: true)
+  #raw("// 低位到高位逐位稳定排序，稳定性传递低位顺序。\n// 假设键均为非负整数；每一位必须稳定排序\nstd::vector<int> out(a.size());\nfor (long long exp = 1; maxValue / exp > 0; exp *= 10)\n{\n    std::array<int, 10> count{};\n    for (int x : a)\n        ++count[(x / exp) % 10];\n    for (int d = 1; d < 10; ++d)\n        count[d] += count[d - 1];\n    for (auto it = a.rbegin(); it != a.rend(); ++it)\n        out[--count[(*it / exp) % 10]] = *it;\n    std::swap(a, out); // exp 从低位到高位，稳定性保留低位次序\n}\n// d 位、基数 10：O(d(n+10)) 时间、O(n+10) 空间；负数需另处理", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -4475,7 +4475,7 @@
   #text("交换根与末尾后，左右子堆仍然有效，只需下滤新根，与较大的孩子交换，直到它不再小于孩子。整体时间 O(n log n)，额外空间 O(1)，但相同键可能改变相对顺序，所以不是稳定排序。若实现索引计算，要先处理长度零或一，并避免对空区间访问堆顶。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// 大顶堆根是当前最大值，交换后缩小有效堆区间。\nvoid siftDown(std::vector<int>& a, int root, int size) {\n    while (2 * root + 1 < size) { int child = 2 * root + 1;\n        if (child + 1 < size && a[child] < a[child + 1]) ++child;\n        if (a[root] >= a[child]) break; std::swap(a[root], a[child]); root = child;\n    }\n}\nfor (int i = n / 2 - 1; i >= 0; --i) siftDown(a, i, n); // O(n) 建大顶堆\nfor (int end = n - 1; end > 0; --end) { std::swap(a[0], a[end]); siftDown(a, 0, end); }\n// 原地升序、O(n log n)，不稳定；每轮只需修复根", lang: "cpp", block: true)
+  #raw("// 大顶堆根是当前最大值，交换后缩小有效堆区间。\nvoid siftDown(std::vector<int>& a, int root, int size)\n{\n    while (2 * root + 1 < size)\n    {\n        int child = 2 * root + 1;\n        if (child + 1 < size && a[child] < a[child + 1])\n            ++child;\n        if (a[root] >= a[child])\n            break;\n        std::swap(a[root], a[child]);\n        root = child;\n    }\n}\nfor (int i = n / 2 - 1; i >= 0; --i)\n    siftDown(a, i, n); // O(n) 建大顶堆\nfor (int end = n - 1; end > 0; --end)\n{\n    std::swap(a[0], a[end]);\n    siftDown(a, 0, end);\n}\n// 原地升序、O(n log n)，不稳定；每轮只需修复根", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -4488,7 +4488,7 @@
   #text("若只是要有序键、快速查找和范围遍历，通常直接使用标准库 std::set 或 std::map；它们维护平衡结构，常见操作有 O(log n) 的复杂度。只有题目要求特定节点结构、增强信息或掌握算法原理时，才值得从头实现。即便自写，也要考虑旋转平衡，不能把普通 BST 的平均表现当作最坏保证。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// BST 每一步按键比较收缩到一条搜索路径；高度未必平衡。\nNode* find(Node* p, int key) { while (p && p->key != key) p = key < p->key ? p->left : p->right; return p; }\nNode* insert(Node* p, int key) { if (!p) return new Node{key};\n    if (key < p->key) p->left = insert(p->left, key); else if (key > p->key) p->right = insert(p->right, key);\n    return p; // 重复键按策略忽略\n}\nNode* erase(Node* p, int key) { if (!p) return nullptr;\n    if (key < p->key) p->left = erase(p->left, key); else if (key > p->key) p->right = erase(p->right, key);\n    else if (!p->left || !p->right) { Node* child = p->left ? p->left : p->right; delete p; return child; }\n    else { Node* s = p->right; while (s->left) s = s->left; p->key = s->key; p->right = erase(p->right, s->key); }\n    return p;\n}\n// 查找/插入/删除 O(h)，双子树删除用右子树最小后继；需明确内存释放策略", lang: "cpp", block: true)
+  #raw("// BST 每一步按键比较收缩到一条搜索路径；高度未必平衡。\nNode* find(Node* p, int key)\n{\n    while (p && p->key != key)\n        p = key < p->key ? p->left : p->right;\n    return p;\n}\nNode* insert(Node* p, int key)\n{\n    if (!p)\n        return new Node{key};\n    if (key < p->key)\n        p->left = insert(p->left, key);\n    else if (key > p->key)\n        p->right = insert(p->right, key);\n    return p; // 重复键按策略忽略\n}\nNode* erase(Node* p, int key)\n{\n    if (!p)\n        return nullptr;\n    if (key < p->key)\n        p->left = erase(p->left, key);\n    else if (key > p->key)\n        p->right = erase(p->right, key);\n    else if (!p->left || !p->right)\n    {\n        Node* child = p->left ? p->left : p->right;\n        delete p;\n        return child;\n    }\n    else\n    {\n        Node* s = p->right;\n        while (s->left)\n            s = s->left;\n        p->key = s->key;\n        p->right = erase(p->right, s->key);\n    }\n    return p;\n}\n// 查找/插入/删除 O(h)，双子树删除用右子树最小后继；需明确内存释放策略", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -4501,7 +4501,7 @@
   #text("有序结构通常不会把所有元素连续放在一块内存中，所以遍历缓存局部性不如 vector，按下标随机访问也不是它的用途。只关心快速精确查找、且不需要排序时可考虑 unordered_set 或 unordered_map；需要插入顺序时则选专门的顺序容器。要先按查询和遍历方式选择结构。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// 按比较器顺序组织键，std::set/std::map 与 multi 版本决定重复键行为。\nstd::set<int> ordered{4, 1, 3}; ordered.insert(2);\nauto firstAtLeast = ordered.lower_bound(3); // 有序范围查询 O(log n)\nstd::map<std::string, int> score; score[\"Ada\"] = 10;\nfor (const auto& [name, value] : score) consume(name, value); // 按键排序遍历\nstd::multiset<int> allowDuplicates; allowDuplicates.insert(5); allowDuplicates.insert(5);\n// std::set/std::map 键唯一，multi 版本允许重复；查找插入删除 O(log n)，非连续存储", lang: "cpp", block: true)
+  #raw("// 按比较器顺序组织键，std::set/std::map 与 multi 版本决定重复键行为。\nstd::set<int> ordered{4, 1, 3};\nordered.insert(2);\nauto firstAtLeast = ordered.lower_bound(3); // 有序范围查询 O(log n)\nstd::map<std::string, int> score;\nscore[\"Ada\"] = 10;\nfor (const auto& [name, value] : score)\n    consume(name, value); // 按键排序遍历\nstd::multiset<int> allowDuplicates;\nallowDuplicates.insert(5);\nallowDuplicates.insert(5);\n// std::set/std::map 键唯一，multi 版本允许重复；查找插入删除 O(log n)，非连续存储", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -4514,7 +4514,7 @@
   #text("unordered_map 扩容会使迭代器失效，因此不能长期保存一个迭代器再假设它仍可用；元素本身的引用和指针规则不同，需按具体操作及标准约定检查。若预计元素很多，可考虑预留桶数减少反复扩容。按是否需要排序、可预测复杂度、内存局部性来选择，不能只比较平均查找数字。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// 是否需要范围有序遍历决定 std::map 与 std::unordered_map 的选择。\nstd::map<std::string, int> ordered; ordered[\"key\"] = 1;\nif (auto it = ordered.find(\"key\"); it != ordered.end()) use(it->second); // 有序，O(log n)\nstd::unordered_map<std::string, int> hashed; ++hashed[\"key\"];\nauto found = hashed.find(\"missing\"); if (found == hashed.end()) handleMissing();\n// 哈希表平均 O(1)、最坏 O(n)，遍历顺序不稳定；std::map 支持范围查询\n// std::unordered_map 扩容会使迭代器失效，选择取决于顺序和复杂度要求", lang: "cpp", block: true)
+  #raw("// 是否需要范围有序遍历决定 std::map 与 std::unordered_map 的选择。\nstd::map<std::string, int> ordered;\nordered[\"key\"] = 1;\nif (auto it = ordered.find(\"key\"); it != ordered.end())\n    use(it->second); // 有序，O(log n)\nstd::unordered_map<std::string, int> hashed;\n++hashed[\"key\"];\nauto found = hashed.find(\"missing\");\nif (found == hashed.end())\n    handleMissing();\n// 哈希表平均 O(1)、最坏 O(n)，遍历顺序不稳定；std::map 支持范围查询\n// std::unordered_map 扩容会使迭代器失效，选择取决于顺序和复杂度要求", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -4527,7 +4527,7 @@
   #text("array 通常没有动态分配，整个容器对象本身包含固定数目的元素，适合长度固定的小数组；它也可以有零长度。两者的对象大小、存储位置和生命周期取决于容器对象如何创建及类型布局。若长度不需要变化，array 更直接；否则通常选择 vector。不要误以为固定数组一定在栈上，标准并不这么保证。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// std::vector 长度可变、std::array 长度编译期固定，两者元素连续。\nstd::vector<int> dynamic; dynamic.reserve(100); dynamic.push_back(7); // 运行期可变且连续\nstd::array<int, 3> fixed{{1, 2, 3}}; // 长度编译期固定，也连续\nint first = dynamic[0], second = fixed.at(1); // 随机访问 O(1)\n// std::vector 扩容可能搬迁元素；reserve 可减少扩容次数\n// std::array 不动态分配长度；二者都可提供连续元素数据", lang: "cpp", block: true)
+  #raw("// std::vector 长度可变、std::array 长度编译期固定，两者元素连续。\nstd::vector<int> dynamic;\ndynamic.reserve(100);\ndynamic.push_back(7); // 运行期可变且连续\nstd::array<int, 3> fixed{{1, 2, 3}}; // 长度编译期固定，也连续\nint first = dynamic[0], second = fixed.at(1); // 随机访问 O(1)\n// std::vector 扩容可能搬迁元素；reserve 可减少扩容次数\n// std::array 不动态分配长度；二者都可提供连续元素数据", lang: "cpp", block: true)
 ]
 
 #heading(level: 2, outlined: true)[#text("13.4 链表、字符串与基础数据结构", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
@@ -4541,7 +4541,7 @@
   #text("例如 1→2→3→4、N 为二，目标是三，慢指针停在二，令二.next 指向四即可。N 必须大于零且不超过链表长度，否则快指针无法合法前进，应按接口约定报错或返回失败。一次遍历时间 O(n)，只增加几个指针，空间 O(1)。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// 快慢指针保持 n 个节点距离，慢指针停在待删节点前。\nif (n <= 0) return head; // 非法 n 按接口约定处理\nNode dummy{0, head}; Node* fast = &dummy; Node* slow = &dummy;\nfor (int i = 0; i < n && fast; ++i) fast = fast->next;\nif (!fast) return head; // n 大于链表长度时不删除\nwhile (fast->next) { fast = fast->next; slow = slow->next; }\nslow->next = slow->next->next; return dummy.next;\n// 单趟 O(n) 时间、O(1) 空间；dummy 统一覆盖删除头节点", lang: "cpp", block: true)
+  #raw("// 快慢指针保持 n 个节点距离，慢指针停在待删节点前。\nif (n <= 0)\n    return head; // 非法 n 按接口约定处理\nNode dummy{0, head};\nNode* fast = &dummy;\nNode* slow = &dummy;\nfor (int i = 0; i < n && fast; ++i)\n    fast = fast->next;\nif (!fast)\n    return head; // n 大于链表长度时不删除\nwhile (fast->next)\n{\n    fast = fast->next;\n    slow = slow->next;\n}\nslow->next = slow->next->next;\nreturn dummy.next;\n// 单趟 O(n) 时间、O(1) 空间；dummy 统一覆盖删除头节点", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -4554,7 +4554,7 @@
   #text("双指针每个字符最多检查一次，时间 O(n)，额外空间 O(1)。若需求按 Unicode 字符、字素簇或规范化后的文本比较，需要先明确何为“一个字符”，并按该规则解码与标准化；视觉上相同的文本可能编码不同。大小写折叠也可能涉及多字符映射，因此要依题目范围选择合适方法。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// 左右端字符按题目规范化后逐对比较，跳过规则需一致。\nbool palindrome(const std::string& s) { int left = 0, right = static_cast<int>(s.size()) - 1;\n    while (left < right) {\n        while (left < right && ignored(s[left])) ++left; // 若题目忽略标点则跳过\n        while (left < right && ignored(s[right])) --right;\n        if (lower(s[left++]) != lower(s[right--])) return false;\n    }\n    return true;\n}\n// O(n) 时间、O(1) 额外空间；UTF-8 应先按 Unicode 字符解码", lang: "cpp", block: true)
+  #raw("// 左右端字符按题目规范化后逐对比较，跳过规则需一致。\nbool palindrome(const std::string& s)\n{\n    int left = 0, right = static_cast<int>(s.size()) - 1;\n    while (left < right)\n    {\n        while (left < right && ignored(s[left]))\n            ++left; // 若题目忽略标点则跳过\n        while (left < right && ignored(s[right]))\n            --right;\n        if (lower(s[left++]) != lower(s[right--]))\n            return false;\n    }\n    return true;\n}\n// O(n) 时间、O(1) 额外空间；UTF-8 应先按 Unicode 字符解码", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -4567,7 +4567,7 @@
   #text("循环条件应允许空指针比较，否则两条链表长度不同或为空时会处理错误。若两条链表尾节点都存在但地址不同，可以提前判定不相交。时间 O(m+n)，空间 O(1)。指针在链表间切换时要注意确实比较节点身份；按值比较会把内容相同但没有共享链接的节点误判。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// 换到另一链表后抵消两表长度差，按节点地址判断交点。\nNode* a = headA; Node* b = headB;\nwhile (a != b) { a = a ? a->next : headB; b = b ? b->next : headA; }\nreturn a; // 同时到 nullptr 表示不相交\n// 相交按节点地址相同判定，不是值相等；换头抵消长度差\n// O(m+n) 时间、O(1) 空间，空链表自然返回 nullptr", lang: "cpp", block: true)
+  #raw("// 换到另一链表后抵消两表长度差，按节点地址判断交点。\nNode* a = headA;\nNode* b = headB;\nwhile (a != b)\n{\n    a = a ? a->next : headB;\n    b = b ? b->next : headA;\n}\nreturn a; // 同时到 nullptr 表示不相交\n// 相交按节点地址相同判定，不是值相等；换头抵消长度差\n// O(m+n) 时间、O(1) 空间，空链表自然返回 nullptr", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -4580,7 +4580,7 @@
   #text("每个节点最多参与一次配对检查，时间 O(n)，递归栈 O(h)。树很深时可将节点对放进队列或栈，迭代处理可以避免递归深度受限。重复值本身没有问题，关键是镜像位置对应正确。对于一般多叉树，要另行定义孩子顺序与镜像规则，不能直接套用二叉树比较。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// 每次比较一对镜像位置，结构和节点值都必须对应。\nbool mirror(Node* a, Node* b) {\n    if (!a || !b) return a == b; // 必须同时为空\n    return a->value == b->value && mirror(a->left, b->right) && mirror(a->right, b->left);\n}\nbool symmetric = !root || mirror(root->left, root->right);\n// 同时比较值与镜像结构；每节点至多访问一次，O(n) 时间、O(h) 栈", lang: "cpp", block: true)
+  #raw("// 每次比较一对镜像位置，结构和节点值都必须对应。\nbool mirror(Node* a, Node* b)\n{\n    if (!a || !b)\n        return a == b; // 必须同时为空\n    return a->value == b->value && mirror(a->left, b->right) && mirror(a->right, b->left);\n}\nbool symmetric = !root || mirror(root->left, root->right);\n// 同时比较值与镜像结构；每节点至多访问一次，O(n) 时间、O(h) 栈", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -4593,7 +4593,7 @@
   #text("检查快指针时必须先保证它及 next 存在，才能安全地向前走两步。时间 O(n)，额外空间 O(1)。如果链表极长但某种并行或跨线程修改会改变 next，算法假设的稳定结构就不成立，需要先定义同步和生命周期。普通单线程、链接稳定的面试题里，双指针无需记录已访问地址。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// 首次相遇用于确认有环，第二阶段交点才是入环位置。\nNode* slow = head; Node* fast = head;\ndo { if (!fast || !fast->next) return nullptr; slow = slow->next; fast = fast->next->next; } while (slow != fast);\nNode* fromHead = head;\nwhile (fromHead != slow) { fromHead = fromHead->next; slow = slow->next; }\nreturn fromHead; // 两指针再次相遇即环入口\n// 有环时快慢必相遇；时间 O(n)、额外空间 O(1)", lang: "cpp", block: true)
+  #raw("// 首次相遇用于确认有环，第二阶段交点才是入环位置。\nNode* slow = head;\nNode* fast = head;\ndo\n{\n    if (!fast || !fast->next)\n        return nullptr;\n    slow = slow->next;\n    fast = fast->next->next;\n} while (slow != fast);\nNode* fromHead = head;\nwhile (fromHead != slow)\n{\n    fromHead = fromHead->next;\n    slow = slow->next;\n}\nreturn fromHead; // 两指针再次相遇即环入口\n// 有环时快慢必相遇；时间 O(n)、额外空间 O(1)", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -4606,7 +4606,7 @@
   #text("例如 [1,3,5,空,空,空] 和 [2,4,6]，依次从后向前放六、五、四、三、二、一。时间 O(m+n)，额外空间 O(1)，前提是第一个数组的容量确实至少为 m+n，且输入区间各自已排序。要验证空数组和 m 或 n 为零的情况。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// 从尾部写入避免覆盖 a 尚未处理的前缀。\nint i = m - 1, j = n - 1, write = m + n - 1;\nwhile (j >= 0) { // 从后向前写，不覆盖 a 中尚未读取的有效元素\n    if (i >= 0 && a[i] > b[j]) a[write--] = a[i--];\n    else a[write--] = b[j--];\n}\n// b 用尽时 a 剩余前缀原位有序；O(m+n) 时间、O(1) 额外空间", lang: "cpp", block: true)
+  #raw("// 从尾部写入避免覆盖 a 尚未处理的前缀。\nint i = m - 1, j = n - 1, write = m + n - 1;\nwhile (j >= 0)\n{ // 从后向前写，不覆盖 a 中尚未读取的有效元素\n    if (i >= 0 && a[i] > b[j])\n        a[write--] = a[i--];\n    else\n        a[write--] = b[j--];\n}\n// b 用尽时 a 剩余前缀原位有序；O(m+n) 时间、O(1) 额外空间", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -4619,7 +4619,7 @@
   #text("复用节点时总时间 O(m+n)，额外空间 O(1)，但会改变并重新连接输入链表；要保留原输入就得创建新节点，空间 O(m+n)。相等时固定优先接左侧，可以保持相同值的原相对顺序。要确保最后接入剩余链表后没有留下旧连接造成环或重复链接。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// 每次摘取较小头节点，尾指针始终指向结果末端。\nNode dummy{}; Node* tail = &dummy;\nwhile (a && b) { Node*& pick = a->value <= b->value ? a : b;\n    tail->next = pick; pick = pick->next; tail = tail->next; // 复用节点，左侧优先保持稳定\n}\ntail->next = a ? a : b; return dummy.next;\n// 一方耗尽后直接接剩余链；O(m+n) 时间、O(1) 额外空间", lang: "cpp", block: true)
+  #raw("// 每次摘取较小头节点，尾指针始终指向结果末端。\nNode dummy{};\nNode* tail = &dummy;\nwhile (a && b)\n{\n    Node*& pick = a->value <= b->value ? a : b;\n    tail->next = pick;\n    pick = pick->next;\n    tail = tail->next; // 复用节点，左侧优先保持稳定\n}\ntail->next = a ? a : b;\nreturn dummy.next;\n// 一方耗尽后直接接剩余链；O(m+n) 时间、O(1) 额外空间", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -4632,7 +4632,7 @@
   #text("区间端点是闭区间还是开区间会影响相接的端点是否算重叠。例如 [1,3] 和 [3,5] 在闭区间下相交，在开区间或半开区间下规则可能不同，比较符号要按题意选择。排序占 O(n log n)，扫描 O(n)；结果数组通常需要 O(n) 空间。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// 已排序区间只需比较当前新区间与结果末尾的右边界。\nstd::sort(intervals.begin(), intervals.end(), [](const auto& a, const auto& b) { return a.start < b.start; });\nstd::vector<Interval> merged;\nfor (const auto& x : intervals) {\n    if (merged.empty() || merged.back().end < x.start) merged.push_back(x);\n    else merged.back().end = std::max(merged.back().end, x.end); // 合并闭区间重叠/相接\n}\n// 空输入返回空结果；排序 O(n log n)，扫描 O(n)\n// 开区间是否合并端点相接要按题意调整比较符", lang: "cpp", block: true)
+  #raw("// 已排序区间只需比较当前新区间与结果末尾的右边界。\nstd::sort(intervals.begin(),\n          intervals.end(),\n          [](const auto& a, const auto& b)\n          {\n              return a.start < b.start;\n          });\nstd::vector<Interval> merged;\nfor (const auto& x : intervals)\n{\n    if (merged.empty() || merged.back().end < x.start)\n        merged.push_back(x);\n    else\n        merged.back().end = std::max(merged.back().end, x.end); // 合并闭区间重叠/相接\n}\n// 空输入返回空结果；排序 O(n log n)，扫描 O(n)\n// 开区间是否合并端点相接要按题意调整比较符", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -4645,7 +4645,7 @@
   #text("合并前先比较两个代表，若已相同就无需改动；否则合并并更新集合大小或秩。并查集适合“只合并”的关系，删除一条边后如何拆开集合它无法高效处理。并查集数组占 O(n) 空间，且接口通常要检查元素编号是否合法。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// 代表元标识集合；路径压缩与按大小合并控制树高。\nint find(int x) { return parent[x] == x ? x : parent[x] = find(parent[x]); } // 路径压缩\nbool unite(int a, int b) { a = find(a); b = find(b); if (a == b) return false;\n    if (size[a] < size[b]) std::swap(a, b); // 小树挂大树\n    parent[b] = a; size[a] += size[b]; return true;\n}\n// 初始化 parent[i]=i、size[i]=1；合并+压缩摊还 O(α(n))\n// 适合只合并不拆分的动态连通关系", lang: "cpp", block: true)
+  #raw("// 代表元标识集合；路径压缩与按大小合并控制树高。\nint find(int x)\n{\n    return parent[x] == x ? x : parent[x] = find(parent[x]);\n} // 路径压缩\nbool unite(int a, int b)\n{\n    a = find(a);\n    b = find(b);\n    if (a == b)\n        return false;\n    if (size[a] < size[b])\n        std::swap(a, b); // 小树挂大树\n    parent[b] = a;\n    size[a] += size[b];\n    return true;\n}\n// 初始化 parent[i]=i、size[i]=1；合并+压缩摊还 O(α(n))\n// 适合只合并不拆分的动态连通关系", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -4658,7 +4658,7 @@
   #text("先构造前缀表需要 O(m) 时间，扫描文本需要 O(n) 时间，总计 O(n+m)，空间 O(m)。不同教材可能把表定义为“包含当前位置”还是“只看当前位置之前”，实现下标会不同，但构造和回退必须采用同一约定。还要规定空模式串返回什么；比较字符串时应按实际编码或字符语义处理。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// pi 记录可复用的前缀长度，失配时文本下标不回退。\n// pi[i] 是 pattern[0..i] 的最长相等真前后缀长度\nif (pattern.empty()) return {0}; // 若接口要求所有边界位置，在此改为返回 0..text.size()\nstd::vector<int> pi(pattern.size());\nfor (int i = 1, j = 0; i < pattern.size(); ++i) {\n    while (j && pattern[i] != pattern[j]) j = pi[j - 1];\n    if (pattern[i] == pattern[j]) ++j; pi[i] = j;\n}\nfor (int i = 0, j = 0; i < text.size(); ++i) {\n    while (j && text[i] != pattern[j]) j = pi[j - 1];\n    if (text[i] == pattern[j]) ++j;\n    if (j == pattern.size()) { matches.push_back(i - j + 1); j = pi[j - 1]; }\n}\n// 空模式需单独定义；预处理 O(m)、扫描 O(n)，文本指针不回退", lang: "cpp", block: true)
+  #raw("// pi 记录可复用的前缀长度，失配时文本下标不回退。\n// pi[i] 是 pattern[0..i] 的最长相等真前后缀长度\nif (pattern.empty())\n    return {0}; // 若接口要求所有边界位置，在此改为返回 0..text.size()\nstd::vector<int> pi(pattern.size());\nfor (int i = 1, j = 0; i < pattern.size(); ++i)\n{\n    while (j && pattern[i] != pattern[j])\n        j = pi[j - 1];\n    if (pattern[i] == pattern[j])\n        ++j;\n    pi[i] = j;\n}\nfor (int i = 0, j = 0; i < text.size(); ++i)\n{\n    while (j && text[i] != pattern[j])\n        j = pi[j - 1];\n    if (text[i] == pattern[j])\n        ++j;\n    if (j == pattern.size())\n    {\n        matches.push_back(i - j + 1);\n        j = pi[j - 1];\n    }\n}\n// 空模式需单独定义；预处理 O(m)、扫描 O(n)，文本指针不回退", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -4671,7 +4671,7 @@
   #text("在现代 C++ 中，实际业务优先用 std::forward_list 或 std::list 等标准容器，避免重复造轮子并使用成熟的生命周期管理。教学或特殊布局需要自定义时，可让每个 next 用 unique_ptr 表达单向所有权，析构时递归释放；特别长的链表可能需要迭代拆链，避免深层析构。裸指针仅做链接时要清楚区分“拥有”与“借用”。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// head 独占整条单链表，移动 std::unique_ptr 转移所有权。\nstruct Node { int value; std::unique_ptr<Node> next; };\nstd::unique_ptr<Node> head;\nvoid pushFront(int x) { auto node = std::make_unique<Node>(); node->value = x;\n    node->next = std::move(head); head = std::move(node);\n}\nvoid popFront() { if (head) head = std::move(head->next); }\n// 单链表头插/头删 O(1)，std::unique_ptr 自动释放整条所有权链\n// 查找仍为 O(n)；双链表还需维护 prev 与头尾边界", lang: "cpp", block: true)
+  #raw("// head 独占整条单链表，移动 std::unique_ptr 转移所有权。\nstruct Node\n{\n    int value;\n    std::unique_ptr<Node> next;\n};\nstd::unique_ptr<Node> head;\nvoid pushFront(int x)\n{\n    auto node = std::make_unique<Node>();\n    node->value = x;\n    node->next = std::move(head);\n    head = std::move(node);\n}\nvoid popFront()\n{\n    if (head)\n        head = std::move(head->next);\n}\n// 单链表头插/头删 O(1)，std::unique_ptr 自动释放整条所有权链\n// 查找仍为 O(n)；双链表还需维护 prev 与头尾边界", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -4684,7 +4684,7 @@
   #text("写完后用很小的输入手算几步，检查状态初始化、下标含义、转移覆盖范围和空输入。背包问题正序还是倒序取决于一件物品能否重复使用，不存在通用固定方向。动态规划也不总比搜索快；状态数量太大时，应考虑记忆化搜索、剪枝、稀疏状态或其他算法。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// dp[x] 代表金额 x 的最优值，状态按依赖从小到大计算。\n// dp[x]：组成金额 x 所需的最少硬币数；硬币面值必须为正\nconst int inf = amount + 1; std::vector<int> dp(amount + 1, inf); dp[0] = 0;\nfor (int x = 1; x <= amount; ++x) for (int coin : coins) {\n    if (coin <= x && dp[x - coin] != inf) dp[x] = std::min(dp[x], dp[x - coin] + 1);\n}\nreturn dp[amount] == inf ? -1 : dp[amount];\n// 先定义状态/边界，再按依赖从小到大计算；O(amount * coins) 时间", lang: "cpp", block: true)
+  #raw("// dp[x] 代表金额 x 的最优值，状态按依赖从小到大计算。\n// dp[x]：组成金额 x 所需的最少硬币数；硬币面值必须为正\nconst int inf = amount + 1;\nstd::vector<int> dp(amount + 1, inf);\ndp[0] = 0;\nfor (int x = 1; x <= amount; ++x)\n    for (int coin : coins)\n    {\n        if (coin <= x && dp[x - coin] != inf)\n            dp[x] = std::min(dp[x], dp[x - coin] + 1);\n    }\nreturn dp[amount] == inf ? -1 : dp[amount];\n// 先定义状态/边界，再按依赖从小到大计算；O(amount * coins) 时间", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -4697,7 +4697,7 @@
   #text("平均性能常称 O(1)，但取决于哈希分布和负载因子；大量碰撞时可能退化到 O(n)。不可信输入还可能故意制造碰撞，影响服务性能。实际使用优先标准库容器和合适的哈希函数，手写实现要分别测试碰撞、扩容、删除后查找及容量耗尽等边界。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// 桶下标由哈希函数决定，桶内相等比较解决碰撞。\n// 链地址法：哈希相同的键进入同桶，再用相等比较区分\nif (capacity == 0) capacity = 1; std::vector<std::vector<Entry>> buckets(capacity);\nauto bucket = [&](const Key& key) { return std::hash<Key>{}(key) % buckets.size(); };\nEntry* find(const Key& key) { for (Entry& e : buckets[bucket(key)]) if (equal(e.key, key)) return &e; return nullptr; }\nvoid insert(Key key, Value value) { auto& chain = buckets[bucket(key)];\n    for (Entry& e : chain) if (equal(e.key, key)) { e.value = value; return; }\n    chain.push_back({std::move(key), std::move(value)}); ++size;\n    if (static_cast<double>(size) / buckets.size() > maxLoad) rehash();\n}\n// rehash 需重算所有桶下标；开放寻址删除要用墓碑避免探测链断开\n// 平均查找 O(1)，恶意碰撞或不佳分布下可退化 O(n)", lang: "cpp", block: true)
+  #raw("// 桶下标由哈希函数决定，桶内相等比较解决碰撞。\n// 链地址法：哈希相同的键进入同桶，再用相等比较区分\nif (capacity == 0)\n    capacity = 1;\nstd::vector<std::vector<Entry>> buckets(capacity);\nauto bucket = [&](const Key& key)\n{\n    return std::hash<Key>{}(key) % buckets.size();\n};\nEntry* find(const Key& key)\n{\n    for (Entry& e : buckets[bucket(key)])\n        if (equal(e.key, key))\n            return &e;\n    return nullptr;\n}\nvoid insert(Key key, Value value)\n{\n    auto& chain = buckets[bucket(key)];\n    for (Entry& e : chain)\n        if (equal(e.key, key))\n        {\n            e.value = value;\n            return;\n        }\n    chain.push_back({std::move(key), std::move(value)});\n    ++size;\n    if (static_cast<double>(size) / buckets.size() > maxLoad)\n        rehash();\n}\n// rehash 需重算所有桶下标；开放寻址删除要用墓碑避免探测链断开\n// 平均查找 O(1)，恶意碰撞或不佳分布下可退化 O(n)", lang: "cpp", block: true)
 ]
 
 #heading(level: 2, outlined: true)[#text("13.5 常见结构与搜索算法", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
@@ -4711,7 +4711,7 @@
   #text("无权图中，BFS 第一次到达顶点时路径的边数最少，因此适合最少步数问题；DFS 没有这个保证。若边有非负权重，应使用 Dijkstra 等加权最短路算法。无向图检测环时要忽略返回父节点的边，有向图则要区分访问中与已完成状态。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// DFS 深入回溯，BFS 按层扩展并在无权图求最短边数。\nvoid dfs(int u) { seen[u] = true; for (int v : graph[u]) if (!seen[v]) dfs(v); }\nfor (int u = 0; u < n; ++u) if (!seen[u]) dfs(u); // 覆盖所有分量\nstd::fill(seen.begin(), seen.end(), false); // 重新初始化后从 start 做 BFS\nstd::queue<int> q; seen[start] = true; distance[start] = 0; q.push(start);\nwhile (!q.empty()) { int u = q.front(); q.pop();\n    for (int v : graph[u]) if (!seen[v]) { seen[v] = true; distance[v] = distance[u] + 1; q.push(v); }\n}\n// 首次发现时标记；DFS 用于深入/回溯，BFS 求无权最少边数\n// 邻接表两者 O(V+E)；带权非负图用 Dijkstra", lang: "cpp", block: true)
+  #raw("// DFS 深入回溯，BFS 按层扩展并在无权图求最短边数。\nvoid dfs(int u)\n{\n    seen[u] = true;\n    for (int v : graph[u])\n        if (!seen[v])\n            dfs(v);\n}\nfor (int u = 0; u < n; ++u)\n    if (!seen[u])\n        dfs(u); // 覆盖所有分量\nstd::fill(seen.begin(), seen.end(), false); // 重新初始化后从 start 做 BFS\nstd::queue<int> q;\nseen[start] = true;\ndistance[start] = 0;\nq.push(start);\nwhile (!q.empty())\n{\n    int u = q.front();\n    q.pop();\n    for (int v : graph[u])\n        if (!seen[v])\n        {\n            seen[v] = true;\n            distance[v] = distance[u] + 1;\n            q.push(v);\n        }\n}\n// 首次发现时标记；DFS 用于深入/回溯，BFS 求无权最少边数\n// 邻接表两者 O(V+E)；带权非负图用 Dijkstra", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -4724,7 +4724,7 @@
   #text("排序部分有 n 轮，每次调整 O(log n)，所以总时间 O(n log n)；建堆线性不会改变这个总量级。只使用数组和几个临时变量，额外空间 O(1)。相等元素可能改变原先顺序，因此排序不稳定。空数组和单元素数组应自然返回，不要计算无效孩子下标。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("void sift_down(std::vector<int>& a, std::size_t i, std::size_t n) {\n  for (; 2*i+1<n;) { auto child=2*i+1; if (child+1<n && a[child]<a[child+1]) ++child;\n    if (a[i]>=a[child]) break; std::swap(a[i],a[child]); i=child; }\n} // 建最大堆后反复把堆顶放到末尾", lang: "cpp", block: true)
+  #raw("void sift_down(std::vector<int>& a, std::size_t i, std::size_t n)\n{\n    for (; 2 * i + 1 < n;)\n    {\n        auto child = 2 * i + 1;\n        if (child + 1 < n && a[child] < a[child + 1])\n            ++child;\n        if (a[i] >= a[child])\n            break;\n        std::swap(a[i], a[child]);\n        i = child;\n    }\n} // 建最大堆后反复把堆顶放到末尾", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -4737,7 +4737,7 @@
   #text("归并排序每一层总共合并 n 个元素，递归层数约 log n，因此时间稳定为 O(n log n)。数组实现通常需要 O(n) 临时空间；相等元素先取左边可以保持稳定。若内存有限、更看重常见速度可选快速排序；若要求最坏时间稳定或稳定排序，归并更合适。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("void quick_sort(std::vector<int>& a, int lo, int hi) { // [lo, hi)区间\n  if (hi - lo <= 1) return;\n  int pivot = a[lo + (hi - lo) / 2], lt = lo, i = lo, gt = hi - 1;\n  while (i <= gt) { if (a[i] < pivot) std::swap(a[lt++], a[i++]);\n    else if (a[i] > pivot) std::swap(a[i], a[gt--]); else ++i; }\n  quick_sort(a, lo, lt); quick_sort(a, gt + 1, hi); // 三路分区跳过等值段\n}\nvoid merge(std::vector<int>& a, std::vector<int>& tmp, int lo, int mid, int hi) {\n  int i=lo, j=mid, k=lo;\n  while (i<mid && j<hi) tmp[k++] = (a[i] <= a[j]) ? a[i++] : a[j++]; // 相等先取左侧，保持稳定\n  while (i<mid) tmp[k++] = a[i++]; while (j<hi) tmp[k++] = a[j++];\n  std::copy(tmp.begin()+lo, tmp.begin()+hi, a.begin()+lo);\n}\nvoid merge_sort(std::vector<int>& a, std::vector<int>& tmp, int lo, int hi) {\n  if (hi - lo <= 1) return;\n  int mid = lo + (hi - lo) / 2;\n  merge_sort(a, tmp, lo, mid); merge_sort(a, tmp, mid, hi);\n  merge(a, tmp, lo, mid, hi); // 分半后稳定合并，O(n log n)且需要临时空间\n}", lang: "cpp", block: true)
+  #raw("void quick_sort(std::vector<int>& a, int lo, int hi)\n{ // [lo, hi)区间\n    if (hi - lo <= 1)\n        return;\n    int pivot = a[lo + (hi - lo) / 2], lt = lo, i = lo, gt = hi - 1;\n    while (i <= gt)\n    {\n        if (a[i] < pivot)\n            std::swap(a[lt++], a[i++]);\n        else if (a[i] > pivot)\n            std::swap(a[i], a[gt--]);\n        else\n            ++i;\n    }\n    quick_sort(a, lo, lt);\n    quick_sort(a, gt + 1, hi); // 三路分区跳过等值段\n}\nvoid merge(std::vector<int>& a, std::vector<int>& tmp, int lo, int mid, int hi)\n{\n    int i = lo, j = mid, k = lo;\n    while (i < mid && j < hi)\n        tmp[k++] = (a[i] <= a[j]) ? a[i++] : a[j++]; // 相等先取左侧，保持稳定\n    while (i < mid)\n        tmp[k++] = a[i++];\n    while (j < hi)\n        tmp[k++] = a[j++];\n    std::copy(tmp.begin() + lo, tmp.begin() + hi, a.begin() + lo);\n}\nvoid merge_sort(std::vector<int>& a, std::vector<int>& tmp, int lo, int hi)\n{\n    if (hi - lo <= 1)\n        return;\n    int mid = lo + (hi - lo) / 2;\n    merge_sort(a, tmp, lo, mid);\n    merge_sort(a, tmp, mid, hi);\n    merge(a, tmp, lo, mid, hi); // 分半后稳定合并，O(n log n)且需要临时空间\n}", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -4750,7 +4750,7 @@
   #text("动态容器端部操作通常均摊 O(1)，但 pop 不一定返回被删除的值，要先读取 top 或 front。空容器上读取或弹出属于错误用法，应在接口层规定检查或异常行为。普通标准容器不支持多个线程同时无同步读写；并发场景要加锁或选择专门的并发结构。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// 栈操作尾端、队列操作两端，读取或弹出前要检查空状态。\nstd::stack<int> lifo; lifo.push(x); int top = lifo.top(); lifo.pop();\nstd::queue<int> fifo; fifo.push(x); int front = fifo.front(); fifo.pop();\n// 栈后进先出，队列先进先出；先检查 empty 再读 top/front 或 pop\n// std::stack/std::queue 是容器适配器，端操作通常 O(1)\n// 固定数组队列可用 head/tail 环绕，并用计数区分满和空", lang: "cpp", block: true)
+  #raw("// 栈操作尾端、队列操作两端，读取或弹出前要检查空状态。\nstd::stack<int> lifo;\nlifo.push(x);\nint top = lifo.top();\nlifo.pop();\nstd::queue<int> fifo;\nfifo.push(x);\nint front = fifo.front();\nfifo.pop();\n// 栈后进先出，队列先进先出；先检查 empty 再读 top/front 或 pop\n// std::stack/std::queue 是容器适配器，端操作通常 O(1)\n// 固定数组队列可用 head/tail 环绕，并用计数区分满和空", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -4763,7 +4763,7 @@
   #text("假设两个目标都在树中，遍历一次时间 O(n)，递归空间 O(h)。若目标可能缺失，仅凭返回一个节点会误把只找到的目标当作答案；需要额外确认两个目标都存在。二叉搜索树可以按键值与根比较，缩小到一侧，时间通常为树高 O(h)。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// 左右递归都返回目标时当前节点是分叉最低点。\nNode* lca(Node* p, Node* a, Node* b) { if (!p || p == a || p == b) return p;\n    Node* left = lca(p->left, a, b); Node* right = lca(p->right, a, b);\n    if (left && right) return p; // 两侧各找到一个，当前节点是最低公共祖先\n    return left ? left : right;\n}\n// 普通二叉树 O(n) 时间、O(h) 栈；若节点可能不存在需另计数确认两者均找到", lang: "cpp", block: true)
+  #raw("// 左右递归都返回目标时当前节点是分叉最低点。\nNode* lca(Node* p, Node* a, Node* b)\n{\n    if (!p || p == a || p == b)\n        return p;\n    Node* left = lca(p->left, a, b);\n    Node* right = lca(p->right, a, b);\n    if (left && right)\n        return p; // 两侧各找到一个，当前节点是最低公共祖先\n    return left ? left : right;\n}\n// 普通二叉树 O(n) 时间、O(h) 栈；若节点可能不存在需另计数确认两者均找到", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -4776,7 +4776,7 @@
   #text("无论哪种方式，每个节点只访问一次，时间 O(n)。BFS 队列最多保存一层节点，空间 O(w)；DFS 调用栈约 O(h)，其中 w 是最大层宽、h 是树高。实现按深度记录时要保证结果按层扩展；有缺失孩子也不能简单把“最右位置为空”当作该层没有可见节点。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// 队列中固定的一层宽度内，最后一个弹出的节点是右视值。\nif (!root) return view;\nstd::queue<Node*> q; q.push(root);\nwhile (!q.empty()) { int width = q.size();\n    for (int i = 0; i < width; ++i) { Node* p = q.front(); q.pop();\n        if (i == width - 1) view.push_back(p->value); // 每层最后弹出者\n        if (p->left) q.push(p->left); if (p->right) q.push(p->right);\n    }\n}\n// O(n) 时间、队列 O(w) 空间；DFS 也可按右、左顺序首次记层", lang: "cpp", block: true)
+  #raw("// 队列中固定的一层宽度内，最后一个弹出的节点是右视值。\nif (!root)\n    return view;\nstd::queue<Node*> q;\nq.push(root);\nwhile (!q.empty())\n{\n    int width = q.size();\n    for (int i = 0; i < width; ++i)\n    {\n        Node* p = q.front();\n        q.pop();\n        if (i == width - 1)\n            view.push_back(p->value); // 每层最后弹出者\n        if (p->left)\n            q.push(p->left);\n        if (p->right)\n            q.push(p->right);\n    }\n}\n// O(n) 时间、队列 O(w) 空间；DFS 也可按右、左顺序首次记层", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -4789,7 +4789,7 @@
   #text("n 个不同元素有 n! 个排列、2^n 个子集，光输出这些结果就可能很大，算法时间和内存至少与输出规模相关。可以边生成边处理以节约结果存储。若要求字典序，候选项按确定顺序遍历，并确保结果复制的是当前 path，而不是之后还会变化的同一份临时容器。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// path 是当前选择；回溯返回时必须撤销本层选择。\nvoid subsets(int start) { out.push_back(path); // 每个递归状态本身就是一个子集\n    for (int i = start; i < a.size(); ++i) {\n        if (i > start && a[i] == a[i - 1]) continue; // 排序后跳过同层重复值\n        path.push_back(a[i]); subsets(i + 1); path.pop_back();\n    }\n}\nvoid permutations() { if (path.size() == a.size()) { out.push_back(path); return; }\n    for (int i = 0; i < a.size(); ++i) if (!used[i]) {\n        if (i && a[i] == a[i - 1] && !used[i - 1]) continue;\n        used[i] = true; path.push_back(a[i]); permutations(); path.pop_back(); used[i] = false;\n    }\n}\n// 输入先排序以去重；输出规模可达 2^n 或 n!，结果可能占主要内存", lang: "cpp", block: true)
+  #raw("// path 是当前选择；回溯返回时必须撤销本层选择。\nvoid subsets(int start)\n{\n    out.push_back(path); // 每个递归状态本身就是一个子集\n    for (int i = start; i < a.size(); ++i)\n    {\n        if (i > start && a[i] == a[i - 1])\n            continue; // 排序后跳过同层重复值\n        path.push_back(a[i]);\n        subsets(i + 1);\n        path.pop_back();\n    }\n}\nvoid permutations()\n{\n    if (path.size() == a.size())\n    {\n        out.push_back(path);\n        return;\n    }\n    for (int i = 0; i < a.size(); ++i)\n        if (!used[i])\n        {\n            if (i && a[i] == a[i - 1] && !used[i - 1])\n                continue;\n            used[i] = true;\n            path.push_back(a[i]);\n            permutations();\n            path.pop_back();\n            used[i] = false;\n        }\n}\n// 输入先排序以去重；输出规模可达 2^n 或 n!，结果可能占主要内存", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -4802,7 +4802,7 @@
   #text("每个元素最多从输入栈转到输出栈一次，之后再弹出一次。因此一次操作最坏可能搬动 n 个元素，但连续很多次操作的平均成本（摊还复杂度）是 O(1)。空队列的 front 或 pop 应规定为报错还是返回失败。两个栈共保存 n 个元素，额外空间 O(n)。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// 只有输出栈空才倒序搬运，之后其栈顶即队首。\nstd::stack<int> input, output;\nvoid push(int x) { input.push(x); } // 新元素暂放输入栈\nint front() { if (output.empty()) while (!input.empty()) { output.push(input.top()); input.pop(); }\n    if (output.empty()) throw EmptyQueue{}; return output.top();\n}\nvoid pop() { (void)front(); output.pop(); }\n// 仅当输出栈空才搬运，保持 FIFO；每元素搬运一次，均摊 O(1)", lang: "cpp", block: true)
+  #raw("// 只有输出栈空才倒序搬运，之后其栈顶即队首。\nstd::stack<int> input, output;\nvoid push(int x)\n{\n    input.push(x);\n} // 新元素暂放输入栈\nint front()\n{\n    if (output.empty())\n        while (!input.empty())\n        {\n            output.push(input.top());\n            input.pop();\n        }\n    if (output.empty())\n        throw EmptyQueue{};\n    return output.top();\n}\nvoid pop()\n{\n    (void)front();\n    output.pop();\n}\n// 仅当输出栈空才搬运，保持 FIFO；每元素搬运一次，均摊 O(1)", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -4815,7 +4815,7 @@
   #text("每根柱子只入栈和出栈各一次，时间 O(n)，栈空间 O(n)。高度相同的柱子可以选择严格递增或非递减规则，但相等时是否弹出要与宽度计算配套；不能一边采用一种边界解释，一边套另一种写法。空直方图答案为零，面积乘法要考虑整数溢出。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// 单调栈保存尚未找到右侧更矮柱子的下标。\nfor (int i = 0; i <= heights.size(); ++i) { // i==n 视作高度 0 的哨兵\n    int current = i == heights.size() ? 0 : heights[i];\n    while (!st.empty() && heights[st.back()] > current) {\n        int h = heights[st.back()]; st.pop_back();\n        int left = st.empty() ? -1 : st.back();\n        best = std::max(best, h * (i - left - 1)); // 左右第一个更矮柱间的宽度\n    }\n    if (i < heights.size()) st.push_back(i);\n}\n// 每个下标入栈出栈一次，O(n) 时间、O(n) 空间；空输入答案 0", lang: "cpp", block: true)
+  #raw("// 单调栈保存尚未找到右侧更矮柱子的下标。\nfor (int i = 0; i <= heights.size(); ++i)\n{ // i==n 视作高度 0 的哨兵\n    int current = i == heights.size() ? 0 : heights[i];\n    while (!st.empty() && heights[st.back()] > current)\n    {\n        int h = heights[st.back()];\n        st.pop_back();\n        int left = st.empty() ? -1 : st.back();\n        best = std::max(best, h * (i - left - 1)); // 左右第一个更矮柱间的宽度\n    }\n    if (i < heights.size())\n        st.push_back(i);\n}\n// 每个下标入栈出栈一次，O(n) 时间、O(n) 空间；空输入答案 0", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -4828,7 +4828,7 @@
   #text("哈希操作平均 O(1)，冲突严重时会退化；补数 target-x 也可能在窄整数类型里溢出，应先用宽类型计算。只找一组、要找全部不同数值对、还是要找所有下标对，答案去重规则不同。查重也要说明是返回任意重复值、全部重复值，还是只判断是否存在。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// 两数之和先查补数再登记当前值，避免元素自配对。\nstd::unordered_set<int> seen;\nfor (int x : a) if (!seen.insert(x).second) duplicates.push_back(x); // 查重\nstd::unordered_map<int, int> index;\nfor (int i = 0; i < a.size(); ++i) { auto it = index.find(target - a[i]);\n    if (it != index.end()) return std::pair<int, int>{it->second, i}; // 先查再存，避免自配对\n    index[a[i]] = i;\n}\n// 平均 O(n) 时间、O(n) 空间；补数运算也要防溢出", lang: "cpp", block: true)
+  #raw("// 两数之和先查补数再登记当前值，避免元素自配对。\nstd::unordered_set<int> seen;\nfor (int x : a)\n    if (!seen.insert(x).second)\n        duplicates.push_back(x); // 查重\nstd::unordered_map<int, int> index;\nfor (int i = 0; i < a.size(); ++i)\n{\n    auto it = index.find(target - a[i]);\n    if (it != index.end())\n        return std::pair<int, int>{it->second, i}; // 先查再存，避免自配对\n    index[a[i]] = i;\n}\n// 平均 O(n) 时间、O(n) 空间；补数运算也要防溢出", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -4841,7 +4841,7 @@
   #text("如果改用两个队列，可以选择让 push 简单、pop 搬移，或相反。应根据主要操作选择，不要只说“一个栈或队列可以模拟”，要说明复杂度承担在哪一类操作。空栈上的 top/pop 应进行检查。队列本身仍需 O(n) 空间，单线程实现不自动提供并发安全。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// 旋转旧队列元素到尾部，让新入队值位于队首模拟栈顶。\nstd::queue<int> q;\nvoid push(int x) { q.push(x); for (int i = 1; i < q.size(); ++i) { q.push(q.front()); q.pop(); } }\nint top() { return q.front(); }\nvoid pop() { q.pop(); }\n// 每次 push 后轮转旧元素，使新元素在队首：push O(n)，top/pop O(1)\n// 空栈操作前需检查；双队列可改为 push O(1)、pop O(n)", lang: "cpp", block: true)
+  #raw("// 旋转旧队列元素到尾部，让新入队值位于队首模拟栈顶。\nstd::queue<int> q;\nvoid push(int x)\n{\n    q.push(x);\n    for (int i = 1; i < q.size(); ++i)\n    {\n        q.push(q.front());\n        q.pop();\n    }\n}\nint top()\n{\n    return q.front();\n}\nvoid pop()\n{\n    q.pop();\n}\n// 每次 push 后轮转旧元素，使新元素在队首：push O(n)，top/pop O(1)\n// 空栈操作前需检查；双队列可改为 push O(1)、pop O(n)", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -4854,7 +4854,7 @@
   #text("“不超过容量”和“恰好装满”的初始化不同：前者通常所有容量的最大价值初值为零；后者应让不可达状态保持负无穷，仅容量零为零。若要输出选了哪些物品，还要记录决策或保留足够的 DP 历史，单个滚动数组往往只剩最优值。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// 0/1 倒序阻止重复取用；完全背包正序允许本轮重用。\n// 0/1 背包：容量倒序，同件物品本轮不能再次使用\nfor (const auto& item : items) for (int c = W; c >= item.weight; --c)\n    dp[c] = std::max(dp[c], dp[c - item.weight] + item.value);\n// 完全背包：容量正序，让当前物品的本轮新状态继续参与转移\nfor (const auto& item : reusable) for (int c = item.weight; c <= W; ++c)\n    dp[c] = std::max(dp[c], dp[c - item.weight] + item.value);\n// 基础 O(nW) 时间、O(W) 空间；多重背包可二进制拆分数量", lang: "cpp", block: true)
+  #raw("// 0/1 倒序阻止重复取用；完全背包正序允许本轮重用。\n// 0/1 背包：容量倒序，同件物品本轮不能再次使用\nfor (const auto& item : items)\n    for (int c = W; c >= item.weight; --c)\n        dp[c] = std::max(dp[c], dp[c - item.weight] + item.value);\n// 完全背包：容量正序，让当前物品的本轮新状态继续参与转移\nfor (const auto& item : reusable)\n    for (int c = item.weight; c <= W; ++c)\n        dp[c] = std::max(dp[c], dp[c - item.weight] + item.value);\n// 基础 O(nW) 时间、O(W) 空间；多重背包可二进制拆分数量", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -4867,7 +4867,7 @@
   #text("两种题型的起点、终点和返回结果都不同，不能把同一个递归答案硬套进去。根到叶搜索时间 O(n)、调用栈 O(h)；任意向下路径法维护前缀表，表中保存的主要是当前根路径，空间 O(h)。负数可使累计和反复增减，正因为如此，不能用“超过目标就剪枝”的方法。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// remain 只在从根向下路径累减，且仅叶节点可结束路径。\nbool hasPath(Node* p, long long remain) { if (!p) return false;\n    remain -= p->value;\n    if (!p->left && !p->right) return remain == 0; // 只有叶子才能结束路径\n    return hasPath(p->left, remain) || hasPath(p->right, remain);\n}\n// 根到叶路径，负数也适用；O(n) 时间、O(h) 栈\n// 若统计任意向下路径，改用前缀和频次并在回溯时撤销计数", lang: "cpp", block: true)
+  #raw("// remain 只在从根向下路径累减，且仅叶节点可结束路径。\nbool hasPath(Node* p, long long remain)\n{\n    if (!p)\n        return false;\n    remain -= p->value;\n    if (!p->left && !p->right)\n        return remain == 0; // 只有叶子才能结束路径\n    return hasPath(p->left, remain) || hasPath(p->right, remain);\n}\n// 根到叶路径，负数也适用；O(n) 时间、O(h) 栈\n// 若统计任意向下路径，改用前缀和频次并在回溯时撤销计数", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -4880,7 +4880,7 @@
   #text("push、pop、top 和 getMin 都是 O(1)，但辅助栈让额外空间增加 O(n)。若只在出现更小值时记录，弹出时必须检查被删元素是否正好等于当前最小值，并正确处理重复最小值；这种写法更省空间但更容易错。空栈调用 top、pop、getMin 应统一规定错误处理。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// 每个栈项保存截至当前位置的最小值，弹出时自动恢复旧最小值。\nstd::stack<std::pair<int, int>> values; // 每项保存 (值, 到此为止的最小值)\nvoid push(int x) { int m = values.empty() ? x : std::min(x, values.top().second); values.emplace(x, m); }\nvoid pop() { if (!values.empty()) values.pop(); }\nint top() const { return values.top().first; }\nint getMin() const { return values.top().second; }\n// push/pop/top/getMin 均 O(1)，空间 O(n)；空栈行为需定义", lang: "cpp", block: true)
+  #raw("// 每个栈项保存截至当前位置的最小值，弹出时自动恢复旧最小值。\nstd::stack<std::pair<int, int>> values; // 每项保存 (值, 到此为止的最小值)\nvoid push(int x)\n{\n    int m = values.empty() ? x : std::min(x, values.top().second);\n    values.emplace(x, m);\n}\nvoid pop()\n{\n    if (!values.empty())\n        values.pop();\n}\nint top() const\n{\n    return values.top().first;\n}\nint getMin() const\n{\n    return values.top().second;\n}\n// push/pop/top/getMin 均 O(1)，空间 O(n)；空栈行为需定义", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -4893,7 +4893,7 @@
   #text("若题目要求真正 O(1) 额外空间，可从根向右推进：发现左子树时，找到左子树最右节点，把原右子树接到它后面；然后把左子树整体移到右侧并清空左指针。重复操作。时间通常 O(n)，但重连细节较易错，必须先保存所需子树，并用带左、右分支的例子核对先序结果。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// 把左子树移到右侧前，先把原右子树接到左子树最右端。\nNode* current = root;\nwhile (current) {\n    if (current->left) { Node* rightmost = current->left;\n        while (rightmost->right) rightmost = rightmost->right;\n        rightmost->right = current->right; // 接上原右子树\n        current->right = current->left; current->left = nullptr;\n    }\n    current = current->right;\n}\n// 原地前序展开，额外空间 O(1)、时间最坏 O(n²) 找右边界\n// 逆前序递归更简洁但需 O(h) 调用栈", lang: "cpp", block: true)
+  #raw("// 把左子树移到右侧前，先把原右子树接到左子树最右端。\nNode* current = root;\nwhile (current)\n{\n    if (current->left)\n    {\n        Node* rightmost = current->left;\n        while (rightmost->right)\n            rightmost = rightmost->right;\n        rightmost->right = current->right; // 接上原右子树\n        current->right = current->left;\n        current->left = nullptr;\n    }\n    current = current->right;\n}\n// 原地前序展开，额外空间 O(1)、时间最坏 O(n²) 找右边界\n// 逆前序递归更简洁但需 O(h) 调用栈", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -4906,7 +4906,7 @@
   #text("每个格子最多处理一次，时间 O(MN)，其中 M、N 是行列数。DFS 递归栈或 BFS 队列最坏可占 O(MN) 空间。默认只按上下左右连接，对角线接触不算相连；若题目定义不同，要修改邻居方向。大网格可用显式栈或队列，避免递归深度耗尽。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// 每片陆地首次发现就标记，避免相邻格重复扩展。\nvoid flood(int r, int c) { if (r < 0 || r == rows || c < 0 || c == cols || grid[r][c] != '1') return;\n    grid[r][c] = '0'; // 入栈/递归前标记，避免重复访问\n    flood(r + 1, c); flood(r - 1, c); flood(r, c + 1); flood(r, c - 1);\n}\nfor (int r = 0; r < rows; ++r) for (int c = 0; c < cols; ++c)\n    if (grid[r][c] == '1') { ++islands; flood(r, c); }\n// O(rows*cols) 时间、最坏 O(rows*cols) 栈/队列；输入不可改则另设 visited", lang: "cpp", block: true)
+  #raw("// 每片陆地首次发现就标记，避免相邻格重复扩展。\nvoid flood(int r, int c)\n{\n    if (r < 0 || r == rows || c < 0 || c == cols || grid[r][c] != '1')\n        return;\n    grid[r][c] = '0'; // 入栈/递归前标记，避免重复访问\n    flood(r + 1, c);\n    flood(r - 1, c);\n    flood(r, c + 1);\n    flood(r, c - 1);\n}\nfor (int r = 0; r < rows; ++r)\n    for (int c = 0; c < cols; ++c)\n        if (grid[r][c] == '1')\n        {\n            ++islands;\n            flood(r, c);\n        }\n// O(rows*cols) 时间、最坏 O(rows*cols) 栈/队列；输入不可改则另设 visited", lang: "cpp", block: true)
 ]
 
 #heading(level: 2, outlined: true)[#text("13.6 排序、组合搜索与贪心", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
@@ -4920,7 +4920,7 @@
   #text("时间稳定为 O(n log n)，数组实现通常需要 O(n) 临时空间；分治递归另有 O(log n) 调用栈。链表可以通过快慢指针拆分、再合并节点，避免按下标随机访问，也不必复制元素。数据装不进内存时，可把块分别排好，再做外部多路归并。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// 归并时相等元素优先取左半，保留稳定次序。\nvoid mergeSort(int left, int right) { if (right - left <= 1) return;\n    int mid = left + (right - left) / 2; mergeSort(left, mid); mergeSort(mid, right);\n    int i = left, j = mid; tmp.clear();\n    while (i < mid || j < right) tmp.push_back(j == right || (i < mid && a[i] <= a[j]) ? a[i++] : a[j++]);\n    std::copy(tmp.begin(), tmp.end(), a.begin() + left);\n}\n// 相等时先取左项保证稳定；O(n log n) 时间、数组临时空间 O(n)", lang: "cpp", block: true)
+  #raw("// 归并时相等元素优先取左半，保留稳定次序。\nvoid mergeSort(int left, int right)\n{\n    if (right - left <= 1)\n        return;\n    int mid = left + (right - left) / 2;\n    mergeSort(left, mid);\n    mergeSort(mid, right);\n    int i = left, j = mid;\n    tmp.clear();\n    while (i < mid || j < right)\n        tmp.push_back(j == right || (i < mid && a[i] <= a[j]) ? a[i++] : a[j++]);\n    std::copy(tmp.begin(), tmp.end(), a.begin() + left);\n}\n// 相等时先取左项保证稳定；O(n log n) 时间、数组临时空间 O(n)", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -4933,7 +4933,7 @@
   #text("快速排序通常不稳定：相等元素可能在分区交换中改变相对顺序。递归栈平均 O(log n)，极端划分可到 O(n)；可总是递归较小区间来限制一部分栈深，但不改变最坏时间。若需要稳定排序或标准库的复杂度保证，优先选适合需求的库算法。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// 三路分区把等于 pivot 的中间段一次排定。\nvoid quickSort(int left, int right) { if (left >= right) return;\n    int pivot = a[left + (right - left) / 2], low = left, i = left, high = right;\n    while (i <= high) { if (a[i] < pivot) std::swap(a[low++], a[i++]);\n        else if (a[i] > pivot) std::swap(a[i], a[high--]); else ++i; }\n    quickSort(left, low - 1); quickSort(high + 1, right); // 中间等值段已完成\n}\n// 平均 O(n log n)，坏划分 O(n²)；三路划分利于大量重复值，排序不稳定", lang: "cpp", block: true)
+  #raw("// 三路分区把等于 pivot 的中间段一次排定。\nvoid quickSort(int left, int right)\n{\n    if (left >= right)\n        return;\n    int pivot = a[left + (right - left) / 2], low = left, i = left, high = right;\n    while (i <= high)\n    {\n        if (a[i] < pivot)\n            std::swap(a[low++], a[i++]);\n        else if (a[i] > pivot)\n            std::swap(a[i], a[high--]);\n        else\n            ++i;\n    }\n    quickSort(left, low - 1);\n    quickSort(high + 1, right); // 中间等值段已完成\n}\n// 平均 O(n log n)，坏划分 O(n²)；三路划分利于大量重复值，排序不稳定", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -4946,7 +4946,7 @@
   #text("线性排列时间 O(n)、空间 O(1)。如果房屋首尾相邻形成一个环，不能同时偷第一和最后一间；可分别计算“排除最后一间”和“排除第一间”的线性答案，取较大者。若有负数收入，是否允许跳过负数或必须选房，需按题意改变初始化。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// prev1/prev2 分别表示前一间与前两间范围的最优收益。\nlong long prev2 = 0, prev1 = 0; // 前 0/1 间房的最优收益\nfor (int money : houses) { long long now = std::max(prev1, prev2 + money);\n    prev2 = prev1; prev1 = now; // 不抢当前 vs 抢当前\n}\nreturn prev1; // O(n) 时间、O(1) 空间；允许一间不抢故初值为 0\n// 环形街区需分别计算不含首间与不含末间两段再取最大", lang: "cpp", block: true)
+  #raw("// prev1/prev2 分别表示前一间与前两间范围的最优收益。\nlong long prev2 = 0, prev1 = 0; // 前 0/1 间房的最优收益\nfor (int money : houses)\n{\n    long long now = std::max(prev1, prev2 + money);\n    prev2 = prev1;\n    prev1 = now; // 不抢当前 vs 抢当前\n}\nreturn prev1; // O(n) 时间、O(1) 空间；允许一间不抢故初值为 0\n// 环形街区需分别计算不含首间与不含末间两段再取最大", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -4959,7 +4959,7 @@
   #text("只有在额外条件支持时才能二分。例如已知值域、数组长度和鸽笼原理，并且能判断某个范围内有多少元素时，才可对候选值范围做计数判断；不能对任意排序数组直接二分某个重复元素。若输入未排序，为了相邻查找而排序需 O(n log n)，且会改变输入顺序。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// 相同元素在已排序数组中形成连续的一组。\nif (a.empty()) return;\nfor (int i = 0; i < a.size();) {\n    int j = i + 1; while (j < a.size() && a[j] == a[i]) ++j;\n    if (j - i > 1) duplicates.push_back(a[i]); // 每组只报告一次\n    i = j;\n}\n// 输入已排序，单次扫描 O(n)、O(1) 额外空间；返回一个重复值可提前停", lang: "cpp", block: true)
+  #raw("// 相同元素在已排序数组中形成连续的一组。\nif (a.empty())\n    return;\nfor (int i = 0; i < a.size();)\n{\n    int j = i + 1;\n    while (j < a.size() && a[j] == a[i])\n        ++j;\n    if (j - i > 1)\n        duplicates.push_back(a[i]); // 每组只报告一次\n    i = j;\n}\n// 输入已排序，单次扫描 O(n)、O(1) 额外空间；返回一个重复值可提前停", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -4972,7 +4972,7 @@
   #text("用邻接表时，每个节点和边处理一次，时间 O(V+E)，空间 O(V)。合法拓扑序可能不止一个；如果要求字典序最小，用保存零入度节点的最小堆代替普通队列，但复杂度会增加到 O((V+E) log V) 左右。只有在图无环时，结果才包含所有顶点。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// 零入度队列逐步删除依赖；未输出顶点意味着图内有环。\nstd::queue<int> ready; for (int u = 0; u < n; ++u) if (indegree[u] == 0) ready.push(u);\nwhile (!ready.empty()) { int u = ready.front(); ready.pop(); order.push_back(u);\n    for (int v : graph[u]) if (--indegree[v] == 0) ready.push(v);\n}\nif (order.size() != n) return {}; // 仍有入度节点说明存在有向环\n// O(V+E) 时间；有多个零入度点时拓扑序不唯一", lang: "cpp", block: true)
+  #raw("// 零入度队列逐步删除依赖；未输出顶点意味着图内有环。\nstd::queue<int> ready;\nfor (int u = 0; u < n; ++u)\n    if (indegree[u] == 0)\n        ready.push(u);\nwhile (!ready.empty())\n{\n    int u = ready.front();\n    ready.pop();\n    order.push_back(u);\n    for (int v : graph[u])\n        if (--indegree[v] == 0)\n            ready.push(v);\n}\nif (order.size() != n)\n    return {}; // 仍有入度节点说明存在有向环\n// O(V+E) 时间；有多个零入度点时拓扑序不唯一", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -4985,7 +4985,7 @@
   #text("答案数量是 Catalan 数，增长很快，所以总时间至少与输出字符串总长度同阶，不能期望对大 n 只花多项式时间。保存所有结果会占很多内存；可以按需逐条输出。n=0 时通常有一个空字符串作为唯一合法结果，但接口也可能另有约定。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// close 不得超过 open，所有递归前缀始终合法。\nvoid generate(int open, int close) {\n    if (path.size() == 2 * n) { out.push_back(path); return; }\n    if (open < n) { path.push_back('('); generate(open + 1, close); path.pop_back(); }\n    if (close < open) { path.push_back(')'); generate(open, close + 1); path.pop_back(); }\n}\n// close<=open 保证每个前缀合法；n=0 通常输出空串\n// 时间至少与 Catalan 数量级的输出量相同", lang: "cpp", block: true)
+  #raw("// close 不得超过 open，所有递归前缀始终合法。\nvoid generate(int open, int close)\n{\n    if (path.size() == 2 * n)\n    {\n        out.push_back(path);\n        return;\n    }\n    if (open < n)\n    {\n        path.push_back('(');\n        generate(open + 1, close);\n        path.pop_back();\n    }\n    if (close < open)\n    {\n        path.push_back(')');\n        generate(open, close + 1);\n        path.pop_back();\n    }\n}\n// close<=open 保证每个前缀合法；n=0 通常输出空串\n// 时间至少与 Catalan 数量级的输出量相同", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -4998,7 +4998,7 @@
   #text("插入排序稳定、原地，空间 O(1)。已有序时几乎不需要移动，最好时间 O(n)；平均和最坏 O(n²)。适合小数组、近乎有序的数据，也常用于大型混合排序的短区间。若数组很大且无序，归并或内省排序通常更合适。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// 每轮开始时左侧区间有序，将当前值插入其正确位置。\nfor (int i = 1; i < n; ++i) { int value = a[i], j = i;\n    while (j > 0 && a[j - 1] > value) { a[j] = a[j - 1]; --j; } // 有序前缀右移\n    a[j] = value;\n}\n// 相等元素不移动，故稳定；原地，近乎有序最好 O(n)，平均/最坏 O(n²)", lang: "cpp", block: true)
+  #raw("// 每轮开始时左侧区间有序，将当前值插入其正确位置。\nfor (int i = 1; i < n; ++i)\n{\n    int value = a[i], j = i;\n    while (j > 0 && a[j - 1] > value)\n    {\n        a[j] = a[j - 1];\n        --j;\n    } // 有序前缀右移\n    a[j] = value;\n}\n// 相等元素不移动，故稳定；原地，近乎有序最好 O(n)，平均/最坏 O(n²)", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -5011,7 +5011,7 @@
   #text("若数据一次到来后不能全部保存，大小为 K 的最小堆适合流式维护目前最大的 K 个数，堆顶就是第 K 大，时间 O(n log K)、空间 O(K)。如果只查询一次且数组可修改，快速选择通常更省；若要多次查询或保留输入，可选择完整排序或堆，按约束权衡。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// partition 将 pivot 放到最终排名，只继续目标所在一侧。\n// 三路 partition 避免重复值堆在某一侧；目标下标为 n-k\nif (k < 1 || k > a.size()) throw InvalidInput{};\nint target = static_cast<int>(a.size()) - k, left = 0, right = a.size() - 1;\nwhile (left <= right) { int pivot = a[left + (right - left) / 2], low = left, i = left, high = right;\n    while (i <= high) { if (a[i] < pivot) std::swap(a[low++], a[i++]);\n        else if (a[i] > pivot) std::swap(a[i], a[high--]); else ++i; }\n    if (target < low) right = low - 1; else if (target > high) left = high + 1; else return pivot;\n}\n// 快速选择平均 O(n)、最坏 O(n²)；随机 pivot 可降低常见退化\n// 流式数据可改用大小 K 的最小堆，时间 O(n log K)、空间 O(K)", lang: "cpp", block: true)
+  #raw("// partition 将 pivot 放到最终排名，只继续目标所在一侧。\n// 三路 partition 避免重复值堆在某一侧；目标下标为 n-k\nif (k < 1 || k > a.size())\n    throw InvalidInput{};\nint target = static_cast<int>(a.size()) - k, left = 0, right = a.size() - 1;\nwhile (left <= right)\n{\n    int pivot = a[left + (right - left) / 2], low = left, i = left, high = right;\n    while (i <= high)\n    {\n        if (a[i] < pivot)\n            std::swap(a[low++], a[i++]);\n        else if (a[i] > pivot)\n            std::swap(a[i], a[high--]);\n        else\n            ++i;\n    }\n    if (target < low)\n        right = low - 1;\n    else if (target > high)\n        left = high + 1;\n    else\n        return pivot;\n}\n// 快速选择平均 O(n)、最坏 O(n²)；随机 pivot 可降低常见退化\n// 流式数据可改用大小 K 的最小堆，时间 O(n log K)、空间 O(K)", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -5024,7 +5024,7 @@
   #text("数列增长很快，定宽整数在较大的 n 会溢出，甚至中间相加就可能超出类型范围；按题目约束选择大整数、模运算或显式报告溢出。若 n 极大且需要精确的单项值，快速倍增可以把递推步骤降到 O(log n)，但大整数运算本身仍会随位数变贵。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// prev/current 始终保存相邻两项，迭代避免重复递归。\nlong long fib(int n) { if (n < 0) throw InvalidInput{}; if (n <= 1) return n; // F0=0、F1=1\n    long long prev = 0, current = 1;\n    for (int i = 2; i <= n; ++i) { long long next = prev + current; prev = current; current = next; }\n    return current;\n}\n// O(n) 时间、O(1) 空间；定宽整数可能溢出，模运算按需逐步执行", lang: "cpp", block: true)
+  #raw("// prev/current 始终保存相邻两项，迭代避免重复递归。\nlong long fib(int n)\n{\n    if (n < 0)\n        throw InvalidInput{};\n    if (n <= 1)\n        return n; // F0=0、F1=1\n    long long prev = 0, current = 1;\n    for (int i = 2; i <= n; ++i)\n    {\n        long long next = prev + current;\n        prev = current;\n        current = next;\n    }\n    return current;\n}\n// O(n) 时间、O(1) 空间；定宽整数可能溢出，模运算按需逐步执行", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -5037,7 +5037,7 @@
   #text("有重复元素且中点与右端相等时，无法从这两个值判断最小值在哪边，可以安全地把 right 减一；但重复很多时最坏要检查 O(n) 个位置。空数组没有最小值，应返回可表达“无结果”的状态。求最小值和返回最小值下标有时不是同一个接口，需看题意。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// 与右端比较后保留包含最小值的闭区间。\nif (a.empty()) throw EmptyInput{};\nint left = 0, right = static_cast<int>(a.size()) - 1;\nwhile (left < right) { int mid = left + (right - left) / 2;\n    if (a[mid] > a[right]) left = mid + 1;\n    else if (a[mid] < a[right]) right = mid;\n    else --right; // 重复值无法判定旋转点在哪边\n}\nreturn a[left]; // 无重复 O(log n)，含重复最坏 O(n)；未旋转也返回首元素", lang: "cpp", block: true)
+  #raw("// 与右端比较后保留包含最小值的闭区间。\nif (a.empty())\n    throw EmptyInput{};\nint left = 0, right = static_cast<int>(a.size()) - 1;\nwhile (left < right)\n{\n    int mid = left + (right - left) / 2;\n    if (a[mid] > a[right])\n        left = mid + 1;\n    else if (a[mid] < a[right])\n        right = mid;\n    else\n        --right; // 重复值无法判定旋转点在哪边\n}\nreturn a[left]; // 无重复 O(log n)，含重复最坏 O(n)；未旋转也返回首元素", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -5050,7 +5050,7 @@
   #text("若矩阵为 m 行 n 列，每格更新一次，每行再在线性时间扫描一次直方图，总时间 O(mn)，高度数组和单调栈用 O(n) 空间。空行或空列返回零。面积乘法可能溢出窄整数；如果想恢复具体矩形，还需在记录最大面积时同时保存其左右边界和上下边界。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// height[c] 是当前行为底时该列连续 1 的高度。\nstd::vector<int> height(cols, 0);\nfor (const auto& row : matrix) {\n    for (int c = 0; c < cols; ++c) height[c] = row[c] == '1' ? height[c] + 1 : 0;\n    best = std::max(best, largestHistogram(height)); // 当前行作矩形底边\n}\nreturn best; // 每行 O(cols)，总 O(rows*cols)，额外 O(cols)\n// 空矩阵/空列返回 0；直方图子程序用单调栈求最大面积", lang: "cpp", block: true)
+  #raw("// height[c] 是当前行为底时该列连续 1 的高度。\nstd::vector<int> height(cols, 0);\nfor (const auto& row : matrix)\n{\n    for (int c = 0; c < cols; ++c)\n        height[c] = row[c] == '1' ? height[c] + 1 : 0;\n    best = std::max(best, largestHistogram(height)); // 当前行作矩形底边\n}\nreturn best; // 每行 O(cols)，总 O(rows*cols)，额外 O(cols)\n// 空矩阵/空列返回 0；直方图子程序用单调栈求最大面积", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -5063,7 +5063,7 @@
   #text("排序成本 O(E log E)，并查集操作近似线性。如果处理完所有边仍只选到少于 V-1 条，原图不连通，算法得到的是最小生成森林而不是一棵覆盖全图的树。多个边权相同可能存在多棵同样最优的树，Kruskal 返回其中一棵即可。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// 仅合并不同并查集的边，已连通边会形成环而跳过。\nstd::sort(edges.begin(), edges.end(), [](const Edge& a, const Edge& b) { return a.weight < b.weight; });\nfor (const Edge& e : edges) if (dsu.unite(e.u, e.v)) {\n    mst.push_back(e); total += e.weight;\n    if (mst.size() == n - 1) break;\n}\nif (mst.size() != n - 1) reportForest(); // 原图不连通\n// O(E log E) 排序加近线性并查集；负权无向边可正常处理", lang: "cpp", block: true)
+  #raw("// 仅合并不同并查集的边，已连通边会形成环而跳过。\nstd::sort(edges.begin(),\n          edges.end(),\n          [](const Edge& a, const Edge& b)\n          {\n              return a.weight < b.weight;\n          });\nfor (const Edge& e : edges)\n    if (dsu.unite(e.u, e.v))\n    {\n        mst.push_back(e);\n        total += e.weight;\n        if (mst.size() == n - 1)\n            break;\n    }\nif (mst.size() != n - 1)\n    reportForest(); // 原图不连通\n// O(E log E) 排序加近线性并查集；负权无向边可正常处理", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -5076,7 +5076,7 @@
   #text("邻接表和二叉堆时，常见复杂度 O(E log V)；稠密图可用邻接矩阵、线性扫描最小候选点，以 O(V²) 完成。若图不连通，从尚未访问的每个顶点再启动 Prim，会得到最小生成森林。若题目保证连通，则从任意顶点启动一次就够。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// 候选堆维护已选集合的外边界，每个顶点只纳入一次。\nusing Candidate = std::pair<int, int>; // (权重, 顶点)\nstd::priority_queue<Candidate, std::vector<Candidate>, std::greater<Candidate>> q;\nfor (int start = 0; start < n; ++start) if (!used[start]) { q.push({0, start});\n    while (!q.empty()) { auto [w, u] = q.top(); q.pop(); if (used[u]) continue;\n        used[u] = true; total += w;\n        for (auto [v, cost] : graph[u]) if (!used[v]) q.push({cost, v});\n    }\n}\n// 外层覆盖不连通分量得最小生成森林；堆优化常见 O(E log V)", lang: "cpp", block: true)
+  #raw("// 候选堆维护已选集合的外边界，每个顶点只纳入一次。\nusing Candidate = std::pair<int, int>; // (权重, 顶点)\nstd::priority_queue<Candidate, std::vector<Candidate>, std::greater<Candidate>> q;\nfor (int start = 0; start < n; ++start)\n    if (!used[start])\n    {\n        q.push({0, start});\n        while (!q.empty())\n        {\n            auto [w, u] = q.top();\n            q.pop();\n            if (used[u])\n                continue;\n            used[u] = true;\n            total += w;\n            for (auto [v, cost] : graph[u])\n                if (!used[v])\n                    q.push({cost, v});\n        }\n    }\n// 外层覆盖不连通分量得最小生成森林；堆优化常见 O(E log V)", lang: "cpp", block: true)
 ]
 
 #heading(level: 2, outlined: true)[#text("13.7 路径规划与动态规划", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
@@ -5090,7 +5090,7 @@
   #text("矩阵 m×n 时，时间 O(mn)，滚动数组空间 O(n)。即使格子里有负数也能使用，因为只能向右和向下，不会回头绕出环，状态依赖仍是有向无环的。如果允许向左、向上等来回移动，负数可能导致无限降低路径代价，就不再适用这个递推。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// dp[c] 在本行更新前是上方，更新后是左方最优代价。\nif (rows == 0 || cols == 0) return 0;\nconst int inf = std::numeric_limits<int>::max() / 4;\nstd::vector<int> dp(cols, inf); dp[0] = grid[0][0];\nfor (int r = 0; r < rows; ++r) for (int c = 0; c < cols; ++c) {\n    if (r == 0 && c == 0) continue;\n    int fromAbove = dp[c], fromLeft = c ? dp[c - 1] : inf;\n    dp[c] = grid[r][c] + std::min(fromAbove, fromLeft);\n}\nreturn dp[cols - 1]; // O(rows*cols) 时间、O(cols) 空间；避免 INF 加法溢出", lang: "cpp", block: true)
+  #raw("// dp[c] 在本行更新前是上方，更新后是左方最优代价。\nif (rows == 0 || cols == 0)\n    return 0;\nconst int inf = std::numeric_limits<int>::max() / 4;\nstd::vector<int> dp(cols, inf);\ndp[0] = grid[0][0];\nfor (int r = 0; r < rows; ++r)\n    for (int c = 0; c < cols; ++c)\n    {\n        if (r == 0 && c == 0)\n            continue;\n        int fromAbove = dp[c], fromLeft = c ? dp[c - 1] : inf;\n        dp[c] = grid[r][c] + std::min(fromAbove, fromLeft);\n    }\nreturn dp[cols - 1]; // O(rows*cols) 时间、O(cols) 空间；避免 INF 加法溢出", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -5103,7 +5103,7 @@
   #text("时间 O(VE)，比非负边的 Dijkstra 慢，但适合有负权边的情况，也能检测可达负环。若只关心某个目标点，需要确认是否还要报告它受可达负环影响。初始化和加法应避免“无穷哨兵”溢出，工程实现可用可选值或安全饱和加法表达不可达。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// 每轮松弛允许最短路再多经过一条边，V-1 轮覆盖简单路径。\nstd::vector<long long> dist(n, INF); dist[source] = 0;\nfor (int round = 1; round < n; ++round) { bool changed = false;\n    for (auto [u, v, w] : edges) if (dist[u] != INF && dist[u] + w < dist[v]) {\n        dist[v] = dist[u] + w; changed = true;\n    }\n    if (!changed) break;\n}\nfor (auto [u, v, w] : edges) if (dist[u] != INF && dist[u] + w < dist[v]) reportReachableNegativeCycle();\n// O(VE) 时间，可处理负边；只从可达点松弛以免 INF 溢出", lang: "cpp", block: true)
+  #raw("// 每轮松弛允许最短路再多经过一条边，V-1 轮覆盖简单路径。\nstd::vector<long long> dist(n, INF);\ndist[source] = 0;\nfor (int round = 1; round < n; ++round)\n{\n    bool changed = false;\n    for (auto [u, v, w] : edges)\n        if (dist[u] != INF && dist[u] + w < dist[v])\n        {\n            dist[v] = dist[u] + w;\n            changed = true;\n        }\n    if (!changed)\n        break;\n}\nfor (auto [u, v, w] : edges)\n    if (dist[u] != INF && dist[u] + w < dist[v])\n        reportReachableNegativeCycle();\n// O(VE) 时间，可处理负边；只从可达点松弛以免 INF 溢出", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -5116,7 +5116,7 @@
   #text("邻接表配二叉堆通常 O((V+E) log V)，空间 O(V+E)。不可达点保持无穷。任何可达负权边都会破坏算法“最小者已确定”的理由，即使某个特定输入看起来仍给对答案也不能保证正确；这时选 Bellman-Ford 等适合算法。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// 堆顶暂定距离若已过期就跳过，避免重复处理旧状态。\nstd::vector<long long> dist(n, INF); dist[source] = 0;\nusing State = std::pair<long long, int>; std::priority_queue<State, std::vector<State>, std::greater<State>> q;\nq.push({0, source});\nwhile (!q.empty()) { auto [d, u] = q.top(); q.pop(); if (d != dist[u]) continue; // 跳过过期条目\n    for (auto [v, w] : graph[u]) if (d + w < dist[v]) { dist[v] = d + w; q.push({dist[v], v}); }\n}\n// 仅适用于非负边；邻接表+堆 O((V+E)log V)，不可达点保持 INF", lang: "cpp", block: true)
+  #raw("// 堆顶暂定距离若已过期就跳过，避免重复处理旧状态。\nstd::vector<long long> dist(n, INF);\ndist[source] = 0;\nusing State = std::pair<long long, int>;\nstd::priority_queue<State, std::vector<State>, std::greater<State>> q;\nq.push({0, source});\nwhile (!q.empty())\n{\n    auto [d, u] = q.top();\n    q.pop();\n    if (d != dist[u])\n        continue; // 跳过过期条目\n    for (auto [v, w] : graph[u])\n        if (d + w < dist[v])\n        {\n            dist[v] = d + w;\n            q.push({dist[v], v});\n        }\n}\n// 仅适用于非负边；邻接表+堆 O((V+E)log V)，不可达点保持 INF", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -5129,7 +5129,7 @@
   #text("二维动态规划时间 O(mn)、空间 O(mn)。可以压缩成一维，但更新要从右往左，确保 dp[j-1] 仍是上一行的左上状态；否则会把同一轮更新过的值重复使用。压缩后空间 O(min(m,n))，长字符串时可明显省内存。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// 子串必须连续，字符不等时以该字符结尾长度归零。\nstd::vector<int> dp(b.size() + 1, 0); int best = 0;\nfor (char x : a) for (int j = static_cast<int>(b.size()); j > 0; --j) {\n    dp[j] = x == b[j - 1] ? dp[j - 1] + 1 : 0; // 不同字符必须清零\n    best = std::max(best, dp[j]);\n}\nreturn best; // 子串连续；逆序更新保护上一行左上状态\n// O(mn) 时间、O(n) 空间；可把较短串放在列维", lang: "cpp", block: true)
+  #raw("// 子串必须连续，字符不等时以该字符结尾长度归零。\nstd::vector<int> dp(b.size() + 1, 0);\nint best = 0;\nfor (char x : a)\n    for (int j = static_cast<int>(b.size()); j > 0; --j)\n    {\n        dp[j] = x == b[j - 1] ? dp[j - 1] + 1 : 0; // 不同字符必须清零\n        best = std::max(best, dp[j]);\n    }\nreturn best; // 子串连续；逆序更新保护上一行左上状态\n// O(mn) 时间、O(n) 空间；可把较短串放在列维", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -5142,7 +5142,7 @@
   #text("二维表时间 O(mn)。只求长度时可用滚动数组，把空间压到 O(min(m,n))；但若还要输出具体序列，需要保存表或用 Hirschberg 等方法重新构造。这里不匹配时不能像公共子串那样归零，因为之前匹配的字符仍可跨过不同字符继续组成子序列。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// 子序列允许跳过字符，不匹配时取删去一侧末字符的较优状态。\nstd::vector<std::vector<int>> dp(a.size() + 1, std::vector<int>(b.size() + 1, 0));\nfor (int i = 1; i <= a.size(); ++i) for (int j = 1; j <= b.size(); ++j) {\n    if (a[i - 1] == b[j - 1]) dp[i][j] = dp[i - 1][j - 1] + 1;\n    else dp[i][j] = std::max(dp[i - 1][j], dp[i][j - 1]);\n}\nreturn dp.back().back(); // 子序列允许跳过字符，不要求连续\n// O(mn) 时间；只求长度可滚动为 O(min(m,n)) 空间，重建需留决策", lang: "cpp", block: true)
+  #raw("// 子序列允许跳过字符，不匹配时取删去一侧末字符的较优状态。\nstd::vector<std::vector<int>> dp(a.size() + 1, std::vector<int>(b.size() + 1, 0));\nfor (int i = 1; i <= a.size(); ++i)\n    for (int j = 1; j <= b.size(); ++j)\n    {\n        if (a[i - 1] == b[j - 1])\n            dp[i][j] = dp[i - 1][j - 1] + 1;\n        else\n            dp[i][j] = std::max(dp[i - 1][j], dp[i][j - 1]);\n    }\nreturn dp.back().back(); // 子序列允许跳过字符，不要求连续\n// O(mn) 时间；只求长度可滚动为 O(min(m,n)) 空间，重建需留决策", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -5155,7 +5155,7 @@
   #text("每个字符最多扫描一次，哈希表更新一次，平均时间 O(n)，空间取决于字符种类。返回长度时，每步更新窗口长度最大值；若要返回子串起止位置，也要在最大值更新时记录窗口边界。C++ string 的下标是字节，对 UTF-8 字符应先解码或明确题目按字节比较。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// 窗口左边界只能前进，哈希表记录字符最近出现下标。\nstd::unordered_map<char, int> last; int left = 0, best = 0;\nfor (int right = 0; right < s.size(); ++right) {\n    auto it = last.find(s[right]);\n    if (it != last.end()) left = std::max(left, it->second + 1); // 窗口左边界不后退\n    last[s[right]] = right; best = std::max(best, right - left + 1);\n}\nreturn best; // 每字符处理一次，平均 O(n) 时间，空间与字符集有关\n// UTF-8 输入若按码点判断，需先解码而不能直接以字节为字符", lang: "cpp", block: true)
+  #raw("// 窗口左边界只能前进，哈希表记录字符最近出现下标。\nstd::unordered_map<char, int> last;\nint left = 0, best = 0;\nfor (int right = 0; right < s.size(); ++right)\n{\n    auto it = last.find(s[right]);\n    if (it != last.end())\n        left = std::max(left, it->second + 1); // 窗口左边界不后退\n    last[s[right]] = right;\n    best = std::max(best, right - left + 1);\n}\nreturn best; // 每字符处理一次，平均 O(n) 时间，空间与字符集有关\n// UTF-8 输入若按码点判断，需先解码而不能直接以字节为字符", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -5168,7 +5168,7 @@
   #text("二分查找使总时间 O(n log n)，tails 用 O(n) 空间。严格递增要找首个 ≥x；非递减序列要找首个 >x，两者条件不同。若要恢复实际子序列，需保存每个元素的前驱位置和它对应的 tails 层，并回溯构造。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// tails 保存各长度的最小结尾，用 std::lower_bound 替换但不直接存真实子序列。\nstd::vector<int> tails;\nfor (int x : a) { auto it = std::lower_bound(tails.begin(), tails.end(), x);\n    if (it == tails.end()) tails.push_back(x); else *it = x;\n}\nreturn tails.size(); // tails[i] 是长度 i+1 的最小可行结尾\n// std::lower_bound 保证严格递增；O(n log n) 时间、O(n) 空间\n// 需要恢复具体序列时另存每项前驱和所在长度", lang: "cpp", block: true)
+  #raw("// tails 保存各长度的最小结尾，用 std::lower_bound 替换但不直接存真实子序列。\nstd::vector<int> tails;\nfor (int x : a)\n{\n    auto it = std::lower_bound(tails.begin(), tails.end(), x);\n    if (it == tails.end())\n        tails.push_back(x);\n    else\n        *it = x;\n}\nreturn tails.size(); // tails[i] 是长度 i+1 的最小可行结尾\n// std::lower_bound 保证严格递增；O(n log n) 时间、O(n) 空间\n// 需要恢复具体序列时另存每项前驱和所在长度", lang: "cpp", block: true)
 ]
 
 #heading(level: 2, outlined: true)[#text("13.8 栈、滑动窗口与数组优化", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
@@ -5182,7 +5182,7 @@
   #text("每个字符最多入栈、出栈各一次，时间 O(n)，栈空间最坏 O(n)。遍历结束时栈还必须为空。若只有一种括号，可用余额计数器省掉栈；混合括号必须记录类型。空字符串一般合法，但仍要符合题目对输入的定义。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// 每个右括号只匹配最近未配对的左括号。\nstd::stack<char> st;\nfor (char c : s) {\n    if (isOpening(c)) st.push(c);\n    else if (isClosing(c)) { if (st.empty() || !matches(st.top(), c)) return false; st.pop(); }\n    else if (otherCharactersAreInvalid) return false;\n}\nreturn st.empty(); // 所有左括号都必须匹配\n// O(n) 时间、O(n) 空间；单一种类括号可仅用计数器", lang: "cpp", block: true)
+  #raw("// 每个右括号只匹配最近未配对的左括号。\nstd::stack<char> st;\nfor (char c : s)\n{\n    if (isOpening(c))\n        st.push(c);\n    else if (isClosing(c))\n    {\n        if (st.empty() || !matches(st.top(), c))\n            return false;\n        st.pop();\n    }\n    else if (otherCharactersAreInvalid)\n        return false;\n}\nreturn st.empty(); // 所有左括号都必须匹配\n// O(n) 时间、O(n) 空间；单一种类括号可仅用计数器", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -5195,7 +5195,7 @@
   #text("普通方法每个后续元素最多比较两次，时间 O(n)、额外空间 O(1)。若比较操作很昂贵，可两个元素先互相比，再分别与当前最小最大比较，减少最坏比较次数；但代码更复杂，且需额外处理奇数个元素。通常优先写清晰的线性扫描。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// 从首元素初始化可兼容全负数组，不依赖 0 作为初值。\nif (a.empty()) return std::nullopt;\nint low = a[0], high = a[0];\nfor (int x : a) { low = std::min(low, x); high = std::max(high, x); }\nreturn std::pair<int, int>{low, high};\n// 全负数也正确；O(n) 时间、O(1) 额外空间\n// 需最少比较时可成对比较，再分别更新全局极值", lang: "cpp", block: true)
+  #raw("// 从首元素初始化可兼容全负数组，不依赖 0 作为初值。\nif (a.empty())\n    return std::nullopt;\nint low = a[0], high = a[0];\nfor (int x : a)\n{\n    low = std::min(low, x);\n    high = std::max(high, x);\n}\nreturn std::pair<int, int>{low, high};\n// 全负数也正确；O(n) 时间、O(1) 额外空间\n// 需最少比较时可成对比较，再分别更新全局极值", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -5208,7 +5208,7 @@
   #text("哈希表平均时间 O(n)、额外空间 O(n)，适合取值范围广且内存充足的情况。要统计频次时把映射值设为计数器；只需要是否重复时，集合足够。碰撞严重会影响哈希性能。只判断有无重复时一旦发现第二次出现即可提前结束。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// 频次大于 1 的键才是重复值；若只求存在可提前返回。\nstd::unordered_map<int, int> frequency;\nfor (int x : a) ++frequency[x];\nfor (const auto& [value, count] : frequency) if (count > 1) duplicates.push_back(value);\n// 计数表可同时得到重复次数；平均 O(n) 时间、O(n) 空间\n// 只需判断是否有重复时，集合发现第二次即可提前返回", lang: "cpp", block: true)
+  #raw("// 频次大于 1 的键才是重复值；若只求存在可提前返回。\nstd::unordered_map<int, int> frequency;\nfor (int x : a)\n    ++frequency[x];\nfor (const auto& [value, count] : frequency)\n    if (count > 1)\n        duplicates.push_back(value);\n// 计数表可同时得到重复次数；平均 O(n) 时间、O(n) 空间\n// 只需判断是否有重复时，集合发现第二次即可提前返回", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -5221,7 +5221,7 @@
   #text("例如 [3,4,-1,1] 摆放后会把一放到下标零、三放到下标二，扫描时下标一缺少二，因此答案是二。每次有效交换都会让一个值回到目标位置，整体 O(n)，额外空间 O(1)，但会修改输入。空数组答案为一。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// 把值 x 放到下标 x-1，越界和重复值停止交换。\nfor (int i = 0; i < n; ++i) {\n    while (a[i] >= 1 && a[i] <= n && a[a[i] - 1] != a[i]) std::swap(a[i], a[a[i] - 1]);\n}\nfor (int i = 0; i < n; ++i) if (a[i] != i + 1) return i + 1;\nreturn n + 1; // 1..n 都归位后答案为 n+1\n// 越界和重复值直接停止交换；O(n) 时间、O(1) 空间但会修改输入", lang: "cpp", block: true)
+  #raw("// 把值 x 放到下标 x-1，越界和重复值停止交换。\nfor (int i = 0; i < n; ++i)\n{\n    while (a[i] >= 1 && a[i] <= n && a[a[i] - 1] != a[i])\n        std::swap(a[i], a[a[i] - 1]);\n}\nfor (int i = 0; i < n; ++i)\n    if (a[i] != i + 1)\n        return i + 1;\nreturn n + 1; // 1..n 都归位后答案为 n+1\n// 越界和重复值直接停止交换；O(n) 时间、O(1) 空间但会修改输入", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -5234,7 +5234,7 @@
   #text("每个下标入栈、出栈各一次，时间 O(n)，辅助栈 O(n)。空数组直接返回零。面积是高度乘宽度，较大输入下 32 位整数可能溢出，应根据约束使用 64 位或更宽类型。零高度也可作为哨兵帮助弹出更高柱子，不必单独分支处理。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("std::vector<int> heights = {2, 1, 5, 6, 2, 3}; std::stack<int> increasing;\nfor (int right=0; right<=static_cast<int>(heights.size()); ++right) {\n  int h = right == heights.size() ? 0 : heights[right];\n  while (!increasing.empty() && heights[increasing.top()] >= h) { auto i=increasing.top(); increasing.pop(); update_area(heights[i], right, increasing); }\n  if (right < heights.size()) increasing.push(right);\n} // 单调栈找到每根柱子的最大左右边界", lang: "cpp", block: true)
+  #raw("std::vector<int> heights = {2, 1, 5, 6, 2, 3};\nstd::stack<int> increasing;\nfor (int right = 0; right <= static_cast<int>(heights.size()); ++right)\n{\n    int h = right == heights.size() ? 0 : heights[right];\n    while (!increasing.empty() && heights[increasing.top()] >= h)\n    {\n        auto i = increasing.top();\n        increasing.pop();\n        update_area(heights[i], right, increasing);\n    }\n    if (right < heights.size())\n        increasing.push(right);\n} // 单调栈找到每根柱子的最大左右边界", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -5247,7 +5247,7 @@
   #text("均匀分布的理想情形下性能可接近线性，但最坏复杂度取决于桶内排序，可能退化；桶数组和临时元素需要额外空间。若没有可靠的值域或分布假设，比较排序通常更稳妥。桶的数量太少会造成拥挤，太多则增加初始化和空桶成本，应根据数据范围与内存预算选择。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// 桶索引按值域线性映射，最大边界需限制在最后一桶。\n// 空输入直接返回；非空时假设 high>low 且桶数 n>0\nif (a.empty()) return out;\nstd::vector<std::vector<double>> buckets(n);\nfor (double x : a) {\n    int id = static_cast<int>((x - low) / (high - low) * n);\n    id = std::min(n - 1, id); buckets[id].push_back(x);\n}\nfor (auto& bucket : buckets) std::sort(bucket.begin(), bucket.end());\nfor (const auto& bucket : buckets) out.insert(out.end(), bucket.begin(), bucket.end());\n// 均匀分布时平均接近 O(n)；集中一桶时退化为桶内排序复杂度\n// 额外空间 O(n)，上界映射需 clamp 防止下标等于 n", lang: "cpp", block: true)
+  #raw("// 桶索引按值域线性映射，最大边界需限制在最后一桶。\n// 空输入直接返回；非空时假设 high>low 且桶数 n>0\nif (a.empty())\n    return out;\nstd::vector<std::vector<double>> buckets(n);\nfor (double x : a)\n{\n    int id = static_cast<int>((x - low) / (high - low) * n);\n    id = std::min(n - 1, id);\n    buckets[id].push_back(x);\n}\nfor (auto& bucket : buckets)\n    std::sort(bucket.begin(), bucket.end());\nfor (const auto& bucket : buckets)\n    out.insert(out.end(), bucket.begin(), bucket.end());\n// 均匀分布时平均接近 O(n)；集中一桶时退化为桶内排序复杂度\n// 额外空间 O(n)，上界映射需 clamp 防止下标等于 n", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -5260,7 +5260,7 @@
   #text("空文本也可能匹配由若干“字符*”组成的模式，因此初始化要依次检查连续配对，不能只把 dp[0][0] 设为真。表格时间和空间 O(mn)，长字符串可研究滚动空间。每一步索引都要防止星号没有前置字符；通常这种模式输入会保证格式合法。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// 星号转移分为跳过前项与匹配后重复两种情况。\n// dp[i][j]：文本前 i 字符与模式前 j 字符匹配；模式不以 * 开头\nstd::vector<std::vector<bool>> dp(s.size() + 1, std::vector<bool>(p.size() + 1)); dp[0][0] = true;\nfor (int j = 2; j <= p.size(); ++j) if (p[j - 1] == '*') dp[0][j] = dp[0][j - 2];\nfor (int i = 1; i <= s.size(); ++i) for (int j = 1; j <= p.size(); ++j) {\n    if (p[j - 1] == '*') dp[i][j] = dp[i][j - 2] || ((p[j - 2] == '.' || p[j - 2] == s[i - 1]) && dp[i - 1][j]);\n    else dp[i][j] = (p[j - 1] == '.' || p[j - 1] == s[i - 1]) && dp[i - 1][j - 1];\n}\n// * 可取零次或延长一次；O(mn) 时间、空间，不代表完整正则语法", lang: "cpp", block: true)
+  #raw("// 星号转移分为跳过前项与匹配后重复两种情况。\n// dp[i][j]：文本前 i 字符与模式前 j 字符匹配；模式不以 * 开头\nstd::vector<std::vector<bool>> dp(s.size() + 1, std::vector<bool>(p.size() + 1));\ndp[0][0] = true;\nfor (int j = 2; j <= p.size(); ++j)\n    if (p[j - 1] == '*')\n        dp[0][j] = dp[0][j - 2];\nfor (int i = 1; i <= s.size(); ++i)\n    for (int j = 1; j <= p.size(); ++j)\n    {\n        if (p[j - 1] == '*')\n            dp[i][j] = dp[i][j - 2] || ((p[j - 2] == '.' || p[j - 2] == s[i - 1]) && dp[i - 1][j]);\n        else\n            dp[i][j] = (p[j - 1] == '.' || p[j - 1] == s[i - 1]) && dp[i - 1][j - 1];\n    }\n// * 可取零次或延长一次；O(mn) 时间、空间，不代表完整正则语法", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -5273,7 +5273,7 @@
   #text("例如 [-2,3,-1,4]，扫描到三时重新开始，之后把负一和四接上，最大和为六。时间 O(n)、额外空间 O(1)。空数组没有非空子数组，需按接口约定返回错误或空结果。若要恢复区间起止位置，在“重新开始”时记录候选起点，在全局最大值更新时保存边界。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// ending 是必须以当前位置结尾的最优和，best 是全局最优。\nif (a.empty()) return 0; // 空数组按接口约定处理\nint ending = a[0], best = a[0];\nfor (int i = 1; i < a.size(); ++i) {\n    ending = std::max(a[i], ending + a[i]); // 从当前重开或延长前段\n    best = std::max(best, ending);\n}\nreturn best; // 全负数也正确；O(n) 时间、O(1) 空间", lang: "cpp", block: true)
+  #raw("// ending 是必须以当前位置结尾的最优和，best 是全局最优。\nif (a.empty())\n    return 0; // 空数组按接口约定处理\nint ending = a[0], best = a[0];\nfor (int i = 1; i < a.size(); ++i)\n{\n    ending = std::max(a[i], ending + a[i]); // 从当前重开或延长前段\n    best = std::max(best, ending);\n}\nreturn best; // 全负数也正确；O(n) 时间、O(1) 空间", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -5286,7 +5286,7 @@
   #text("等窗口至少包含 k 个元素后才输出；此前是未填满的部分，不是完整窗口。每个下标只入队、出队一次，时间 O(n)，额外空间 O(k)。若 k<=0 或 k>n，按接口定义返回空或报错。重复最大值可保留较新的一个，因为它更晚过期。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// 队列下标递增且对应值递减，过期从头、较小候选从尾删除。\nif (k <= 0 || k > a.size()) return maxima;\nstd::deque<int> q; // 下标对应值单调递减，队首为窗口最大值\nfor (int i = 0; i < a.size(); ++i) {\n    while (!q.empty() && q.front() <= i - k) q.pop_front();\n    while (!q.empty() && a[q.back()] <= a[i]) q.pop_back();\n    q.push_back(i); if (i >= k - 1) maxima.push_back(a[q.front()]);\n}\n// 每下标最多进出队一次，O(n) 时间、O(k) 空间；仅完整窗口输出", lang: "cpp", block: true)
+  #raw("// 队列下标递增且对应值递减，过期从头、较小候选从尾删除。\nif (k <= 0 || k > a.size())\n    return maxima;\nstd::deque<int> q; // 下标对应值单调递减，队首为窗口最大值\nfor (int i = 0; i < a.size(); ++i)\n{\n    while (!q.empty() && q.front() <= i - k)\n        q.pop_front();\n    while (!q.empty() && a[q.back()] <= a[i])\n        q.pop_back();\n    q.push_back(i);\n    if (i >= k - 1)\n        maxima.push_back(a[q.front()]);\n}\n// 每下标最多进出队一次，O(n) 时间、O(k) 空间；仅完整窗口输出", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -5299,7 +5299,7 @@
   #text("时间 O(n)、空间 O(1)，但方案数按指数速度增长，定宽整数会溢出。某些题目把起点和台阶的计数方式定义不同，n=0 可能返回零或一，因此要按题意确认边界。若每次可走 1、2、3 阶，转移需把前三项相加，不能沿用原公式。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// 每阶最后一步只能来自前一阶或前两阶。\nif (n == 0) return 1; // 空台阶通常有一种空走法\nlong long twoBack = 1, oneBack = 1; // F(0)=F(1)=1\nfor (int step = 2; step <= n; ++step) { long long ways = twoBack + oneBack;\n    twoBack = oneBack; oneBack = ways;\n}\nreturn oneBack; // O(n) 时间、O(1) 空间；大 n 注意计数溢出", lang: "cpp", block: true)
+  #raw("// 每阶最后一步只能来自前一阶或前两阶。\nif (n == 0)\n    return 1; // 空台阶通常有一种空走法\nlong long twoBack = 1, oneBack = 1; // F(0)=F(1)=1\nfor (int step = 2; step <= n; ++step)\n{\n    long long ways = twoBack + oneBack;\n    twoBack = oneBack;\n    oneBack = ways;\n}\nreturn oneBack; // O(n) 时间、O(1) 空间；大 n 注意计数溢出", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -5312,7 +5312,7 @@
   #text("有重复元素时，“找任意一个”“第一个不小于目标的位置（下界）”和“最后一个不大于目标的位置”是不同问题。下界二分在相等时仍收缩到左半边，最终位置也是插入点。空数组返回未找到或插入位置零；测试首尾、中点、重复值和目标缺失等边界。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// 线性扫描无需有序；二分半开区间返回 std::lower_bound 所在位置。\n// 线性查找不要求有序，逐项比较 O(n)\nfor (int i = 0; i < a.size(); ++i) if (a[i] == target) return i;\n// 二分要求有序且可 O(1) 访问中点；半开区间找首个 >= target\nint left = 0, right = a.size();\nwhile (left < right) { int mid = left + (right - left) / 2;\n    if (a[mid] < target) left = mid + 1; else right = mid;\n}\nreturn left; // std::lower_bound 插入位置，O(log n)；mid 公式避免加法溢出", lang: "cpp", block: true)
+  #raw("// 线性扫描无需有序；二分半开区间返回 std::lower_bound 所在位置。\n// 线性查找不要求有序，逐项比较 O(n)\nfor (int i = 0; i < a.size(); ++i)\n    if (a[i] == target)\n        return i;\n// 二分要求有序且可 O(1) 访问中点；半开区间找首个 >= target\nint left = 0, right = a.size();\nwhile (left < right)\n{\n    int mid = left + (right - left) / 2;\n    if (a[mid] < target)\n        left = mid + 1;\n    else\n        right = mid;\n}\nreturn left; // std::lower_bound 插入位置，O(log n)；mid 公式避免加法溢出", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -5325,7 +5325,7 @@
   #text("两个字符串长度为 m、n 时，时间 O(mn)，整张表空间 O(mn)。只求距离可以只保留前一行和当前行，降为 O(min(m,n)) 空间；但要恢复具体操作序列，需要保存决策或用其他重建方法。若不同操作的代价不同，分别给各转移加对应费用。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// diagonal 保存上一行左上，dp[j] 与 dp[j-1] 表示删除/插入候选。\nstd::vector<int> dp(b.size() + 1); std::iota(dp.begin(), dp.end(), 0); // 空前缀需插入 j 次\nfor (int i = 1; i <= a.size(); ++i) { int diagonal = dp[0]; dp[0] = i; // 删除 i 次\n    for (int j = 1; j <= b.size(); ++j) { int old = dp[j];\n        dp[j] = a[i - 1] == b[j - 1] ? diagonal : 1 + std::min({diagonal, dp[j], dp[j - 1]});\n        diagonal = old; // 保存上一行左上值\n    }\n}\n// O(mn) 时间、O(n) 空间；恢复操作序列需保存路径/决策", lang: "cpp", block: true)
+  #raw("// diagonal 保存上一行左上，dp[j] 与 dp[j-1] 表示删除/插入候选。\nstd::vector<int> dp(b.size() + 1);\nstd::iota(dp.begin(), dp.end(), 0); // 空前缀需插入 j 次\nfor (int i = 1; i <= a.size(); ++i)\n{\n    int diagonal = dp[0];\n    dp[0] = i; // 删除 i 次\n    for (int j = 1; j <= b.size(); ++j)\n    {\n        int old = dp[j];\n        dp[j] = a[i - 1] == b[j - 1] ? diagonal : 1 + std::min({diagonal, dp[j], dp[j - 1]});\n        diagonal = old; // 保存上一行左上值\n    }\n}\n// O(mn) 时间、O(n) 空间；恢复操作序列需保存路径/决策", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -5338,7 +5338,7 @@
   #text("简单输出整数时，时间 O(n+k)、空间 O(k)。如果排序的是带附加信息的记录且要求稳定，不能只按频次重建：要计算每种值在结果中的结束位置，再从输入尾部向前放入临时数组，这会用 O(n+k) 空间。负数通过偏移自然处理。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// count[x-low] 统计偏移值出现次数，按计数回填整数。\nif (a.empty()) return;\nint low = *std::min_element(a.begin(), a.end()), high = *std::max_element(a.begin(), a.end());\nstd::vector<int> count(high - low + 1, 0);\nfor (int x : a) ++count[x - low];\nint write = 0; for (int i = 0; i < count.size(); ++i) while (count[i]-- > 0) a[write++] = i + low;\n// O(n+k) 时间、O(k) 空间，k=high-low+1；值域很大/稀疏时不适合\n// 稳定排序记录需改用累积位置并从输入尾部放置", lang: "cpp", block: true)
+  #raw("// count[x-low] 统计偏移值出现次数，按计数回填整数。\nif (a.empty())\n    return;\nint low = *std::min_element(a.begin(), a.end()), high = *std::max_element(a.begin(), a.end());\nstd::vector<int> count(high - low + 1, 0);\nfor (int x : a)\n    ++count[x - low];\nint write = 0;\nfor (int i = 0; i < count.size(); ++i)\n    while (count[i]-- > 0)\n        a[write++] = i + low;\n// O(n+k) 时间、O(k) 空间，k=high-low+1；值域很大/稀疏时不适合\n// 稳定排序记录需改用累积位置并从输入尾部放置", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -5351,7 +5351,7 @@
   #text("选择排序最多交换 n-1 次，写入次数可能比插入排序少；但普通交换实现不稳定，可能让相同键的记录越过彼此。空间 O(1)。在小数据或写入特别昂贵的场景可以考虑；近乎有序数组通常更适合插入排序。若稳定性重要，可调整插入方式，但移动次数会改变。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// 每轮定位未排序区最小项，只做一次最终交换。\nfor (int i = 0; i < n; ++i) { int minIndex = i;\n    for (int j = i + 1; j < n; ++j) if (a[j] < a[minIndex]) minIndex = j;\n    if (minIndex != i) std::swap(a[i], a[minIndex]); // 每轮最多一次交换\n}\n// 比较次数约 n(n-1)/2、空间 O(1)，交换少但时间仍 O(n²)\n// 标准交换版不稳定，近乎有序也不会明显减少比较", lang: "cpp", block: true)
+  #raw("// 每轮定位未排序区最小项，只做一次最终交换。\nfor (int i = 0; i < n; ++i)\n{\n    int minIndex = i;\n    for (int j = i + 1; j < n; ++j)\n        if (a[j] < a[minIndex])\n            minIndex = j;\n    if (minIndex != i)\n        std::swap(a[i], a[minIndex]); // 每轮最多一次交换\n}\n// 比较次数约 n(n-1)/2、空间 O(1)，交换少但时间仍 O(n²)\n// 标准交换版不稳定，近乎有序也不会明显减少比较", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -5364,7 +5364,7 @@
   #text("输入长分别为 m、n，时间 O(max(m,n))，结果空间同阶。要验证空链表表示零还是非法输入，以及数字是否包含前导零。若最高位在头部，需先反转输入、用栈存位，或递归处理末端；不能从头直接相加。复用节点则需明确谁拥有这些节点，避免两条链表共享时破坏输入。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// carry 保存十进位；循环条件必须包含尚未输出的末尾进位。\nNode dummy{}; Node* tail = &dummy; int carry = 0;\nwhile (a || b || carry) { int sum = carry + (a ? a->value : 0) + (b ? b->value : 0);\n    carry = sum / 10; tail->next = new Node{sum % 10}; tail = tail->next;\n    if (a) a = a->next; if (b) b = b->next;\n}\nreturn dummy.next; // 循环包含末尾进位，低位在前\n// O(max(m,n)) 时间；新建结果节点，不修改输入链表", lang: "cpp", block: true)
+  #raw("// carry 保存十进位；循环条件必须包含尚未输出的末尾进位。\nNode dummy{};\nNode* tail = &dummy;\nint carry = 0;\nwhile (a || b || carry)\n{\n    int sum = carry + (a ? a->value : 0) + (b ? b->value : 0);\n    carry = sum / 10;\n    tail->next = new Node{sum % 10};\n    tail = tail->next;\n    if (a)\n        a = a->next;\n    if (b)\n        b = b->next;\n}\nreturn dummy.next; // 循环包含末尾进位，低位在前\n// O(max(m,n)) 时间；新建结果节点，不修改输入链表", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -5377,7 +5377,7 @@
   #text("时间 O(n)，输出数组不计入额外空间时只用一个滚动乘积变量，故额外空间 O(1)。所有中间乘积都可能溢出，应按约束选 64 位、大整数或明确溢出处理。若允许空数组，返回空结果；一项数组时该项以外没有元素，通常乘积定义为一。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// 前缀和后缀乘积均跳过当前位置，不使用除法。\nstd::vector<long long> out(a.size(), 1); long long prefix = 1;\nfor (int i = 0; i < a.size(); ++i) { out[i] = prefix; prefix *= a[i]; }\nlong long suffix = 1;\nfor (int i = static_cast<int>(a.size()) - 1; i >= 0; --i) {\n    out[i] *= suffix; suffix *= a[i];\n}\n// 前缀与后缀都不包含当前位置；O(n) 时间、输出外 O(1) 空间\n// 无除法可自然处理零值，乘积类型仍需符合数值范围", lang: "cpp", block: true)
+  #raw("// 前缀和后缀乘积均跳过当前位置，不使用除法。\nstd::vector<long long> out(a.size(), 1);\nlong long prefix = 1;\nfor (int i = 0; i < a.size(); ++i)\n{\n    out[i] = prefix;\n    prefix *= a[i];\n}\nlong long suffix = 1;\nfor (int i = static_cast<int>(a.size()) - 1; i >= 0; --i)\n{\n    out[i] *= suffix;\n    suffix *= a[i];\n}\n// 前缀与后缀都不包含当前位置；O(n) 时间、输出外 O(1) 空间\n// 无除法可自然处理零值，乘积类型仍需符合数值范围", lang: "cpp", block: true)
 ]
 
 #heading(level: 2, outlined: true)[#text("13.9 STL 容器使用与选择", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
@@ -5391,7 +5391,7 @@
   #text("通常优先选意图最清楚的写法：已有对象用 push_back，直接用构造参数创建新对象时用 emplace_back。不要只为追求“零拷贝”把所有 push_back 机械替换成 emplace_back。扩容会影响原有迭代器、指针和引用，capacity 变化时尤其要查看失效规则。〔S2〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("std::vector<Point> points; Point p{3, 4};\npoints.push_back(p); points.push_back(std::move(p)); points.emplace_back(5, 6);\n// emplace直接用参数构造；已有Point时不保证比push_back少一次移动", lang: "cpp", block: true)
+  #raw("std::vector<Point> points;\nPoint p{3, 4};\npoints.push_back(p);\npoints.push_back(std::move(p));\npoints.emplace_back(5, 6);\n// emplace直接用参数构造；已有Point时不保证比push_back少一次移动", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -5404,7 +5404,7 @@
   #text("需要连续内存、扫描性能或和 C API 交互时选 vector；两端频繁增删且不要求整体连续时可选 deque。若大量在任意位置插入或删除，list 只有在已持有位置迭代器等场景可能合适，代价是节点开销和较差缓存局部性。先看数据访问模式，再选容器。〔S2〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("std::vector<int> contiguous; contiguous.reserve(100); contiguous.push_back(1);\nstd::deque<int> both_ends; both_ends.push_front(0); both_ends.push_back(1);\n// vector连续存储；deque适合两端插入但整体不连续", lang: "cpp", block: true)
+  #raw("std::vector<int> contiguous;\ncontiguous.reserve(100);\ncontiguous.push_back(1);\nstd::deque<int> both_ends;\nboth_ends.push_front(0);\nboth_ends.push_back(1);\n// vector连续存储；deque适合两端插入但整体不连续", lang: "cpp", block: true)
 ]
 
 
@@ -5419,7 +5419,7 @@
   #text("它不提供任意位置的高效删除或 decrease-key。Dijkstra 等算法可在距离变小时压入新条目，取出时跳过已过期项目；这会产生重复条目，需考虑堆的峰值空间。若必须更新指定元素，可用带索引的自定义堆。空队列不能调用 top 或 pop。〔N150〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("std::priority_queue<int, std::vector<int>, std::greater<int>> pending;\npending.push(7); pending.push(2);\nint smallest = pending.top(); // 2，查看不删除\npending.pop(); // 删除堆顶，不返回原值", lang: "cpp", block: true)
+  #raw("std::priority_queue<int, std::vector<int>, std::greater<int>> pending;\npending.push(7);\npending.push(2);\nint smallest = pending.top(); // 2，查看不删除\npending.pop(); // 删除堆顶，不返回原值", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -5446,7 +5446,7 @@
   #text("如果需要按序遍历和范围查询，平衡搜索树很合适。C++ 标准保证 std::map 的语义与复杂度要求，但不强制实现必须采用红黑树；具体库可能选其一或其他符合要求的结构。面试回答应区分“数据结构理论保证”和“特定库当前实现”，并依据需求与测量选型。〔N153、N154〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("if (height(left) - height(right) > 1) rotate_avl(node); // AVL维护更严格的高度平衡\nif (red_black_rule_violated(node)) recolor_and_rotate(node); // 红黑树更新时修复颜色约束\n// 两类平衡树操作均为O(log n)，实际读写取舍应测量", lang: "cpp", block: true)
+  #raw("if (height(left) - height(right) > 1)\n    rotate_avl(node); // AVL维护更严格的高度平衡\nif (red_black_rule_violated(node))\n    recolor_and_rotate(node); // 红黑树更新时修复颜色约束\n// 两类平衡树操作均为O(log n)，实际读写取舍应测量", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -5459,7 +5459,7 @@
   #text("跳表容易按顺序遍历和做范围查询，结构相对直观。Redis 较大的有序集合实现可将字典与跳表结合，节点跨度还支持名次相关查询；较小集合可能使用紧凑编码，因此不能说所有 ZSet 都一定使用跳表。选型还要考虑随机数质量、内存和最坏延迟。〔N155〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("Node* current = head;\nfor (int level = max_level; level >= 0; --level) while (current->next[level] && current->next[level]->key < key) current = current->next[level];\n// 跳表随机分层，期望O(log n)；记录每层前驱后即可插入", lang: "cpp", block: true)
+  #raw("Node* current = head;\nfor (int level = max_level; level >= 0; --level)\n    while (current->next[level] && current->next[level]->key < key)\n        current = current->next[level];\n// 跳表随机分层，期望O(log n)；记录每层前驱后即可插入", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -5472,7 +5472,7 @@
   #text("固定字母表用数组访问快，但每个节点可能浪费大量空槽；稀疏映射省空间但增加映射成本，压缩 Trie 还会合并单支路径。中文等文本要先确定边按 UTF-8 字节、Unicode 码点还是其他单位切分，L 的含义随之不同。输出所有匹配还要加上结果遍历和输出成本。〔N156〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("struct TrieNode { std::unordered_map<char, std::unique_ptr<TrieNode>> next; bool terminal = false; };\nvoid insert(TrieNode& root, std::string_view word) {\n  TrieNode* node = &root;\n  for (char c : word) { auto& child = node->next[c]; if (!child) child = std::make_unique<TrieNode>(); node = child.get(); }\n  node->terminal = true; // 路径存在表示前缀，terminal才表示完整单词\n}", lang: "cpp", block: true)
+  #raw("struct TrieNode\n{\n    std::unordered_map<char, std::unique_ptr<TrieNode>> next;\n    bool terminal = false;\n};\nvoid insert(TrieNode& root, std::string_view word)\n{\n    TrieNode* node = &root;\n    for (char c : word)\n    {\n        auto& child = node->next[c];\n        if (!child)\n            child = std::make_unique<TrieNode>();\n        node = child.get();\n    }\n    node->terminal = true; // 路径存在表示前缀，terminal才表示完整单词\n}", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -5485,7 +5485,7 @@
   #text("临时结果可能接近原数据大小，要预留足够磁盘空间。失败时应能清理临时段并保留原输入，完整结果写好后再原子发布。若要求稳定排序，相同键还需按原始段/位置定义优先顺序。临时文件也要校验、设置合适权限，并防止被其他进程替换。〔N157〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("while (input.has_more()) { auto chunk = input.read_bounded(memory_budget); std::sort(chunk.begin(), chunk.end()); write_run(chunk); }\nwhile (runs.size() > 1) runs = merge_at_most_k_runs(runs, k, output_buffer);\n// 每轮用最小堆合并多个有序段；发布前校验临时文件", lang: "cpp", block: true)
+  #raw("while (input.has_more())\n{\n    auto chunk = input.read_bounded(memory_budget);\n    std::sort(chunk.begin(), chunk.end());\n    write_run(chunk);\n}\nwhile (runs.size() > 1)\n    runs = merge_at_most_k_runs(runs, k, output_buffer);\n// 每轮用最小堆合并多个有序段；发布前校验临时文件", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -5498,7 +5498,7 @@
   #text("无向图通常在两端的邻接表都保存一次同一条边；有向图只记录出边。构图前应明确是否允许自环、重边、方向和权重，否则后续算法可能重复计数或误判。没有一种结构适合所有查询：查边、遍历、排序边和内存限制要综合考虑。〔N158〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("std::vector<std::vector<int>> adjacency(vertex_count); // 稀疏图邻接表占O(V+E)\nadjacency[u].push_back(v); std::vector<Edge> edges{{u, v, weight}};\n// 稠密图可用邻接矩阵O(V^2)换O(1)查边；边列表适合扫描全部边", lang: "cpp", block: true)
+  #raw("std::vector<std::vector<int>> adjacency(vertex_count); // 稀疏图邻接表占O(V+E)\nadjacency[u].push_back(v);\nstd::vector<Edge> edges{{u, v, weight}};\n// 稠密图可用邻接矩阵O(V^2)换O(1)查边；边列表适合扫描全部边", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -5511,7 +5511,7 @@
   #text("如果无法证明，不要只拿几个样例就认定贪心正确；应尝试构造反例，或用动态规划覆盖多种选择。反过来，DP 也可能因状态数太大而不可行，算法选择要结合约束和复杂度。清楚说明证明依据，比单纯写出“每次选最大的”更重要。〔N159、N160〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("std::sort(events.begin(), events.end(), [](auto a, auto b) { return a.end < b.end; });\nfor (auto event : events) if (event.start >= last_end) { selected.push_back(event); last_end = event.end; }\n// 活动选择的“最早结束”需用交换论证证明最优；不是所有问题都适合贪心", lang: "cpp", block: true)
+  #raw("std::sort(events.begin(),\n          events.end(),\n          [](auto a, auto b)\n          {\n              return a.end < b.end;\n          });\nfor (auto event : events)\n    if (event.start >= last_end)\n    {\n        selected.push_back(event);\n        last_end = event.end;\n    }\n// 活动选择的“最早结束”需用交换论证证明最优；不是所有问题都适合贪心", lang: "cpp", block: true)
 ]
 
 #heading(level: 1, outlined: true)[#text("第14章 Qt", size: 15pt, weight: "bold", fill: rgb("#000000"))]
@@ -5546,7 +5546,7 @@
   #text("例如成绩表若要按学号输出，可直接使用 QMap；缓存只需根据用户编号命中记录，则可选择 QHash。自定义哈希键需要相等比较以及与之匹配的 qHash：相等的键必须产生相同哈希值。冲突多时性能会变差；若哈希表结果最终仍需排序，应把排序成本一并考虑。只读查询也应避免用会插入默认值的下标操作。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("QMap<QString, int> ordered{{QStringLiteral(\"b\"), 2}, {QStringLiteral(\"a\"), 1}};\nfor (auto it = ordered.cbegin(); it != ordered.cend(); ++it)\n    consume(it.key(), it.value()); // QMap 按键排序\nQHash<QString, int> fast; fast.insert(QStringLiteral(\"a\"), 1);\nconst auto found = fast.constFind(QStringLiteral(\"a\"));\nif (found != fast.cend()) consume(found.value()); // 不依赖遍历顺序\n// 自定义 QHash 键还需相等比较与 qHash 实现", lang: "cpp", block: true)
+  #raw("QMap<QString, int> ordered{{QStringLiteral(\"b\"), 2}, {QStringLiteral(\"a\"), 1}};\nfor (auto it = ordered.cbegin(); it != ordered.cend(); ++it)\n    consume(it.key(), it.value()); // QMap 按键排序\nQHash<QString, int> fast;\nfast.insert(QStringLiteral(\"a\"), 1);\nconst auto found = fast.constFind(QStringLiteral(\"a\"));\nif (found != fast.cend())\n    consume(found.value()); // 不依赖遍历顺序\n// 自定义 QHash 键还需相等比较与 qHash 实现", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -5568,7 +5568,7 @@
   #text("取值时仍需核对类型或检查转换是否成功。例如文本“十八”转成整数会失败，不能把转换得到的零当作真实年龄。自定义值通常需要声明元类型，若还要经过排队信号槽等运行时边界，则按要求注册。QVariant 保存某个裸指针时也不会自动获得指向对象的所有权；动态包装并不能代替清晰的类型与生命周期约定。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("QVariant display = QStringLiteral(\"ready\"); // DisplayRole 可返回文本\nQVariant edit = 42; // EditRole 也可返回数值\nbool ok = false;\nconst int count = edit.toInt(&ok); // 动态转换要检查结果\nif (ok) updateCount(count);\nQVariant custom = QVariant::fromValue(MyValue{});\nqRegisterMetaType<MyValue>(); // 自定义类型跨元对象边界前注册", lang: "cpp", block: true)
+  #raw("QVariant display = QStringLiteral(\"ready\"); // DisplayRole 可返回文本\nQVariant edit = 42; // EditRole 也可返回数值\nbool ok = false;\nconst int count = edit.toInt(&ok); // 动态转换要检查结果\nif (ok)\n    updateCount(count);\nQVariant custom = QVariant::fromValue(MyValue{});\nqRegisterMetaType<MyValue>(); // 自定义类型跨元对象边界前注册", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -5579,7 +5579,7 @@
   #text("不能同时把同一对象交给父对象和另一个独立拥有者反复删除。栈上对象还要保证构造、析构顺序合理，避免父对象提前删除仍由栈管理的子对象。跨线程清理通常使用 deleteLater()，让所属线程在适当时机销毁对象；它依赖事件循环和线程结束规则，主循环已经停止后不能指望普通延迟删除继续被处理。退出时应安排停止、清理与等待顺序。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("QObject owner; // 栈对象先构造，也会先于局部 child 析构\nauto *child = new QObject(&owner); // parent 是唯一所有者且同线程\nauto *independent = new Worker; // 无 parent，由调用方负责\nindependent->moveToThread(&workerThread); // 只能移动无 parent 对象及其子树\nconnect(&workerThread, &QThread::finished, independent, &QObject::deleteLater);\nworkerThread.start(); // 退出时须 quit()、wait()，并让事件循环处理延迟删除\nchild->deleteLater(); // owner 仍会回收；延迟删除依赖所属线程事件循环", lang: "cpp", block: true)
+  #raw("QObject owner; // 栈对象先构造，也会先于局部 child 析构\nauto* child = new QObject(&owner); // parent 是唯一所有者且同线程\nauto* independent = new Worker; // 无 parent，由调用方负责\nindependent->moveToThread(&workerThread); // 只能移动无 parent 对象及其子树\nconnect(&workerThread, &QThread::finished, independent, &QObject::deleteLater);\nworkerThread.start(); // 退出时须 quit()、wait()，并让事件循环处理延迟删除\nchild->deleteLater(); // owner 仍会回收；延迟删除依赖所属线程事件循环", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -5612,7 +5612,7 @@
   #text("例如项目的大多数接口接收 QList，反复转成 std::vector 再转回来可能只有额外开销；纯标准库模块直接使用标准容器通常更自然。Qt 6 中 QList 与 QVector 已采用相同连续存储实现，不能照搬旧版性能比较。是否需要连续内存、频繁中间插入、稳定引用或廉价移动，比“哪家容器更快”更有判断价值，关键路径再用实际数据测量。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("QList<QPointF> points; points.append(point); chart->setPoints(points); // Qt接口直接使用Qt容器\nstd::vector<QPointF> samples; samples.reserve(count); std::sort(samples.begin(), samples.end());\n// 选择调用边界原生容器，避免不必要的来回转换", lang: "cpp", block: true)
+  #raw("QList<QPointF> points;\npoints.append(point);\nchart->setPoints(points); // Qt接口直接使用Qt容器\nstd::vector<QPointF> samples;\nsamples.reserve(count);\nstd::sort(samples.begin(), samples.end());\n// 选择调用边界原生容器，避免不必要的来回转换", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -5645,7 +5645,7 @@
   #text("接收端可以是成员函数，也可以是 Lambda，新式 connect 用函数指针把它们连接起来。为 Lambda 指定上下文对象，可以让连接随该对象销毁而失效，避免回调访问已销毁的界面。跨线程排队时，参数必须能安全复制并符合元类型要求；同样要保证接收线程处理事件。若出现缺失元对象相关链接符号，应先检查 Q_OBJECT 和 moc 构建配置。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("class Worker : public QObject {\n    Q_OBJECT\nsignals:\n    void dataReady(const QByteArray &bytes); // 信号通常无需函数体\npublic slots:\n    void run() { emit dataReady(makePayload()); }\n};\nconnect(worker, &Worker::dataReady, receiver, &Receiver::handleData);\n// 含 Q_OBJECT 的类需要构建系统运行 moc", lang: "cpp", block: true)
+  #raw("class Worker : public QObject\n{\n    Q_OBJECT\n  signals:\n    void dataReady(const QByteArray& bytes); // 信号通常无需函数体\n  public slots:\n    void run()\n    {\n        emit dataReady(makePayload());\n    }\n};\nconnect(worker, &Worker::dataReady, receiver, &Receiver::handleData);\n// 含 Q_OBJECT 的类需要构建系统运行 moc", lang: "cpp", block: true)
 ]
 
 #heading(level: 2, outlined: true)[#text("14.2 界面与绘图", size: 14pt, weight: "bold", fill: rgb("#000000"))]
@@ -5657,7 +5657,7 @@
   #text("它的优势在于不用自己重新组织全部坐标与命中逻辑，同一个场景还可以同时显示在主编辑区和缩略预览中。视图缩放改变的是观察方式，图元的场景位置可以保持原值。普通设置表单直接使用 Widgets 布局更合适；若画布有大量图元，则仍应测量索引、局部重绘、图元缓存和交互复杂度，框架并不保证任意规模都流畅。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("auto *scene = new QGraphicsScene(this); // 管理图元和场景坐标\nauto *item = scene->addEllipse(QRectF(0, 0, 24, 24), QPen(Qt::blue), QBrush(Qt::cyan));\nitem->setFlag(QGraphicsItem::ItemIsSelectable);\nauto *view = new QGraphicsView(scene, this); // 视图处理滚动与变换\nview->scale(1.5, 1.5); // 编辑器类场景可缩放和平移\n// 普通表单无需 Graphics View；大场景再测索引和局部更新", lang: "cpp", block: true)
+  #raw("auto* scene = new QGraphicsScene(this); // 管理图元和场景坐标\nauto* item = scene->addEllipse(QRectF(0, 0, 24, 24), QPen(Qt::blue), QBrush(Qt::cyan));\nitem->setFlag(QGraphicsItem::ItemIsSelectable);\nauto* view = new QGraphicsView(scene, this); // 视图处理滚动与变换\nview->scale(1.5, 1.5); // 编辑器类场景可缩放和平移\n// 普通表单无需 Graphics View；大场景再测索引和局部更新", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -5668,7 +5668,7 @@
   #text("一个场景可以交给多个视图，因此在主画布移动节点，缩略图也能看到同一个节点的新位置。图元还可以有父图元，子图元的局部坐标和变换会受到父图元影响。需要注意，普通 QGraphicsItem 并不是 QObject，图元父子关系也不能直接等同于 QObject 父子树；如果图元需要信号、槽或属性，可以使用 QGraphicsObject，并明确场景和图元的清理责任。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("auto *scene = new QGraphicsScene(this);\nauto *shape = scene->addRect(QRectF(0, 0, 80, 40)); // QGraphicsItem\nshape->setFlag(QGraphicsItem::ItemIsMovable);\nmainView->setScene(scene); // view 映射同一个 scene\npreviewView->setScene(scene); // 多个 view 可同时观察\npreviewView->scale(0.25, 0.25);\n// 需 QObject 信号槽的图元可改用 QGraphicsObject", lang: "cpp", block: true)
+  #raw("auto* scene = new QGraphicsScene(this);\nauto* shape = scene->addRect(QRectF(0, 0, 80, 40)); // QGraphicsItem\nshape->setFlag(QGraphicsItem::ItemIsMovable);\nmainView->setScene(scene); // view 映射同一个 scene\npreviewView->setScene(scene); // 多个 view 可同时观察\npreviewView->scale(0.25, 0.25);\n// 需 QObject 信号槽的图元可改用 QGraphicsObject", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -5690,7 +5690,7 @@
   #text("业务数据变化时先修改状态，再调用 update() 请求重绘；Qt 可以合并多个更新请求，稍后统一绘制。不要手工调用 paintEvent，也不要在普通按钮回调中直接对 QWidget 作画。图像处理则可以创建指向 QImage 的 painter。绘制路径应保持短小，文件读取、网络请求和耗时计算应提前完成，否则会阻塞界面事件循环。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("void PlotWidget::setValue(double value) {\n    value_ = value;\n    update(); // 请求事件循环合并重绘\n}\nvoid PlotWidget::paintEvent(QPaintEvent *event) {\n    QPainter painter(this); // 仅在 paintEvent 中画 QWidget\n    painter.setClipRegion(event->region()); // 只画失效区域\n    painter.drawLine(QPoint(8, 8), mapValue(value_));\n} // 不直接调用 paintEvent，也不在其中做 I/O", lang: "cpp", block: true)
+  #raw("void PlotWidget::setValue(double value)\n{\n    value_ = value;\n    update(); // 请求事件循环合并重绘\n}\nvoid PlotWidget::paintEvent(QPaintEvent* event)\n{\n    QPainter painter(this); // 仅在 paintEvent 中画 QWidget\n    painter.setClipRegion(event->region()); // 只画失效区域\n    painter.drawLine(QPoint(8, 8), mapValue(value_));\n} // 不直接调用 paintEvent，也不在其中做 I/O", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -5701,7 +5701,7 @@
   #text("例如后台线程把照片解码为 QImage，完成滤镜处理后传回 GUI 线程，再转换成 QPixmap 放入标签。发布后不要继续无同步地修改同一份图像实例，跨线程传递应保证值和所有权明确。QPixmap 的具体实现依赖平台，不能笼统断言它一定使用 GPU，也不宜把界面图像资源的线程限制当作 QImage 的限制。格式转换还可能带来复制成本，应避免每帧反复转换。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// 后台线程解码和逐像素处理使用 QImage\nQImage decoded = QImageReader(path).read();\nif (decoded.isNull()) report(QStringLiteral(\"image decode failed\"));\nQImage processed = transform(decoded); // 线程间传值时按数据所有权处理\nQMetaObject::invokeMethod(this, [this, processed] {\n    label->setPixmap(QPixmap::fromImage(processed)); // GUI 线程显示\n}, Qt::QueuedConnection);\n// QBitmap 仅适合单色蒙版；不要假设 QPixmap 一定由 GPU 加速", lang: "cpp", block: true)
+  #raw("// 后台线程解码和逐像素处理使用 QImage\nQImage decoded = QImageReader(path).read();\nif (decoded.isNull())\n    report(QStringLiteral(\"image decode failed\"));\nQImage processed = transform(decoded); // 线程间传值时按数据所有权处理\nQMetaObject::invokeMethod(\n    this,\n    [this, processed]\n    {\n        label->setPixmap(QPixmap::fromImage(processed)); // GUI 线程显示\n    },\n    Qt::QueuedConnection);\n// QBitmap 仅适合单色蒙版；不要假设 QPixmap 一定由 GPU 加速", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -5712,7 +5712,7 @@
   #text("例如编辑器用 QMainWindow 放文档区和工具栏，打开设置时创建 QDialog，设置页内部再由普通 QWidget 和布局组合。模态对话框会限制用户与其他窗口交互，非模态对话框允许继续操作，应按任务选择。三者都属于 GUI 对象，应在 GUI 线程创建和操作；通常通过父子关系管理子控件，并用布局分配尺寸，而不是为每一种窗口重新手算坐标。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("auto* window = new QMainWindow; auto* editor = new QWidget(window); window->setCentralWidget(editor);\nauto* dialog = new QDialog(window); connect(ok_button, &QPushButton::clicked, dialog, &QDialog::accept);\n// 主窗口管理中央控件；对话框通过accept/reject返回结果", lang: "cpp", block: true)
+  #raw("auto* window = new QMainWindow;\nauto* editor = new QWidget(window);\nwindow->setCentralWidget(editor);\nauto* dialog = new QDialog(window);\nconnect(ok_button, &QPushButton::clicked, dialog, &QDialog::accept);\n// 主窗口管理中央控件；对话框通过accept/reject返回结果", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -5723,7 +5723,7 @@
   #text("手写代码更适合按数据数量动态创建控件、复用复杂构造逻辑或实现特殊交互。二者可以组合：Designer 负责固定表单，程序运行后填充模型、绑定信号槽，再按需要添加组件。已有自定义控件可以通过提升为子类接入表单。选择依据是维护和复用方式；无论来源如何，最终仍需检查布局、父子所有权以及真实窗口缩放效果。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("Ui::SettingsForm ui; ui.setupUi(this); // uic根据.ui生成setupUi代码\nfor (const Device& device : query_devices()) ui.deviceLayout->addWidget(new DeviceRow(device));\nconnect(ui.saveButton, &QPushButton::clicked, this, &Settings::save); // 不手改生成文件", lang: "cpp", block: true)
+  #raw("Ui::SettingsForm ui;\nui.setupUi(this); // uic根据.ui生成setupUi代码\nfor (const Device& device : query_devices())\n    ui.deviceLayout->addWidget(new DeviceRow(device));\nconnect(ui.saveButton, &QPushButton::clicked, this, &Settings::save); // 不手改生成文件", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -5734,7 +5734,7 @@
   #text("提示应在本轮 painter 创建后、实际绘制前设置，后端是否支持以及最终效果还受设备像素比和坐标变换影响。例如圆边缘可以更平滑，但把低分辨率头像放大很多倍仍然会模糊，抗锯齿不能补回原图缺失的细节。动画或大量图元绘制时需要测量成本，并结合高分辨率素材、合理坐标和局部重绘改善结果。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("void Canvas::paintEvent(QPaintEvent *) {\n    QPainter painter(this);\n    painter.setRenderHint(QPainter::Antialiasing); // 曲线与斜线\n    painter.setRenderHint(QPainter::TextAntialiasing); // 文字单独控制\n    painter.setRenderHint(QPainter::SmoothPixmapTransform); // 缩放图像\n    painter.drawEllipse(QPointF(40, 40), 25, 25);\n} // 效果受设备像素比、变换和绘图后端影响\n// 高频绘制要在目标设备测量开销", lang: "cpp", block: true)
+  #raw("void Canvas::paintEvent(QPaintEvent*)\n{\n    QPainter painter(this);\n    painter.setRenderHint(QPainter::Antialiasing); // 曲线与斜线\n    painter.setRenderHint(QPainter::TextAntialiasing); // 文字单独控制\n    painter.setRenderHint(QPainter::SmoothPixmapTransform); // 缩放图像\n    painter.drawEllipse(QPointF(40, 40), 25, 25);\n} // 效果受设备像素比、变换和绘图后端影响\n// 高频绘制要在目标设备测量开销", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -5745,7 +5745,7 @@
   #text("目标控件先启用接收拖放，在 dragEnterEvent 或 dragMoveEvent 检查格式和允许动作，符合条件才接受；dropEvent 到来时仍需重新验证内容，再真正更新数据。不要传一个仅在源进程有效的裸指针给外部应用，也不能只因拖入事件接受了就信任最终数据。复制与移动语义应明确，文件拖放还应处理路径、权限和读取失败，只有完成实际操作才更新界面状态。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("void SourceWidget::mouseMoveEvent(QMouseEvent *event) {\n    if (!dragging_) return;\n    auto *mime = new QMimeData;\n    mime->setText(selectedText()); // MIME 可跨 widget/应用传值\n    QDrag drag(this); drag.setMimeData(mime);\n    drag.exec(Qt::CopyAction | Qt::MoveAction);\n}\nvoid TargetWidget::dragEnterEvent(QDragEnterEvent *event) {\n    if (event->mimeData()->hasText()) event->acceptProposedAction();\n} // dropEvent 中再次校验 MIME，再读取文本", lang: "cpp", block: true)
+  #raw("void SourceWidget::mouseMoveEvent(QMouseEvent* event)\n{\n    if (!dragging_)\n        return;\n    auto* mime = new QMimeData;\n    mime->setText(selectedText()); // MIME 可跨 widget/应用传值\n    QDrag drag(this);\n    drag.setMimeData(mime);\n    drag.exec(Qt::CopyAction | Qt::MoveAction);\n}\nvoid TargetWidget::dragEnterEvent(QDragEnterEvent* event)\n{\n    if (event->mimeData()->hasText())\n        event->acceptProposedAction();\n} // dropEvent 中再次校验 MIME，再读取文本", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -5756,7 +5756,7 @@
   #text("布局会结合控件的建议大小、最小尺寸、尺寸策略、伸缩因子和边距分配空间。例如输入框可以吸收窗口增加的宽度，而保存按钮维持自然宽度。把布局安装在父控件上后，不应继续用固定坐标反复调整同一批子控件，否则两套几何规则互相覆盖。布局还应在字体变大、翻译文本变长和窗口缩小时检查，避免仅在设计分辨率下正常。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("auto *form = new QFormLayout;\nform->addRow(tr(\"Name\"), nameEdit); // 标签加输入框\nauto *grid = new QGridLayout;\ngrid->addWidget(formWidget, 0, 0); // 网格可放子布局\nauto *pages = new QStackedLayout;\npages->addWidget(pageA); pages->addWidget(pageB);\npages->setCurrentWidget(pageA); // 页面切换不重设子控件坐标\nparentWidget->setLayout(grid); // 布局接管几何分配和缩放", lang: "cpp", block: true)
+  #raw("auto* form = new QFormLayout;\nform->addRow(tr(\"Name\"), nameEdit); // 标签加输入框\nauto* grid = new QGridLayout;\ngrid->addWidget(formWidget, 0, 0); // 网格可放子布局\nauto* pages = new QStackedLayout;\npages->addWidget(pageA);\npages->addWidget(pageB);\npages->setCurrentWidget(pageA); // 页面切换不重设子控件坐标\nparentWidget->setLayout(grid); // 布局接管几何分配和缩放", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -5767,7 +5767,7 @@
   #text("样式主要决定外观，不能替代业务行为、布局或复杂绘图。写了禁用样式并不等于按钮已经不可点击，仍需调用 setEnabled(false)。应用级选择器覆盖面大，可能改变平台原生观感，也可能让大量控件重新计算样式；应控制作用范围。QSS 并不完整实现浏览器 CSS，复杂定制可以考虑控件绘制或 QStyle，同时检查字体、边框和内边距是否影响尺寸。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("button->setObjectName(QStringLiteral(\"saveButton\"));\nbutton->setProperty(\"accent\", true); // 属性可供选择器匹配\nqApp->setStyleSheet(QStringLiteral(\n    \"QPushButton[accent=\\\"true\\\"] { background: #2878c8; }\"\n    \"QPushButton:hover { border: 1px solid white; }\"));\n// 应用级规则会覆盖较大范围；复杂绘制仍由控件/QStyle 实现\nbutton->setEnabled(false); // 样式不会替代交互状态逻辑", lang: "cpp", block: true)
+  #raw("button->setObjectName(QStringLiteral(\"saveButton\"));\nbutton->setProperty(\"accent\", true); // 属性可供选择器匹配\nqApp->setStyleSheet(QStringLiteral(\"QPushButton[accent=\\\"true\\\"] { background: #2878c8; }\"\n                                   \"QPushButton:hover { border: 1px solid white; }\"));\n// 应用级规则会覆盖较大范围；复杂绘制仍由控件/QStyle 实现\nbutton->setEnabled(false); // 样式不会替代交互状态逻辑", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -5778,7 +5778,7 @@
   #text("事件过滤器可以在目标处理前观察或截断事件，专用处理函数则决定如何响应。accept() 和 ignore() 的意义要结合具体事件类型理解：某些忽略的输入事件可以继续传播到父控件，但不能认为所有事件都沿父子树逐层冒泡。例如重绘事件并不是普通鼠标事件的传播规则。重写 event() 时，对自己不处理的类型通常应调用基类，以保留默认分派和控件行为。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("class Target : public QWidget {\n    void mousePressEvent(QMouseEvent *event) override {\n        if (event->button() == Qt::LeftButton) event->accept();\n        else event->ignore(); // 某些输入事件可继续向父控件传播\n    }\n};\nQCoreApplication::postEvent(target, new MyEvent(payload)); // 排队稍后分发\n// sendEvent() 同步重入调用；事件循环调用 event() 再分派专用处理函数", lang: "cpp", block: true)
+  #raw("class Target : public QWidget\n{\n    void mousePressEvent(QMouseEvent* event) override\n    {\n        if (event->button() == Qt::LeftButton)\n            event->accept();\n        else\n            event->ignore(); // 某些输入事件可继续向父控件传播\n    }\n};\nQCoreApplication::postEvent(target, new MyEvent(payload)); // 排队稍后分发\n// sendEvent() 同步重入调用；事件循环调用 event() 再分派专用处理函数", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -5789,7 +5789,7 @@
   #text("过滤器返回 true 表示事件已被过滤，目标不会再收到这一事件；返回 false 才允许继续处理。这与事件对象自身的 accept 状态不是同一个开关。过滤器和目标必须处于同一线程，重写函数时也应检查 watched 是哪个对象。若只是旁观，应放行事件；在 event() 中不处理的事件则交还基类，避免无意破坏键盘、布局或其他默认行为。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("target->installEventFilter(this); // filter 与 target 必须同线程\nbool Filter::eventFilter(QObject *watched, QEvent *event) {\n    if (watched == target && event->type() == QEvent::MouseButtonPress) {\n        handlePress(static_cast<QMouseEvent *>(event));\n        return true; // 已处理，目标不会再收到该事件\n    }\n    return QObject::eventFilter(watched, event); // 保持默认过滤行为\n}", lang: "cpp", block: true)
+  #raw("target->installEventFilter(this); // filter 与 target 必须同线程\nbool Filter::eventFilter(QObject* watched, QEvent* event)\n{\n    if (watched == target && event->type() == QEvent::MouseButtonPress)\n    {\n        handlePress(static_cast<QMouseEvent*>(event));\n        return true; // 已处理，目标不会再收到该事件\n    }\n    return QObject::eventFilter(watched, event); // 保持默认过滤行为\n}", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -5800,7 +5800,7 @@
   #text("回调应快速完成状态更新或绘制，耗时计算放在工作线程，否则鼠标和绘制事件都要排队，界面就会卡住。重写后通常在需要保留默认行为时调用基类实现；例如自定义控件只接管左键，其他键仍交回 QWidget。paintEvent 应能从当前状态重建受影响区域，不能依赖上一次屏幕内容。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("void Canvas::resizeEvent(QResizeEvent *event) {\n    cachedSize_ = event->size(); // 重算与尺寸相关的缓存\n    QWidget::resizeEvent(event); // 按需保留基类行为\n}\nvoid Canvas::mousePressEvent(QMouseEvent *event) {\n    if (event->button() == Qt::LeftButton) { beginDrag(event->position()); return; }\n    QWidget::mousePressEvent(event);\n}\nvoid Canvas::paintEvent(QPaintEvent *) { QPainter(this).drawImage(rect(), cachedImage_); }\n// 事件回调只更新轻状态；耗时工作放到 worker", lang: "cpp", block: true)
+  #raw("void Canvas::resizeEvent(QResizeEvent* event)\n{\n    cachedSize_ = event->size(); // 重算与尺寸相关的缓存\n    QWidget::resizeEvent(event); // 按需保留基类行为\n}\nvoid Canvas::mousePressEvent(QMouseEvent* event)\n{\n    if (event->button() == Qt::LeftButton)\n    {\n        beginDrag(event->position());\n        return;\n    }\n    QWidget::mousePressEvent(event);\n}\nvoid Canvas::paintEvent(QPaintEvent*)\n{\n    QPainter(this).drawImage(rect(), cachedImage_);\n}\n// 事件回调只更新轻状态；耗时工作放到 worker", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -5811,7 +5811,7 @@
   #text("手动缓存更适合复用昂贵但静态的背景，再把每帧变化的动画对象叠加绘制。缓存大小、缩放和设备像素比发生变化时应重新生成；只重绘脏区域可以省成本，但必须保证缓存其他部分仍有效。额外缓冲会占用内存，连续保存多张全窗口图像可能比绘制本身更昂贵，需按实际帧率和内存测量。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// QWidget 已由 backing store 双缓冲，通常不需手写整窗缓冲\nvoid Canvas::setStaticLayer(const QImage &layer) {\n    cachedLayer_ = layer; update();\n}\nvoid Canvas::paintEvent(QPaintEvent *event) {\n    QPainter painter(this); painter.setClipRegion(event->region());\n    painter.drawImage(QPoint(0, 0), cachedLayer_); // 重用静态层\n    drawMovingObjects(painter); // 每帧只重绘变化部分\n}\n// 缓存需随尺寸/DPR 更新；避免保存多份全尺寸图像", lang: "cpp", block: true)
+  #raw("// QWidget 已由 backing store 双缓冲，通常不需手写整窗缓冲\nvoid Canvas::setStaticLayer(const QImage& layer)\n{\n    cachedLayer_ = layer;\n    update();\n}\nvoid Canvas::paintEvent(QPaintEvent* event)\n{\n    QPainter painter(this);\n    painter.setClipRegion(event->region());\n    painter.drawImage(QPoint(0, 0), cachedLayer_); // 重用静态层\n    drawMovingObjects(painter); // 每帧只重绘变化部分\n}\n// 缓存需随尺寸/DPR 更新；避免保存多份全尺寸图像", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -5822,7 +5822,7 @@
   #text("sizeHint 和 minimumSizeHint 告诉布局控件偏好的尺寸，焦点策略决定键盘是否可达；交互控件还应提供可访问名称、状态和键盘操作。资源用父对象所有权或 RAII 管理，控件应在 GUI 线程使用。把业务逻辑放进控件时要控制边界：控件负责输入和呈现，数据持久化或长任务由外部服务处理。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("class Meter : public QWidget {\n    Q_OBJECT\npublic:\n    QSize sizeHint() const override { return QSize(120, 32); }\nsignals:\n    void valueActivated(int value); // 交互用信号报告给外部\nprotected:\n    void paintEvent(QPaintEvent *) override { QPainter(this).drawText(rect(), text_); }\n    void mousePressEvent(QMouseEvent *) override { emit valueActivated(value_); }\n};\n// QWidget 子类留在 GUI 线程；父子树或 RAII 管理其资源", lang: "cpp", block: true)
+  #raw("class Meter : public QWidget\n{\n    Q_OBJECT\n  public:\n    QSize sizeHint() const override\n    {\n        return QSize(120, 32);\n    }\n  signals:\n    void valueActivated(int value); // 交互用信号报告给外部\n  protected:\n    void paintEvent(QPaintEvent*) override\n    {\n        QPainter(this).drawText(rect(), text_);\n    }\n    void mousePressEvent(QMouseEvent*) override\n    {\n        emit valueActivated(value_);\n    }\n};\n// QWidget 子类留在 GUI 线程；父子树或 RAII 管理其资源", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -5833,7 +5833,7 @@
   #text("QDialog::exec() 会启动嵌套事件循环并在关闭后同步返回 Accepted/Rejected，因此调用栈停在等待位置，但期间其他事件仍可能进入，产生重入。open() 或 show() 以异步方式打开，再监听 finished 信号通常更容易维护流程。无论哪种方式，都要清楚管理对话框对象生命周期；通过 parent 持有、完成后 deleteLater 可避免悬空对象。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("auto *dialog = new SettingsDialog(this); // parent 保证窗口对象活到关闭\nconnect(dialog, &QDialog::finished, dialog, &QObject::deleteLater);\nconnect(dialog, &QDialog::finished, this, &Window::applySettings);\ndialog->open(); // 非模态流程，不启动同步嵌套循环\n// 短操作可用 exec() 并检查 Accepted/Rejected\n// exec() 返回前 GUI 线程仍可重入处理其他事件", lang: "cpp", block: true)
+  #raw("auto* dialog = new SettingsDialog(this); // parent 保证窗口对象活到关闭\nconnect(dialog, &QDialog::finished, dialog, &QObject::deleteLater);\nconnect(dialog, &QDialog::finished, this, &Window::applySettings);\ndialog->open(); // 非模态流程，不启动同步嵌套循环\n// 短操作可用 exec() 并检查 Accepted/Rejected\n// exec() 返回前 GUI 线程仍可重入处理其他事件", lang: "cpp", block: true)
 ]
 
 #heading(level: 2, outlined: true)[#text("14.3 并发与网络", size: 14pt, weight: "bold", fill: rgb("#000000"))]
@@ -5845,7 +5845,7 @@
   #text("无论选择哪一种，同一共享数据的所有读写路径都必须遵守一致的同步约定。QMutexLocker、QReadLocker 等 RAII 守卫会在作用域退出时释放锁，因此提前返回也安全。信号量许可必须与实际资源使用对应：获取后所有成功、失败和取消路径都要释放，否则许可逐渐耗尽，后续任务将永久等待。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("QMutex mutex;\n{\n    QMutexLocker lock(&mutex); // 所有访问共享状态的路径用同一把锁\n    ++sharedCount_;\n} // 提前 return 也会释放\nQReadWriteLock rw;\n{ QReadLocker read(&rw); inspect(sharedData_); } // 多读者\n{ QWriteLocker write(&rw); sharedData_ = next; } // 写者独占\nQSemaphore slots(8); // acquire 后使用许可，完成必须 release", lang: "cpp", block: true)
+  #raw("QMutex mutex;\n{\n    QMutexLocker lock(&mutex); // 所有访问共享状态的路径用同一把锁\n    ++sharedCount_;\n} // 提前 return 也会释放\nQReadWriteLock rw;\n{\n    QReadLocker read(&rw);\n    inspect(sharedData_);\n} // 多读者\n{\n    QWriteLocker write(&rw);\n    sharedData_ = next;\n} // 写者独占\nQSemaphore slots(8); // acquire 后使用许可，完成必须 release", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -5856,7 +5856,7 @@
   #text("GUI 控件应留在主线程。停止时先请求 worker 协作取消，不能指望 quit() 打断一个正在执行的长函数；然后让事件循环退出并 wait 等待线程结束，再清理对象。需要队列槽的 worker 线程必须运行事件循环；若长任务占住线程执行栈，它也暂时无法处理新的队列请求，取消标志应能被计算过程定期检查。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("auto *thread = new QThread(this); // QThread 对象属于创建线程\nauto *worker = new Worker; worker->moveToThread(thread); // worker 无 parent\nconnect(thread, &QThread::started, worker, &Worker::process);\nconnect(worker, &Worker::finished, thread, &QThread::quit);\nconnect(thread, &QThread::finished, worker, &QObject::deleteLater);\nthread->start(); // 工作槽需要 worker 线程事件循环\n// 关闭时请求协作取消，再 quit() 并 wait()；quit 不打断长函数", lang: "cpp", block: true)
+  #raw("auto* thread = new QThread(this); // QThread 对象属于创建线程\nauto* worker = new Worker;\nworker->moveToThread(thread); // worker 无 parent\nconnect(thread, &QThread::started, worker, &Worker::process);\nconnect(worker, &Worker::finished, thread, &QThread::quit);\nconnect(thread, &QThread::finished, worker, &QObject::deleteLater);\nthread->start(); // 工作槽需要 worker 线程事件循环\n// 关闭时请求协作取消，再 quit() 并 wait()；quit 不打断长函数", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -5867,7 +5867,7 @@
   #text("并行执行不等于自动安全：任务不能直接读写 QWidget，也要避免多个任务无同步修改同一共享对象。完成后用 watcher 在其所属线程中取结果并更新界面；错误传播和取消能力取决于任务及 API 设计，长时间任务不应假定能被强制中断。若任务间有依赖、需要长期事件循环或精细线程亲和性，worker-object 模式可能更合适。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("QFuture<Result> future = QtConcurrent::run([input] { return calculate(input); });\nauto *watcher = new QFutureWatcher<Result>(this);\nconnect(watcher, &QFutureWatcher<Result>::finished, this, [watcher] {\n    display(watcher->result()); // 回主线程显示结果\n    watcher->deleteLater();\n});\nwatcher->setFuture(future); // pool 管理工作线程\n// 任务不可直接访问 QWidget；长任务需设计取消与错误传播", lang: "cpp", block: true)
+  #raw("QFuture<Result> future = QtConcurrent::run(\n    [input]\n    {\n        return calculate(input);\n    });\nauto* watcher = new QFutureWatcher<Result>(this);\nconnect(watcher,\n        &QFutureWatcher<Result>::finished,\n        this,\n        [watcher]\n        {\n            display(watcher->result()); // 回主线程显示结果\n            watcher->deleteLater();\n        });\nwatcher->setFuture(future); // pool 管理工作线程\n// 任务不可直接访问 QWidget；长任务需设计取消与错误传播", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -5878,7 +5878,7 @@
   #text("QObject 的线程亲和性表示事件投递和对象归属的线程，不表示任意成员函数调用都自动安全。跨线程调用事件驱动对象，通常用队列信号槽；GUI 组件只在 GUI 线程操作。析构、取消和线程退出顺序也属于安全性的一部分。数据竞态之外还要检查死锁和对象提前销毁，尤其避免持锁等待一个必须回头获取同一锁的回调。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// 优先让一个线程独占可变 QObject 状态\nconnect(worker, &Worker::resultReady, controller, &Controller::applyResult,\n        Qt::QueuedConnection);\nvoid Controller::applyResult(const Result &result) {\n    model_->replace(result); // 模型只在所属线程被修改\n    emit viewNeedsRefresh();\n}\n// 若必须共享裸数据，对所有读写统一加同一把锁\n// 线程亲和性本身不等于对象方法线程安全", lang: "cpp", block: true)
+  #raw("// 优先让一个线程独占可变 QObject 状态\nconnect(worker, &Worker::resultReady, controller, &Controller::applyResult, Qt::QueuedConnection);\nvoid Controller::applyResult(const Result& result)\n{\n    model_->replace(result); // 模型只在所属线程被修改\n    emit viewNeedsRefresh();\n}\n// 若必须共享裸数据，对所有读写统一加同一把锁\n// 线程亲和性本身不等于对象方法线程安全", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -5889,7 +5889,7 @@
   #text("排队信号参数应能按要求复制或注册元类型，接收线程必须有机会处理事件；如果目标事件循环已停止，槽就不会按预期执行。大对象要考虑复制成本，可传不可变共享值或句柄并明确所有权。无论如何，不要从工作线程直接调用 QWidget 更新界面；消息传递只负责调度，不替代业务层校验。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("connect(worker, &Worker::resultReady, window, &Window::showResult,\n        Qt::QueuedConnection);\nworker->startWork(); // 发射端可在工作线程\n// Qt 把槽排到 window 所在线程的事件循环\n// 参数类型需可复制；自定义类型跨队列要注册元类型\n// 事件循环未运行时队列槽不会处理\n// worker 只传结果，不直接访问 QWidget", lang: "cpp", block: true)
+  #raw("connect(worker, &Worker::resultReady, window, &Window::showResult, Qt::QueuedConnection);\nworker->startWork(); // 发射端可在工作线程\n// Qt 把槽排到 window 所在线程的事件循环\n// 参数类型需可复制；自定义类型跨队列要注册元类型\n// 事件循环未运行时队列槽不会处理\n// worker 只传结果，不直接访问 QWidget", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -5900,7 +5900,7 @@
   #text("tryLock 超时可以让等待者恢复或重试，却必须设计清楚失败时如何回滚部分状态，不能只把死锁变成无声数据错误。BlockingQueuedConnection、互相 wait/join 和锁内发射会触发同步槽的场景也可能形成等待环。复杂系统应记录线程、锁和超时信息，并优先通过单线程拥有状态、异步消息减少锁的数量。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// 多锁统一规定顺序：先 accountMutex，再 ledgerMutex\nQMutexLocker first(&accountMutex);\nif (!ledgerMutex.tryLock(100)) {\n    rollbackLocalChanges(); // 超时也要恢复一致状态\n    return;\n}\nQMutexLocker second(&ledgerMutex, QMutexLocker::AdoptLock);\ncommitTransfer(); // 尽量缩短临界区\n// 持锁时不要同步等待信号、I/O、另一线程 wait() 或阻塞队列槽", lang: "cpp", block: true)
+  #raw("// 多锁统一规定顺序：先 accountMutex，再 ledgerMutex\nQMutexLocker first(&accountMutex);\nif (!ledgerMutex.tryLock(100))\n{\n    rollbackLocalChanges(); // 超时也要恢复一致状态\n    return;\n}\nQMutexLocker second(&ledgerMutex, QMutexLocker::AdoptLock);\ncommitTransfer(); // 尽量缩短临界区\n// 持锁时不要同步等待信号、I/O、另一线程 wait() 或阻塞队列槽", lang: "cpp", block: true)
 ]
 
 #heading(level: 2, outlined: true)[#text("14.4 数据、模型与事件", size: 14pt, weight: "bold", fill: rgb("#000000"))]
@@ -5912,7 +5912,7 @@
   #text("例如状态列直接画绿色圆点，比常驻一个小控件更轻。编辑流程中 createEditor、setEditorData、setModelData 应共同遵守模型角色和数据校验约定；不要绕过模型直接改底层记录，否则视图不会收到更新通知。绘制代码应尊重传入的 option 状态，如选中、禁用和焦点，并尽量复用当前 style 的标准绘制行为来保持平台一致。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("void StatusDelegate::paint(QPainter *p, const QStyleOptionViewItem &o,\n                            const QModelIndex &i) const {\n    const bool active = i.data(Qt::UserRole).toBool();\n    p->setBrush(active ? Qt::green : Qt::gray);\n    p->drawEllipse(o.rect.center(), 5, 5); // 绘制可见单元格，无常驻 QWidget\n}\nQWidget *StatusDelegate::createEditor(QWidget *parent, const QStyleOptionViewItem &,\n                                      const QModelIndex &) const {\n    return new QComboBox(parent); // 编辑时才创建 editor\n} // setEditorData/setModelData 在编辑器和 model 间传值", lang: "cpp", block: true)
+  #raw("void StatusDelegate::paint(QPainter* p, const QStyleOptionViewItem& o, const QModelIndex& i) const\n{\n    const bool active = i.data(Qt::UserRole).toBool();\n    p->setBrush(active ? Qt::green : Qt::gray);\n    p->drawEllipse(o.rect.center(), 5, 5); // 绘制可见单元格，无常驻 QWidget\n}\nQWidget*\nStatusDelegate::createEditor(QWidget* parent, const QStyleOptionViewItem&, const QModelIndex&) const\n{\n    return new QComboBox(parent); // 编辑时才创建 editor\n} // setEditorData/setModelData 在编辑器和 model 间传值", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -5923,7 +5923,7 @@
   #text("应用可以从 Qt::UserRole 开始定义自己的角色，例如是否已完成，并集中命名这些标识。若在 QML 中暴露模型角色，还需通过 roleNames() 提供稳定名称。读取和编辑应保持角色含义一致，setData 修改后发出 dataChanged 并说明受影响角色；模型返回空值或转换失败时，视图和编辑器都应有明确处理。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("QVariant TaskModel::data(const QModelIndex &i, int role) const {\n    if (!i.isValid() || i.row() >= tasks_.size()) return {};\n    const Task &task = tasks_[i.row()];\n    if (role == Qt::DisplayRole) return task.title;\n    if (role == Qt::DecorationRole) return task.icon;\n    if (role == Qt::UserRole) return task.done;\n    return {};\n}\n// 自定义角色集中声明；QML 列表模型还实现 roleNames()\n// 视图按角色取值，不要把所有数据塞成一个显示字符串", lang: "cpp", block: true)
+  #raw("QVariant TaskModel::data(const QModelIndex& i, int role) const\n{\n    if (!i.isValid() || i.row() >= tasks_.size())\n        return {};\n    const Task& task = tasks_[i.row()];\n    if (role == Qt::DisplayRole)\n        return task.title;\n    if (role == Qt::DecorationRole)\n        return task.icon;\n    if (role == Qt::UserRole)\n        return task.done;\n    return {};\n}\n// 自定义角色集中声明；QML 列表模型还实现 roleNames()\n// 视图按角色取值，不要把所有数据塞成一个显示字符串", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -5934,7 +5934,7 @@
   #text("模型更新通知是协议的一部分。插入和删除行前后必须配对调用 beginInsertRows/endInsertRows 等函数，视图据此维护索引、选择和缓存；任意修改底层数组而不通知，画面会陈旧或索引错位。data() 要检查 index 有效性和行列边界，修改时根据角色发 dataChanged。数据库、过滤器等复杂模型还应清楚定义排序和父子关系。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("int TaskModel::rowCount(const QModelIndex &parent) const {\n    return parent.isValid() ? 0 : static_cast<int>(tasks_.size());\n}\nQVariant TaskModel::data(const QModelIndex &i, int role) const {\n    if (!i.isValid() || i.row() < 0 || i.row() >= rowCount()) return {};\n    if (role == Qt::DisplayRole) return tasks_[i.row()].title;\n    return {};\n}\n// QAbstractListModel 把数据接口提供给 QListView/QML；修改时必须发模型通知", lang: "cpp", block: true)
+  #raw("int TaskModel::rowCount(const QModelIndex& parent) const\n{\n    return parent.isValid() ? 0 : static_cast<int>(tasks_.size());\n}\nQVariant TaskModel::data(const QModelIndex& i, int role) const\n{\n    if (!i.isValid() || i.row() < 0 || i.row() >= rowCount())\n        return {};\n    if (role == Qt::DisplayRole)\n        return tasks_[i.row()].title;\n    return {};\n}\n// QAbstractListModel 把数据接口提供给 QListView/QML；修改时必须发模型通知", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -5945,7 +5945,7 @@
   #text("长任务通常应移入 worker，或拆成由 QTimer 安排的小步骤，让主事件循环自然调度。尤其不要在持锁、模型 begin/end 通知期间或对象半初始化时调用 processEvents，因为任意回调可能观察到不一致状态。若少量场景确实需要处理事件，应限定事件类型、缩短范围并确保状态可重入；这属于特殊工具，不应作为常规“解决卡顿”的方法。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// 不用 processEvents() 在长循环里反复嵌套分发任意回调\nauto *watcher = new QFutureWatcher<Result>(this);\nconnect(watcher, &QFutureWatcher<Result>::finished, this, [watcher] {\n    showResult(watcher->result()); watcher->deleteLater();\n});\nwatcher->setFuture(QtConcurrent::run([input] { return compute(input); }));\n// 少量可切成 QTimer::singleShot() 小步任务\n// 持锁、改模型通知或对象半初始化时绝不嵌套处理事件", lang: "cpp", block: true)
+  #raw("// 不用 processEvents() 在长循环里反复嵌套分发任意回调\nauto* watcher = new QFutureWatcher<Result>(this);\nconnect(watcher,\n        &QFutureWatcher<Result>::finished,\n        this,\n        [watcher]\n        {\n            showResult(watcher->result());\n            watcher->deleteLater();\n        });\nwatcher->setFuture(QtConcurrent::run(\n    [input]\n    {\n        return compute(input);\n    }));\n// 少量可切成 QTimer::singleShot() 小步任务\n// 持锁、改模型通知或对象半初始化时绝不嵌套处理事件", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -5956,7 +5956,7 @@
   #text("二进制格式紧凑但不便人工检查，文本较易读却要明确编码、分隔和转义规则。跨机器或跨版本保存时，不能只依赖本机默认设置；Qt 6 的 QTextStream 默认使用 UTF-8，但稳定文件格式仍建议显式约定。读取不可信文件时，先限制长度和总资源消耗，再分配内存；读写后检查 stream status，避免静默接受截断数据。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("QDataStream binary(&file);\nbinary.setVersion(QDataStream::Qt_6_0); // 固定序列化版本\nbinary.setByteOrder(QDataStream::BigEndian); // 文件格式显式约定字节序\nbinary << quint32(1) << record.id << record.name; // 结构化二进制\nif (binary.status() != QDataStream::Ok) report(binary.status());\nQTextStream text(&textFile); text.setEncoding(QStringConverter::Utf8);\ntext << record.name << '\\n'; // 面向可读文本\n// 读不可信长度时先限幅，再分配内存", lang: "cpp", block: true)
+  #raw("QDataStream binary(&file);\nbinary.setVersion(QDataStream::Qt_6_0); // 固定序列化版本\nbinary.setByteOrder(QDataStream::BigEndian); // 文件格式显式约定字节序\nbinary << quint32(1) << record.id << record.name; // 结构化二进制\nif (binary.status() != QDataStream::Ok)\n    report(binary.status());\nQTextStream text(&textFile);\ntext.setEncoding(QStringConverter::Utf8);\ntext << record.name << '\\n'; // 面向可读文本\n// 读不可信长度时先限幅，再分配内存", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -5967,7 +5967,7 @@
   #text("I/O 操作可能失败，必须检查 open()、read()、write() 的结果及 errorString，而不能假设路径存在且权限允许。用户输入的文件名还要做路径和权限校验，防止意外读写目录之外的内容。使用 QDir 组合路径可避免自行拼分隔符；但路径规范化也不等同于授权判断，符号链接和平台权限仍需按应用安全边界处理。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("QDir dir(rootPath);\nfor (const QFileInfo &info : dir.entryInfoList(QDir::Files)) {\n    if (!isAllowed(info.fileName())) continue; // 校验输入路径/名称\n    QFile file(info.filePath());\n    if (!file.open(QIODevice::ReadOnly)) { qWarning() << file.errorString(); continue; }\n    consume(file.readAll()); // QFile 析构关闭文件\n    qInfo() << info.size() << info.lastModified();\n}\n// 组合路径用 QDir，不手工拼平台分隔符", lang: "cpp", block: true)
+  #raw("QDir dir(rootPath);\nfor (const QFileInfo& info : dir.entryInfoList(QDir::Files))\n{\n    if (!isAllowed(info.fileName()))\n        continue; // 校验输入路径/名称\n    QFile file(info.filePath());\n    if (!file.open(QIODevice::ReadOnly))\n    {\n        qWarning() << file.errorString();\n        continue;\n    }\n    consume(file.readAll()); // QFile 析构关闭文件\n    qInfo() << info.size() << info.lastModified();\n}\n// 组合路径用 QDir，不手工拼平台分隔符", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -5978,7 +5978,7 @@
   #text("记录很多时，应优先使用模型和 delegate，而不是为每行创建一套按钮、标签等 QWidget。模型负责数据、视图只负责显示交互，滚动时通常仅处理可见项目，资源消耗更可控。模型形状必须与视图预期匹配：树模型要正确实现父子索引，表格要提供列数；选定根索引可让树视图从指定目录开始显示。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("auto *model = new QFileSystemModel(this);\nmodel->setRootPath(rootPath); // 层级数据由模型管理\nlistView->setModel(model); // 一维项\ntableView->setModel(model); // 行列数据\ntreeView->setModel(model); // 父子层级\ntreeView->setRootIndex(model->index(rootPath));\n// 大量记录用 model/view 和 delegate，避免每行创建 QWidget", lang: "cpp", block: true)
+  #raw("auto* model = new QFileSystemModel(this);\nmodel->setRootPath(rootPath); // 层级数据由模型管理\nlistView->setModel(model); // 一维项\ntableView->setModel(model); // 行列数据\ntreeView->setModel(model); // 父子层级\ntreeView->setRootIndex(model->index(rootPath));\n// 大量记录用 model/view 和 delegate，避免每行创建 QWidget", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -5989,7 +5989,7 @@
   #text("manager、reply 受 QObject 线程亲和性和事件循环约束：在其所属线程使用并读取结果，不要在其他线程直接操作 reply。完成回调中先检查网络错误和 HTTP 状态，再读取数据并安排 deleteLater 清理。网络完成只代表传输结束，不代表服务端业务操作成功；还要检查响应内容、超时、重试策略和用户取消情况。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("auto *manager = new QNetworkAccessManager(this); // 在线程内复用\nQNetworkReply *reply = manager->get(QNetworkRequest(QUrl(url)));\nconnect(reply, &QNetworkReply::finished, this, [reply] {\n    if (reply->error() == QNetworkReply::NoError) consume(reply->readAll());\n    else qWarning() << reply->errorString();\n    reply->deleteLater(); // 读完再延迟销毁\n});\n// manager/reply 由所属线程事件循环驱动，不在别的线程直接读取", lang: "cpp", block: true)
+  #raw("auto* manager = new QNetworkAccessManager(this); // 在线程内复用\nQNetworkReply* reply = manager->get(QNetworkRequest(QUrl(url)));\nconnect(reply,\n        &QNetworkReply::finished,\n        this,\n        [reply]\n        {\n            if (reply->error() == QNetworkReply::NoError)\n                consume(reply->readAll());\n            else\n                qWarning() << reply->errorString();\n            reply->deleteLater(); // 读完再延迟销毁\n        });\n// manager/reply 由所属线程事件循环驱动，不在别的线程直接读取", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -6000,7 +6000,7 @@
   #text("写入配置不等于写入敏感信息安全库。普通设置可能以可读文本保存，口令、令牌等凭据应使用适当的系统凭据存储或加密方案。配置键变更时要设计迁移或兼容默认值；需要确认落盘时可调用 sync 并检查 status，但频繁同步会造成不必要 I/O。读取外部可修改配置时，也要验证值的范围和类型。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("QSettings settings;\nsettings.beginGroup(QStringLiteral(\"window\"));\nsettings.setValue(QStringLiteral(\"size\"), size());\nsettings.endGroup();\nsettings.sync(); // 写回后检查持久化状态\nif (settings.status() != QSettings::NoError) reportSettingsError();\nconst QSize saved = settings.value(QStringLiteral(\"window/size\"), QSize(800, 600)).toSize();\n// 普通配置不存明文口令，升级时按版本迁移键值", lang: "cpp", block: true)
+  #raw("QSettings settings;\nsettings.beginGroup(QStringLiteral(\"window\"));\nsettings.setValue(QStringLiteral(\"size\"), size());\nsettings.endGroup();\nsettings.sync(); // 写回后检查持久化状态\nif (settings.status() != QSettings::NoError)\n    reportSettingsError();\nconst QSize saved = settings.value(QStringLiteral(\"window/size\"), QSize(800, 600)).toSize();\n// 普通配置不存明文口令，升级时按版本迁移键值", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -6011,7 +6011,7 @@
   #text("数据库连接有线程归属：在哪个线程创建，就应在那个线程使用。后台线程需要建立自己的命名连接，不能把同一连接对象拿去并发共享。关闭并移除连接前，相关 query、model 和数据库句柄副本都应先销毁，否则 Qt 可能仍认为连接在使用。连接失败、SQL 执行失败和事务失败都要检查 lastError；界面模型修改后也需明确提交策略。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("const QString name = QUuid::createUuid().toString();\nQSqlDatabase db = QSqlDatabase::addDatabase(QStringLiteral(\"QSQLITE\"), name);\ndb.setDatabaseName(filePath);\nif (!db.open()) return report(db.lastError());\n{ QSqlQuery query(db); query.prepare(QStringLiteral(\"SELECT name FROM user WHERE id=?\"));\n  query.addBindValue(userId); if (!query.exec()) report(query.lastError()); }\n// 连接在哪个线程创建就在哪个线程使用\ndb.close(); db = {}; QSqlDatabase::removeDatabase(name); // 先销毁 query/model/副本", lang: "cpp", block: true)
+  #raw("const QString name = QUuid::createUuid().toString();\nQSqlDatabase db = QSqlDatabase::addDatabase(QStringLiteral(\"QSQLITE\"), name);\ndb.setDatabaseName(filePath);\nif (!db.open())\n    return report(db.lastError());\n{\n    QSqlQuery query(db);\n    query.prepare(QStringLiteral(\"SELECT name FROM user WHERE id=?\"));\n    query.addBindValue(userId);\n    if (!query.exec())\n        report(query.lastError());\n}\n// 连接在哪个线程创建就在哪个线程使用\ndb.close();\ndb = {};\nQSqlDatabase::removeDatabase(name); // 先销毁 query/model/副本", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -6022,7 +6022,7 @@
   #text("例如订单表中存着客户编号，关联模型可在视图显示客户姓名。但这种便利不等于能自动安全编辑任意多表事务；复杂业务更新应使用参数化查询或自定义模型，并明确事务边界。选模型前先确定是否只读、数据是否来自单表、是否需要外键关联，以及视图编辑如何提交。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("QSqlQueryModel reportModel(this);\nreportModel.setQuery(QStringLiteral(\"SELECT department, count(*) FROM staff GROUP BY department\"), db);\n// 自定义 JOIN/聚合通常用查询模型，只读展示\nQSqlTableModel editable(this, db); editable.setTable(QStringLiteral(\"employee\"));\neditable.select(); // 单表编辑使用 QSqlTableModel\nQSqlRelationalTableModel related(this, db);\nrelated.setTable(QStringLiteral(\"order\")); // 外键可映射关联表显示\n// 多表编辑需自定义提交/事务边界", lang: "cpp", block: true)
+  #raw("QSqlQueryModel reportModel(this);\nreportModel.setQuery(QStringLiteral(\"SELECT department, count(*) FROM staff GROUP BY department\"),\n                     db);\n// 自定义 JOIN/聚合通常用查询模型，只读展示\nQSqlTableModel editable(this, db);\neditable.setTable(QStringLiteral(\"employee\"));\neditable.select(); // 单表编辑使用 QSqlTableModel\nQSqlRelationalTableModel related(this, db);\nrelated.setTable(QStringLiteral(\"order\")); // 外键可映射关联表显示\n// 多表编辑需自定义提交/事务边界", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -6033,7 +6033,7 @@
   #text("例如实时位置更新可容忍偶尔丢一条，UDP 可能合适；文件内容完整性要求高则常选 TCP。UDP 数据报过大可能触发 IP 分片，任一分片丢失都会使整个包不可用，设计时应控制载荷大小。二者的异步通知都由对象线程事件循环处理；读取 TCP 时要累计缓冲，读取 UDP 则保留每个数据报边界。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("QTcpSocket tcp; tcp.connectToHost(host, port); // 可靠有序字节流\nconnect(&tcp, &QTcpSocket::readyRead, this, &Client::appendTcpBytes);\nQUdpSocket udp; udp.bind(QHostAddress::AnyIPv4, 0);\nudp.writeDatagram(payload, serverAddress, serverPort); // 独立数据报\n// TCP 需自行定义消息边界；UDP 要处理丢失、乱序与重复\n// 两类 socket 都需在有事件循环的所属线程中使用", lang: "cpp", block: true)
+  #raw("QTcpSocket tcp;\ntcp.connectToHost(host, port); // 可靠有序字节流\nconnect(&tcp, &QTcpSocket::readyRead, this, &Client::appendTcpBytes);\nQUdpSocket udp;\nudp.bind(QHostAddress::AnyIPv4, 0);\nudp.writeDatagram(payload, serverAddress, serverPort); // 独立数据报\n// TCP 需自行定义消息边界；UDP 要处理丢失、乱序与重复\n// 两类 socket 都需在有事件循环的所属线程中使用", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -6044,7 +6044,7 @@
   #text("如果线程正忙或事件队列积压，超时处理会晚于计划时间，因此不适合硬实时控制。要测量真实经过时间，应使用 QElapsedTimer；定时器只用于安排“何时再检查或更新”，不能把两次回调间隔当作精确耗时。对象线程必须有事件循环，若在回调中执行耗时工作，后续定时器和其他事件也会延迟。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("QElapsedTimer elapsed; elapsed.start(); // 测实际经过时间\nQTimer timer(this); timer.setInterval(500); // 事件循环驱动的周期回调\nconnect(&timer, &QTimer::timeout, this, [this] { refreshView(); });\ntimer.start();\n// 所属线程必须有事件循环；回调繁忙会延迟触发\n// QTimer 不是硬实时计时器，不用 timeout 间隔测精确耗时", lang: "cpp", block: true)
+  #raw("QElapsedTimer elapsed;\nelapsed.start(); // 测实际经过时间\nQTimer timer(this);\ntimer.setInterval(500); // 事件循环驱动的周期回调\nconnect(&timer,\n        &QTimer::timeout,\n        this,\n        [this]\n        {\n            refreshView();\n        });\ntimer.start();\n// 所属线程必须有事件循环；回调繁忙会延迟触发\n// QTimer 不是硬实时计时器，不用 timeout 间隔测精确耗时", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -6055,7 +6055,7 @@
   #text("这些方式都由对象所属线程的事件循环投递，不会自动创建计时线程；回调耗时、系统调度和事件队列拥堵都会带来延迟。简单提醒用 QTimer 最易读；对象内部管理少量低层计时器时可考虑 QBasicTimer 或 timer ID。停止定时器并在析构前清理，且不要用定时回调频率推断精确墙钟时间。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("QTimer highLevel(this); // timeout 信号和单次/周期 API\nconnect(&highLevel, &QTimer::timeout, this, &Worker::tick);\nhighLevel.setSingleShot(true); highLevel.start(200);\nconst int timerId = startTimer(1000); // 低层 ID 由对象管理\nvoid Worker::timerEvent(QTimerEvent *e) {\n    if (e->timerId() == timerId) doSmallStep();\n    else QObject::timerEvent(e);\n}\n// 两种方式都依赖对象线程事件循环", lang: "cpp", block: true)
+  #raw("QTimer highLevel(this); // timeout 信号和单次/周期 API\nconnect(&highLevel, &QTimer::timeout, this, &Worker::tick);\nhighLevel.setSingleShot(true);\nhighLevel.start(200);\nconst int timerId = startTimer(1000); // 低层 ID 由对象管理\nvoid Worker::timerEvent(QTimerEvent* e)\n{\n    if (e->timerId() == timerId)\n        doSmallStep();\n    else\n        QObject::timerEvent(e);\n}\n// 两种方式都依赖对象线程事件循环", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -6066,7 +6066,7 @@
   #text("如果一个线程长时间运行不返回的函数，该线程的事件循环就暂时无法处理后续事件；没有事件循环时，排队调用和定时通知也不能按预期执行。同步 I/O 或死锁会让窗口看似假死。把长工作移到线程、将处理拆成小步骤，并在应用退出时有序停止循环，才能让事件驱动组件保持响应。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("int main(int argc, char **argv) {\n    QApplication app(argc, argv); // 创建 GUI 应用上下文\n    MainWindow window; window.show();\n    QTimer::singleShot(0, &window, &MainWindow::startAsyncWork);\n    return app.exec(); // 网络/定时器/排队槽由主循环分发\n}\n// 工作线程需自己的 exec() 才能处理该线程的 queued slot 和 QTimer\n// 长时间阻塞某线程会暂停该线程的事件处理", lang: "cpp", block: true)
+  #raw("int main(int argc, char** argv)\n{\n    QApplication app(argc, argv); // 创建 GUI 应用上下文\n    MainWindow window;\n    window.show();\n    QTimer::singleShot(0, &window, &MainWindow::startAsyncWork);\n    return app.exec(); // 网络/定时器/排队槽由主循环分发\n}\n// 工作线程需自己的 exec() 才能处理该线程的 queued slot 和 QTimer\n// 长时间阻塞某线程会暂停该线程的事件处理", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -6077,7 +6077,7 @@
   #text("一个模型可以同时连接列表和表格视图，二者观察同一份数据并以不同方式呈现。数据变更必须按模型 API 通知视图，否则选择状态、索引和画面会不一致。Delegate 不应把业务存储藏在绘制对象里，视图也不应绕开模型直接改数据。该结构适合数据集合；少量固定控件的表单用普通 Widgets 通常更简单。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("class TaskModel : public QAbstractListModel { /* 数据与 role API */ };\nTaskModel model;\nQListView list; QTableView table;\nlist.setModel(&model); table.setModel(&model); // 两个视图观察同一份数据\nmodel.setData(model.index(0, 0), QStringLiteral(\"done\"), Qt::EditRole);\n// 模型发 dataChanged/插删通知后视图更新\n// Delegate 管绘制与编辑，View 管选择和呈现", lang: "cpp", block: true)
+  #raw("class TaskModel : public QAbstractListModel\n{ /* 数据与 role API */\n};\nTaskModel model;\nQListView list;\nQTableView table;\nlist.setModel(&model);\ntable.setModel(&model); // 两个视图观察同一份数据\nmodel.setData(model.index(0, 0), QStringLiteral(\"done\"), Qt::EditRole);\n// 模型发 dataChanged/插删通知后视图更新\n// Delegate 管绘制与编辑，View 管选择和呈现", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -6088,7 +6088,7 @@
   #text("JSON 适合常见 HTTP 请求和中小文档，接口数据应做结构校验并返回有用错误。Compact 输出省去格式空白，Indented 更便于调试。文档解析会把数据装入内存；特别大的输入应限制字节数，或采用增量解析方案。JSON 中数字表示也有精度边界，长整数标识符可考虑字符串编码，避免客户端转换丢失精度。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("QJsonParseError error;\nconst QJsonDocument doc = QJsonDocument::fromJson(bytes, &error);\nif (error.error != QJsonParseError::NoError || !doc.isObject()) return report(error);\nconst QJsonObject object = doc.object();\nif (!object.value(\"id\").isDouble()) return reportSchemaError();\nQJsonObject response{{\"ok\", true}, {\"id\", object.value(\"id\")}};\nconst QByteArray output = QJsonDocument(response).toJson(QJsonDocument::Compact);\n// 大文档流式读取可用 QJsonStreamReader 等分段方案", lang: "cpp", block: true)
+  #raw("QJsonParseError error;\nconst QJsonDocument doc = QJsonDocument::fromJson(bytes, &error);\nif (error.error != QJsonParseError::NoError || !doc.isObject())\n    return report(error);\nconst QJsonObject object = doc.object();\nif (!object.value(\"id\").isDouble())\n    return reportSchemaError();\nQJsonObject response{{\"ok\", true}, {\"id\", object.value(\"id\")}};\nconst QByteArray output = QJsonDocument(response).toJson(QJsonDocument::Compact);\n// 大文档流式读取可用 QJsonStreamReader 等分段方案", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -6099,7 +6099,7 @@
   #text("收发仍然依赖对象所属线程的事件循环。生产环境要校验证书和服务端身份、验证用户权限、限制消息大小，并为断线重连使用退避策略，避免故障时疯狂重连。TLS 加密并不等于身份认证和业务授权；收到消息后还要做格式、大小和权限校验。关闭时移除连接并清理 socket，不能将失效连接一直留在列表中。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("QWebSocket socket; // 对象需存活在事件循环线程\nconnect(&socket, &QWebSocket::connected, this, [&socket] {\n    socket.sendTextMessage(QStringLiteral(\"hello\"));\n});\nconnect(&socket, &QWebSocket::textMessageReceived, this, &Client::onMessage);\nconnect(&socket, &QWebSocket::errorOccurred, this, &Client::onError);\nconnect(&socket, &QWebSocket::disconnected, this, &Client::scheduleReconnect);\nsocket.open(QUrl(QStringLiteral(\"wss://example.invalid/socket\")));\n// 校验证书、限制消息大小，并为断线重连设置退避", lang: "cpp", block: true)
+  #raw("QWebSocket socket; // 对象需存活在事件循环线程\nconnect(&socket,\n        &QWebSocket::connected,\n        this,\n        [&socket]\n        {\n            socket.sendTextMessage(QStringLiteral(\"hello\"));\n        });\nconnect(&socket, &QWebSocket::textMessageReceived, this, &Client::onMessage);\nconnect(&socket, &QWebSocket::errorOccurred, this, &Client::onError);\nconnect(&socket, &QWebSocket::disconnected, this, &Client::scheduleReconnect);\nsocket.open(QUrl(QStringLiteral(\"wss://example.invalid/socket\")));\n// 校验证书、限制消息大小，并为断线重连设置退避", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -6110,7 +6110,7 @@
   #text("如果业务需要随机访问任意节点、反复查询树结构，可以使用 DOM，但整份文档会占用更多内存。Qt 6 移除了旧 SAX API，项目需依照目标 Qt 版本选择接口。解析不可信 XML 时要控制文档大小和深度，并依据安全要求禁用或限制外部实体；XML 文本即使经过格式解析，也仍需按业务规则验证。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("QXmlStreamReader xml(&file); // 前向解析，适合大文件\nwhile (!xml.atEnd()) {\n    xml.readNext();\n    if (xml.isStartElement() && xml.name() == u\"item\")\n        consume(xml.attributes().value(u\"id\").toString());\n}\nif (xml.hasError()) report(xml.errorString(), xml.lineNumber(), xml.columnNumber());\nQXmlStreamWriter writer(&out); writer.writeStartDocument();\nwriter.writeTextElement(QStringLiteral(\"name\"), userText); // 自动转义\nwriter.writeEndDocument(); // DOM 仅在需要随机访问整棵树时载入", lang: "cpp", block: true)
+  #raw("QXmlStreamReader xml(&file); // 前向解析，适合大文件\nwhile (!xml.atEnd())\n{\n    xml.readNext();\n    if (xml.isStartElement() && xml.name() == u\"item\")\n        consume(xml.attributes().value(u\"id\").toString());\n}\nif (xml.hasError())\n    report(xml.errorString(), xml.lineNumber(), xml.columnNumber());\nQXmlStreamWriter writer(&out);\nwriter.writeStartDocument();\nwriter.writeTextElement(QStringLiteral(\"name\"), userText); // 自动转义\nwriter.writeEndDocument(); // DOM 仅在需要随机访问整棵树时载入", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -6121,7 +6121,7 @@
   #text("文件操作要检查打开和读写错误。持久化结构应包含自己的格式版本号，不能只依赖当前 Qt 的默认 stream version；解析不可信文件时要限制长度，避免恶意长度字段触发超大分配。大文件可分块读取，避免 readAll() 一次占用全部内存。文本也可能包含二进制不可用的换行转换，因此要清楚选择文本模式或原始字节模式。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("QFile binary(path);\nif (!binary.open(QIODevice::WriteOnly)) return report(binary.errorString());\nQDataStream out(&binary); out.setVersion(QDataStream::Qt_6_0);\nout << quint32(formatVersion) << payload; // 结构化二进制\nQFile textFile(textPath); if (!textFile.open(QIODevice::WriteOnly)) return;\nQTextStream text(&textFile); text.setEncoding(QStringConverter::Utf8);\ntext << QString::fromUtf8(message); // 编码与字节序显式约定\n// 读取外部文件要验证长度和流状态后再使用数据", lang: "cpp", block: true)
+  #raw("QFile binary(path);\nif (!binary.open(QIODevice::WriteOnly))\n    return report(binary.errorString());\nQDataStream out(&binary);\nout.setVersion(QDataStream::Qt_6_0);\nout << quint32(formatVersion) << payload; // 结构化二进制\nQFile textFile(textPath);\nif (!textFile.open(QIODevice::WriteOnly))\n    return;\nQTextStream text(&textFile);\ntext.setEncoding(QStringConverter::Utf8);\ntext << QString::fromUtf8(message); // 编码与字节序显式约定\n// 读取外部文件要验证长度和流状态后再使用数据", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -6132,7 +6132,7 @@
   #text("清理顺序很关键：先销毁所有 query、model 和 QSqlDatabase 副本，关闭数据库，再 removeDatabase。若仍有对象引用连接，删除时会有告警，继续使用也可能造成错误。连接只能在创建它的线程中使用；后台任务要创建自己的连接。部署时还需包含相应 SQL 驱动插件，例如 SQLite 驱动。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("const QString connection = QUuid::createUuid().toString();\n{\n    QSqlDatabase db = QSqlDatabase::addDatabase(QStringLiteral(\"QSQLITE\"), connection);\n    db.setDatabaseName(filePath);\n    if (!db.open()) return report(db.lastError());\n    { QSqlQuery query(db); runQueries(query); } // query 先离开作用域\n    db.close();\n} // 清除所有 QSqlDatabase 副本、model 后再 remove\nQSqlDatabase::removeDatabase(connection); // 否则仍引用连接会告警", lang: "cpp", block: true)
+  #raw("const QString connection = QUuid::createUuid().toString();\n{\n    QSqlDatabase db = QSqlDatabase::addDatabase(QStringLiteral(\"QSQLITE\"), connection);\n    db.setDatabaseName(filePath);\n    if (!db.open())\n        return report(db.lastError());\n    {\n        QSqlQuery query(db);\n        runQueries(query);\n    } // query 先离开作用域\n    db.close();\n} // 清除所有 QSqlDatabase 副本、model 后再 remove\nQSqlDatabase::removeDatabase(connection); // 否则仍引用连接会告警", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -6143,7 +6143,7 @@
   #text("网络对象一般依赖对象线程事件循环，异步完成信号应在正确线程处理。选择模块还要检查构建依赖和目标部署内容，例如 Qt Network、WebSockets 模块和 SSL 后端。QFile/QSettings 属于本地文件与配置，SQL 模块处理数据库，不是网络协议类。先确认可靠性、消息边界、连接模型和部署环境，再选最低层足够表达需求的 API。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("QTcpSocket tcp; tcp.connectToHost(host, port); // 可靠字节流，应用层自行分帧\nQUdpSocket udp; udp.writeDatagram(packet, peer); // 数据报可能丢失\nmanager.get(QNetworkRequest(url)); // HTTP客户端复用管理器", lang: "cpp", block: true)
+  #raw("QTcpSocket tcp;\ntcp.connectToHost(host, port); // 可靠字节流，应用层自行分帧\nQUdpSocket udp;\nudp.writeDatagram(packet, peer); // 数据报可能丢失\nmanager.get(QNetworkRequest(url)); // HTTP客户端复用管理器", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -6165,7 +6165,7 @@
   #text("它们都由对象所属线程的事件循环驱动，不会开独立计时线程。回调何时执行受线程忙闲与系统调度影响，因此都不是硬实时计时器。常规界面刷新、延迟搜索用 QTimer；确实需要在对象事件回调中统一管理少量定时器时可用低层 ID。无论何种方式，都要停止不再需要的计时器。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("class TimerOwner : public QObject {\n    void startLowLevel() { timerId_ = startTimer(250); }\n    void timerEvent(QTimerEvent *event) override {\n        if (event->timerId() == timerId_) poll();\n        else QObject::timerEvent(event);\n    }\n    int timerId_ = 0;\n};\nQTimer high(this); connect(&high, &QTimer::timeout, this, &TimerOwner::poll);\n// 高层信号 API 更清楚；两者精度都受事件循环调度", lang: "cpp", block: true)
+  #raw("class TimerOwner : public QObject\n{\n    void startLowLevel()\n    {\n        timerId_ = startTimer(250);\n    }\n    void timerEvent(QTimerEvent* event) override\n    {\n        if (event->timerId() == timerId_)\n            poll();\n        else\n            QObject::timerEvent(event);\n    }\n    int timerId_ = 0;\n};\nQTimer high(this);\nconnect(&high, &QTimer::timeout, this, &TimerOwner::poll);\n// 高层信号 API 更清楚；两者精度都受事件循环调度", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -6176,7 +6176,7 @@
   #text("TCP 是可靠有序的字节流，readyRead 一次可能只有半条消息，也可能包含多条消息；应按长度前缀或分隔协议解析，并限制未完成消息的缓冲上限。服务端必须进行身份验证和输入校验，避免资源被慢速或恶意客户端耗尽。socket 和 server 应在事件循环所在的线程使用，客户端断开后延迟删除并清除对应状态。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("auto *server = new QTcpServer(this);\nconnect(server, &QTcpServer::newConnection, this, [server] {\n    while (server->hasPendingConnections()) {\n        auto *client = server->nextPendingConnection(); // server 暂时拥有\n        connect(client, &QTcpSocket::readyRead, this, [client] {\n            appendAndParse(client, client->readAll()); // TCP 字节流\n        });\n        connect(client, &QTcpSocket::disconnected, client, &QObject::deleteLater);\n    }\n});\nif (!server->listen(QHostAddress::Any, port)) report(server->errorString());\n// 限制每连接缓冲与消息长度", lang: "cpp", block: true)
+  #raw("auto* server = new QTcpServer(this);\nconnect(server,\n        &QTcpServer::newConnection,\n        this,\n        [server]\n        {\n            while (server->hasPendingConnections())\n            {\n                auto* client = server->nextPendingConnection(); // server 暂时拥有\n                connect(client,\n                        &QTcpSocket::readyRead,\n                        this,\n                        [client]\n                        {\n                            appendAndParse(client, client->readAll()); // TCP 字节流\n                        });\n                connect(client, &QTcpSocket::disconnected, client, &QObject::deleteLater);\n            }\n        });\nif (!server->listen(QHostAddress::Any, port))\n    report(server->errorString());\n// 限制每连接缓冲与消息长度", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -6187,7 +6187,7 @@
   #text("HTTPS 需要正确验证证书，不能为了消除证书错误而关闭校验。网络传输成功和业务成功不是一回事：HTTP 4xx/5xx 仍可能使 reply 的网络错误为 NoError，所以还要检查状态码和响应结构。设置超时、取消和重试策略，避免无限等待或重复提交副作用；请求参数应正确编码，凭据也不应写入日志。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("auto *manager = new QNetworkAccessManager(this);\nauto *reply = manager->post(QNetworkRequest(QUrl(url)), body);\nconnect(reply, &QNetworkReply::finished, this, [reply] {\n    if (reply->error() != QNetworkReply::NoError) report(reply->errorString());\n    else if (reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt() >= 400)\n        reportHttpStatus(reply->attribute(QNetworkRequest::HttpStatusCodeAttribute));\n    else consume(reply->readAll());\n    reply->deleteLater();\n});\n// GUI 线程不要 waitFor...；HTTPS 必须验证证书", lang: "cpp", block: true)
+  #raw("auto* manager = new QNetworkAccessManager(this);\nauto* reply = manager->post(QNetworkRequest(QUrl(url)), body);\nconnect(reply,\n        &QNetworkReply::finished,\n        this,\n        [reply]\n        {\n            if (reply->error() != QNetworkReply::NoError)\n                report(reply->errorString());\n            else if (reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt() >= 400)\n                reportHttpStatus(reply->attribute(QNetworkRequest::HttpStatusCodeAttribute));\n            else\n                consume(reply->readAll());\n            reply->deleteLater();\n        });\n// GUI 线程不要 waitFor...；HTTPS 必须验证证书", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -6198,7 +6198,7 @@
   #text("查询和连接都应检查 exec、next、lastError 等结果，并在连接所属线程操作。多条相关写操作可用事务。关闭连接前先释放查询、模型和句柄副本，再移除连接名；常见告警通常说明仍有连接引用。数据库路径权限、升级迁移和备份也属于应用职责，SQLite 驱动可用并不代表数据库文件一定可写。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("const QString connection = QUuid::createUuid().toString();\n{\n    QSqlDatabase db = QSqlDatabase::addDatabase(QStringLiteral(\"QSQLITE\"), connection);\n    db.setDatabaseName(filePath);\n    if (!db.open()) return report(db.lastError());\n    QSqlQuery query(db); query.prepare(QStringLiteral(\"INSERT INTO user(name) VALUES(?)\"));\n    query.addBindValue(userName); if (!query.exec()) report(query.lastError());\n} // 先析构 query/model/db 副本\nQSqlDatabase::removeDatabase(connection); // 部署也要包含 QSQLITE 驱动", lang: "cpp", block: true)
+  #raw("const QString connection = QUuid::createUuid().toString();\n{\n    QSqlDatabase db = QSqlDatabase::addDatabase(QStringLiteral(\"QSQLITE\"), connection);\n    db.setDatabaseName(filePath);\n    if (!db.open())\n        return report(db.lastError());\n    QSqlQuery query(db);\n    query.prepare(QStringLiteral(\"INSERT INTO user(name) VALUES(?)\"));\n    query.addBindValue(userName);\n    if (!query.exec())\n        report(query.lastError());\n} // 先析构 query/model/db 副本\nQSqlDatabase::removeDatabase(connection); // 部署也要包含 QSQLITE 驱动", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -6209,7 +6209,7 @@
   #text("正文不完整时保留缓冲，等下一次数据到来；处理一帧后移除其字节并继续检查后续帧。长度计算要避免整数溢出，同时限制总缓冲大小和连接数，防止恶意客户端宣称超大包而耗尽内存。分隔符协议也要处理转义和编码边界。任何情况下都不要把“一次 read”当成“一条消息”。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("buffer.append(socket->readAll()); // readyRead 一次可能含半帧或多帧\nwhile (buffer.size() >= 4) {\n    const auto *head = reinterpret_cast<const uchar *>(buffer.constData());\n    const quint32 length = qFromBigEndian<quint32>(head); // 固定大端长度\n    if (length > maxPayload || length > std::numeric_limits<quint32>::max() - 4u) { socket->abort(); return; }\n    if (buffer.size() < 4 + length) break; // 半帧留待下次数据\n    handle(buffer.mid(4, length)); buffer.remove(0, 4 + length);\n}\n// 解析后移除完整包；长度上限避免溢出和内存耗尽", lang: "cpp", block: true)
+  #raw("buffer.append(socket->readAll()); // readyRead 一次可能含半帧或多帧\nwhile (buffer.size() >= 4)\n{\n    const auto* head = reinterpret_cast<const uchar*>(buffer.constData());\n    const quint32 length = qFromBigEndian<quint32>(head); // 固定大端长度\n    if (length > maxPayload || length > std::numeric_limits<quint32>::max() - 4u)\n    {\n        socket->abort();\n        return;\n    }\n    if (buffer.size() < 4 + length)\n        break; // 半帧留待下次数据\n    handle(buffer.mid(4, length));\n    buffer.remove(0, 4 + length);\n}\n// 解析后移除完整包；长度上限避免溢出和内存耗尽", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -6220,7 +6220,7 @@
   #text("事务不能撤销已经发出的邮件、调用的远程 API 或写入另一系统的文件；这类副作用需通过事务外的可靠流程、outbox 或补偿处理。事务也不自动解决并发业务冲突，隔离级别和唯一约束要结合数据库语义设计。事务应尽量短，避免持锁等待用户输入或网络响应。提交失败同样要记录错误并决定是否回滚或重试。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("if (!db.transaction()) return report(db.lastError());\nbool ok = false; QSqlError queryError;\n{ QSqlQuery q(db); q.prepare(sql); q.addBindValue(value);\n  ok = q.exec(); if (!ok) queryError = q.lastError(); }\nif (!ok) { db.rollback(); return report(queryError); } // query 先销毁\nif (!db.commit()) { const auto error = db.lastError(); db.rollback(); report(error); }\n// 事务尽量短；外部服务副作用不由数据库回滚", lang: "cpp", block: true)
+  #raw("if (!db.transaction())\n    return report(db.lastError());\nbool ok = false;\nQSqlError queryError;\n{\n    QSqlQuery q(db);\n    q.prepare(sql);\n    q.addBindValue(value);\n    ok = q.exec();\n    if (!ok)\n        queryError = q.lastError();\n}\nif (!ok)\n{\n    db.rollback();\n    return report(queryError);\n} // query 先销毁\nif (!db.commit())\n{\n    const auto error = db.lastError();\n    db.rollback();\n    report(error);\n}\n// 事务尽量短；外部服务副作用不由数据库回滚", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -6231,7 +6231,7 @@
   #text("结构变化必须用 beginInsertRows/endInsertRows、beginRemoveRows/endRemoveRows 或 reset 等成对 API 包起来，让视图更新内部索引和选择。传入非法 parent、负数行或越界列时应安全返回。角色名应稳定，编辑验证失败要返回 false 并保持原状态。用模型测试覆盖边界行、通知范围和排序筛选行为，比只检查显示文本更可靠。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("bool Model::insertRows(int row, int count, const QModelIndex &parent) {\n    if (parent.isValid() || count <= 0 || row < 0 || row > rows_.size()) return false;\n    beginInsertRows(parent, row, row + count - 1); // 先通知视图\n    rows_.insert(row, count, Item{});\n    endInsertRows(); // 修改后闭合通知\n    return true;\n}\nQVariant Model::data(const QModelIndex &i, int role) const { /* bounds + role */ }\n// 修改已有值后发 dataChanged；移除也用 begin/endRemoveRows", lang: "cpp", block: true)
+  #raw("bool Model::insertRows(int row, int count, const QModelIndex& parent)\n{\n    if (parent.isValid() || count <= 0 || row < 0 || row > rows_.size())\n        return false;\n    beginInsertRows(parent, row, row + count - 1); // 先通知视图\n    rows_.insert(row, count, Item{});\n    endInsertRows(); // 修改后闭合通知\n    return true;\n}\nQVariant Model::data(const QModelIndex& i, int role) const\n{ /* bounds + role */\n}\n// 修改已有值后发 dataChanged；移除也用 begin/endRemoveRows", lang: "cpp", block: true)
 ]
 
 #heading(level: 2, outlined: true)[#text("14.5 高级特性与 QML", size: 14pt, weight: "bold", fill: rgb("#000000"))]
@@ -6243,7 +6243,7 @@
   #text("ListView 面向长列表，主要创建可见区域附近的 delegate，并可复用它们，滚动时减少对象数量。因为 delegate 可能销毁或重用，持久状态应放在 model 中，而不是某个 delegate 的局部属性。访问 Loader 的 item 前检查 status 和 item 是否有效；设计时还要考虑模型变化、异步加载和页面销毁时机。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// QML：Loader 仅在需要时创建低频页面\nLoader { id: settings; active: settingsVisible; source: \"Settings.qml\" }\nonLoaded: settings.item.resetView()\nonStatusChanged: if (status === Loader.Error) console.warn(errorString())\n// Repeater 会为所有项创建 delegate，适合小集合\nRepeater { model: 5; delegate: Text { text: index } }\n// 长列表用 ListView 的可视 delegate；model 状态不能放在会销毁的 delegate 内", lang: "cpp", block: true)
+  #raw("// QML：Loader 仅在需要时创建低频页面\nLoader\n{\nid:\n    settings;\nactive:\n    settingsVisible;\nsource:\n    \"Settings.qml\"\n}\nonLoaded : settings.item.resetView() onStatusChanged\n    : if (status == = Loader.Error) console.warn(errorString())\n      // Repeater 会为所有项创建 delegate，适合小集合\n      Repeater\n{\nmodel:\n    5;\ndelegate:\n    Text\n    {\n    text:\n        index\n    }\n}\n// 长列表用 ListView 的可视 delegate；model 状态不能放在会销毁的 delegate 内", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -6254,7 +6254,7 @@
   #text("调用 resolve 前后检查 load() 和 errorString()，并保证函数指针只在库保持加载期间使用。若需要枚举插件元数据、验证接口类型并创建 QObject 实例，应使用 QPluginLoader，而不是把 QLibrary 当作插件框架。卸载前确认没有仍在执行的函数和存活实例依赖该库；普通动态库更新也涉及兼容性与安全信任边界。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("QLibrary library(fileName);\nif (!library.load()) return report(library.errorString());\nusing CreateFn = QObject *(*)(); // 导出函数 ABI 必须一致\nauto create = reinterpret_cast<CreateFn>(library.resolve(\"createPlugin\"));\nif (!create) return report(library.errorString());\nQObject *instance = create(); // 调用期间库必须仍加载\nuse(instance);\ndestroyWithLibraryContract(instance);\nlibrary.unload(); // 所有函数指针/对象失效后才卸载", lang: "cpp", block: true)
+  #raw("QLibrary library(fileName);\nif (!library.load())\n    return report(library.errorString());\nusing CreateFn = QObject* (*)(); // 导出函数 ABI 必须一致\nauto create = reinterpret_cast<CreateFn>(library.resolve(\"createPlugin\"));\nif (!create)\n    return report(library.errorString());\nQObject* instance = create(); // 调用期间库必须仍加载\nuse(instance);\ndestroyWithLibraryContract(instance);\nlibrary.unload(); // 所有函数指针/对象失效后才卸载", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -6265,7 +6265,7 @@
   #text("同一属性应由清楚的动画或状态流程负责；另一段代码持续写入该属性时，动画会被打断或结果难预测。循环动画要有明确停止条件，页面隐藏或对象销毁时也要考虑是否继续运行。动画不能补救主线程卡顿，耗时处理应在后台完成，再把最终状态交给 QML 展示。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// QML\nRectangle {\n    id: panel\n    opacity: expanded ? 1.0 : 0.0\n    Behavior on opacity {\n        NumberAnimation { duration: 200; easing.type: Easing.OutCubic }\n    }\n}\n// 状态切换也可由 states/Transition 驱动\n// 多个动画不要同时命令式写同一属性；隐藏组件时停止循环动画", lang: "cpp", block: true)
+  #raw("// QML\nRectangle\n{\nid:\n    panel opacity : expanded ? 1.0 : 0.0 Behavior on opacity\n    {\n        NumberAnimation\n        {\n        duration:\n            200;\n            easing.type : Easing.OutCubic\n        }\n    }\n}\n// 状态切换也可由 states/Transition 驱动\n// 多个动画不要同时命令式写同一属性；隐藏组件时停止循环动画", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -6276,7 +6276,7 @@
   #text("信号适合表达已经发生的事件，如用户选择了一个编号；它不应被当作同步返回值接口。处理函数若在 GUI 线程执行长时间计算，会冻结动画和输入，应把工作异步移出后再发结果信号。连接动态对象时要处理目标变成 null 或销毁的情况，也不要在多处重复连接导致一个事件执行多次。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// QML\nItem {\n    signal valueChosen(int value)\n    Button { onClicked: valueChosen(7) }\n    onValueChosen: console.log(\"chosen\", value)\n}\n// C++ 接 QObject 信号时用 typed connect\nconnect(&backend, &Backend::finished, this, &Window::showResult);\n// QML 参数需可被元类型系统识别；重活不能同步阻塞 UI", lang: "cpp", block: true)
+  #raw("// QML\nItem{\n    signal valueChosen(int value) Button{onClicked : valueChosen(7)}\n    onValueChosen : console.log(\"chosen\", value)\n} // C++ 接 QObject 信号时用 typed connect\nconnect(&backend, &Backend::finished, this, &Window::showResult);\n// QML 参数需可被元类型系统识别；重活不能同步阻塞 UI", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -6287,7 +6287,7 @@
   #text("对绑定属性直接做命令式赋值通常会移除原绑定，之后父项变化也不会再自动更新。若确实要重新建立动态表达式，可使用 Qt.binding()；很多场景更适合修改源状态，让原绑定自然计算结果。工具 qmllint 可以发现部分绑定断裂和未限定引用。复杂表达式则应拆分成有名字的属性，便于调试依赖。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("QProperty<qreal> parent_width, child_width;\nchild_width.setBinding([&] { return parent_width.value() * 0.5; }); // 依赖变化时自动更新\n// 直接setValue会替换绑定；更新数据源通常更清晰", lang: "cpp", block: true)
+  #raw("QProperty<qreal> parent_width, child_width;\nchild_width.setBinding(\n    [&]\n    {\n        return parent_width.value() * 0.5;\n    }); // 依赖变化时自动更新\n// 直接setValue会替换绑定；更新数据源通常更清晰", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -6298,7 +6298,7 @@
   #text("对象的生命周期和所有权需要显式约定。某些由 QML 创建或返回的 QObject 可能按引擎规则转移所有权，不能假设所有指针都由 C++ 父对象回收。上下文属性虽然方便，但隐藏依赖且不利于静态工具分析；优先考虑类型注册或根对象属性。跨线程访问需通过消息传递，不能从 QML 同步调用长任务。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("class Backend : public QObject {\n    Q_OBJECT\n    Q_PROPERTY(QString title READ title NOTIFY titleChanged)\npublic:\n    Q_INVOKABLE void refresh() { /* 异步触发工作 */ }\nsignals: void titleChanged();\n};\nqmlRegisterType<Backend>(\"App\", 1, 0, \"Backend\"); // 类型可见\n// QML 引擎使用对象时确认 QObject owner 与销毁顺序", lang: "cpp", block: true)
+  #raw("class Backend : public QObject\n{\n    Q_OBJECT\n    Q_PROPERTY(QString title READ title NOTIFY titleChanged)\n  public:\n    Q_INVOKABLE void refresh()\n    { /* 异步触发工作 */\n    }\n  signals:\n    void titleChanged();\n};\nqmlRegisterType<Backend>(\"App\", 1, 0, \"Backend\"); // 类型可见\n// QML 引擎使用对象时确认 QObject owner 与销毁顺序", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -6309,7 +6309,7 @@
   #text("它提供调用能力，不自动使函数异步、线程安全或对所有输入可靠。适合暴露简短命令或查询；耗时工作应启动后台任务并用信号报告完成，否则调用线程上的 QML 界面会停顿。不要把内部实现细节都标成可调用接口，最好校验输入并保持方法名和参数语义稳定。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("class Backend : public QObject {\n    Q_OBJECT\npublic:\n    Q_INVOKABLE QString greeting(const QString &name) const {\n        return tr(\"Hello, %1\").arg(name);\n    }\n};\nQMetaObject::invokeMethod(&backend, \"refresh\", Qt::QueuedConnection);\n// Q_INVOKABLE 写入元对象；同步耗时函数会卡住调用线程", lang: "cpp", block: true)
+  #raw("class Backend : public QObject\n{\n    Q_OBJECT\n  public:\n    Q_INVOKABLE QString greeting(const QString& name) const\n    {\n        return tr(\"Hello, %1\").arg(name);\n    }\n};\nQMetaObject::invokeMethod(&backend, \"refresh\", Qt::QueuedConnection);\n// Q_INVOKABLE 写入元对象；同步耗时函数会卡住调用线程", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -6320,7 +6320,7 @@
   #text("如果属性可变，应让 setter 检查新旧值并在实际变化时发 NOTIFY 信号，否则依赖该属性的 QML 绑定不会刷新或会收到无用通知。只读属性可只提供 READ；读写函数和通知必须对应同一份状态。不要把每个内部字段都曝光，属性也受类型和线程约束，元对象不会自动加锁。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("class Backend : public QObject {\n    Q_OBJECT\n    Q_PROPERTY(QString title READ title WRITE setTitle NOTIFY titleChanged)\npublic:\n    QString title() const { return title_; }\n    void setTitle(const QString &v) { if (title_ == v) return; title_ = v; emit titleChanged(); }\nsignals: void titleChanged();\nprivate: QString title_;\n};\n// NOTIFY 触发 QML 绑定更新；属性读写必须共享同一状态", lang: "cpp", block: true)
+  #raw("class Backend : public QObject\n{\n    Q_OBJECT\n    Q_PROPERTY(QString title READ title WRITE setTitle NOTIFY titleChanged)\n  public:\n    QString title() const\n    {\n        return title_;\n    }\n    void setTitle(const QString& v)\n    {\n        if (title_ == v)\n            return;\n        title_ = v;\n        emit titleChanged();\n    }\n  signals:\n    void titleChanged();\n\n  private:\n    QString title_;\n};\n// NOTIFY 触发 QML 绑定更新；属性读写必须共享同一状态", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -6342,7 +6342,7 @@
   #text("插件必须与宿主使用兼容的 ABI、Qt 和编译器配置，部署时还要带齐依赖库。加载成功不代表可信或安全，插件来自不可信来源时它可以在进程内执行代码。插件对象销毁前不能卸载库，因为虚函数和析构代码仍位于库中；版本不匹配、缺失元数据和加载失败都要给出诊断。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// 普通 C ABI 用 QLibrary；Qt 插件更适合 QPluginLoader\nQPluginLoader loader(pluginPath);\nQObject *object = loader.instance();\nif (!object) return report(loader.errorString());\nauto *plugin = qobject_cast<MyInterface *>(object);\nif (!plugin) return report(QStringLiteral(\"interface mismatch\"));\nplugin->start();\n// 销毁插件对象及其调用者后才能卸载库；宿主/插件 ABI 必须匹配", lang: "cpp", block: true)
+  #raw("// 普通 C ABI 用 QLibrary；Qt 插件更适合 QPluginLoader\nQPluginLoader loader(pluginPath);\nQObject* object = loader.instance();\nif (!object)\n    return report(loader.errorString());\nauto* plugin = qobject_cast<MyInterface*>(object);\nif (!plugin)\n    return report(QStringLiteral(\"interface mismatch\"));\nplugin->start();\n// 销毁插件对象及其调用者后才能卸载库；宿主/插件 ABI 必须匹配", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -6364,7 +6364,7 @@
   #text("这不是对任意 C++ 程序的完整反射：它不会自动列出所有普通成员、模板实例或局部变量。需要通过 Qt 元对象访问的类通常要继承 QObject 并有 Q_OBJECT。系统仅覆盖 Qt 声明的元信息，普通业务元数据仍需显式设计。理解这一边界有助于判断何时用属性、信号槽，何时直接调用普通 C++ 接口。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("class Device : public QObject {\n    Q_OBJECT\n    Q_PROPERTY(QString name READ name)\npublic slots: void start() { /* ... */ }\n};\nconst QMetaObject *meta = device->metaObject(); // moc 生成元数据\nint propertyIndex = meta->indexOfProperty(\"name\");\nint methodIndex = meta->indexOfMethod(\"start()\");\nQMetaObject::invokeMethod(device, \"start\", Qt::QueuedConnection);\n// 这套反射不会自动枚举任意 C++ 成员；构建启用 AUTOMOC", lang: "cpp", block: true)
+  #raw("class Device : public QObject\n{\n    Q_OBJECT\n    Q_PROPERTY(QString name READ name)\n  public slots:\n    void start()\n    { /* ... */\n    }\n};\nconst QMetaObject* meta = device->metaObject(); // moc 生成元数据\nint propertyIndex = meta->indexOfProperty(\"name\");\nint methodIndex = meta->indexOfMethod(\"start()\");\nQMetaObject::invokeMethod(device, \"start\", Qt::QueuedConnection);\n// 这套反射不会自动枚举任意 C++ 成员；构建启用 AUTOMOC", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -6375,7 +6375,7 @@
   #text("持久化格式需要版本号、字段默认值和迁移逻辑，读取时要处理缺字段、未知字段和损坏内容。网络传输与本地持久化也要考虑信任边界，不能直接信任反序列化结果。只保存稳定的业务值而不保存临时控件状态，通常更易兼容；反序列化后应重新构造 QObject，并按正常流程恢复关联。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("QJsonObject record{{\"version\", 2}, {\"name\", object.name()}};\nconst QByteArray bytes = QJsonDocument(record).toJson(QJsonDocument::Compact);\nQFile file(path); if (!file.open(QIODevice::WriteOnly)) return report(file.errorString());\nif (file.write(bytes) != bytes.size()) return report(file.errorString());\nQJsonParseError error; const auto doc = QJsonDocument::fromJson(file.readAll(), &error);\nif (error.error != QJsonParseError::NoError) return report(error.errorString());\nrestoreFields(doc.object()); // QObject 指针树/连接不会由属性自动恢复\n// 长文档和兼容格式需限制大小并显式迁移 version", lang: "cpp", block: true)
+  #raw("QJsonObject record{{\"version\", 2}, {\"name\", object.name()}};\nconst QByteArray bytes = QJsonDocument(record).toJson(QJsonDocument::Compact);\nQFile file(path);\nif (!file.open(QIODevice::WriteOnly))\n    return report(file.errorString());\nif (file.write(bytes) != bytes.size())\n    return report(file.errorString());\nQJsonParseError error;\nconst auto doc = QJsonDocument::fromJson(file.readAll(), &error);\nif (error.error != QJsonParseError::NoError)\n    return report(error.errorString());\nrestoreFields(doc.object()); // QObject 指针树/连接不会由属性自动恢复\n// 长文档和兼容格式需限制大小并显式迁移 version", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -6386,7 +6386,7 @@
   #text("插件与宿主必须在 Qt、编译器、架构和 ABI 上兼容，且部署依赖齐全。插件加载等同于在宿主进程执行本机代码，不应把不可信插件当作安全沙箱。调用接口期间库必须保持加载；应先停止异步工作和销毁插件对象，再 unload。接口变更要有版本策略，避免新宿主错误调用旧插件。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("QPluginLoader loader(pluginPath);\nQObject *root = loader.instance(); // loader 持有库和根对象\nif (!root) return report(loader.errorString());\nauto *iface = qobject_cast<MyInterface *>(root); // 检查接口\nif (!iface) return report(QStringLiteral(\"unsupported plugin\"));\niface->initialize();\nconnect(this, &Host::closing, root, &Plugin::stop);\n// 停止调用者并销毁对象后才 unload；检查版本和 ABI", lang: "cpp", block: true)
+  #raw("QPluginLoader loader(pluginPath);\nQObject* root = loader.instance(); // loader 持有库和根对象\nif (!root)\n    return report(loader.errorString());\nauto* iface = qobject_cast<MyInterface*>(root); // 检查接口\nif (!iface)\n    return report(QStringLiteral(\"unsupported plugin\"));\niface->initialize();\nconnect(this, &Host::closing, root, &Plugin::stop);\n// 停止调用者并销毁对象后才 unload；检查版本和 ABI", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -6397,7 +6397,7 @@
   #text("动态属性不等于完整的业务属性：它没有强类型访问函数和自动 NOTIFY 信号，修改时会产生动态属性变化事件，但属性消费者需自行处理。核心数据更适合 Q_PROPERTY，使接口可以检查、绑定和文档化。设置属性后，QSS 可能需要重新 polish 才应用新规则；动态属性也没有自动提供跨线程安全。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("widget->setProperty(\"busy\", true); // 运行时附加属性\nconst QVariant value = widget->property(\"busy\");\nif (!value.isValid()) return; // 检查属性是否存在\napplyBusyStyle(value.toBool());\nconnect(widget, &QObject::destroyed, this, &Controller::clearState);\n// 动态属性变化还会产生 QDynamicPropertyChangeEvent\n// 常驻业务状态改用有类型访问器的 Q_PROPERTY", lang: "cpp", block: true)
+  #raw("widget->setProperty(\"busy\", true); // 运行时附加属性\nconst QVariant value = widget->property(\"busy\");\nif (!value.isValid())\n    return; // 检查属性是否存在\napplyBusyStyle(value.toBool());\nconnect(widget, &QObject::destroyed, this, &Controller::clearState);\n// 动态属性变化还会产生 QDynamicPropertyChangeEvent\n// 常驻业务状态改用有类型访问器的 Q_PROPERTY", lang: "cpp", block: true)
 ]
 
 #heading(level: 2, outlined: true)[#text("14.6 工程实践", size: 14pt, weight: "bold", fill: rgb("#000000"))]
@@ -6409,7 +6409,7 @@
   #text("构建配置应与实际 Qt 安装和目标平台一致。Qt 6 仍能构建已有 qmake 项目，但新项目也常用 CMake，团队应按工具链和依赖生态选择。不同配置项的效果受 Qt 版本和平台影响，不要盲目复制旧项目的静态链接或编译器标志。构建成功后还需检查运行时所需插件、资源和共享库部署。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("TEMPLATE = app\nQT += widgets network sql\nCONFIG += c++20\nSOURCES += main.cpp worker.cpp\nHEADERS += worker.h\nFORMS += mainwindow.ui\n# qmake 从 .pro 生成构建文件；CMake 项目改用 Qt6::Widgets 等 targets", lang: "cpp", block: true)
+  #raw("TEMPLATE = app QT += widgets network sql CONFIG += c++ 20 SOURCES += main.cpp worker.cpp HEADERS +=\n    worker.h FORMS += mainwindow.ui\n#qmake 从.pro 生成构建文件；CMake 项目改用 Qt6::Widgets 等 targets", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -6420,7 +6420,7 @@
   #text("在构建配置中明确要求项目的 C++ 标准，并确认所有目标平台的编译器都支持。QObject 父子树、线程亲和性和信号槽规则仍按 Qt 约定工作，不能被 STL 智能指针或新语法绕过。复杂 C++ 特性若降低接口可读性或跨编译器兼容性，应谨慎使用；选择能由团队和部署环境稳定支持的标准。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("connect(button, &QPushButton::clicked, this, [this, id = record.id] {\n    saveRecord(id); // lambda 按值捕获异步所需数据\n});\nstd::optional<Result> result = findResult(id); // C++17 接口可表达缺失值\nif (result) show(*result);\n// CXX_STANDARD 由项目工具链显式设置；语言标准不等于 Qt API 版本", lang: "cpp", block: true)
+  #raw("connect(button,\n        &QPushButton::clicked,\n        this,\n        [this, id = record.id]\n        {\n            saveRecord(id); // lambda 按值捕获异步所需数据\n        });\nstd::optional<Result> result = findResult(id); // C++17 接口可表达缺失值\nif (result)\n    show(*result);\n// CXX_STANDARD 由项目工具链显式设置；语言标准不等于 Qt API 版本", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -6431,7 +6431,7 @@
   #text("异步连接可能在较晚时机运行，因此要避免捕获失效的局部引用或已销毁对象。显式上下文比无上下文的长期回调更安全；跨线程连接仍按连接类型在接收者线程调度。复杂分支和可复用业务逻辑最好抽成具名函数，再由 lambda 调用，保持连接点易读并便于测试。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("connect(button, &QPushButton::clicked, this, [this, recordId] {\n    save(recordId); // context 销毁时连接自动断开\n});\nconst auto connection = connect(source, &Source::ready, this,\n    [this](const Result &r) { show(r); });\ndisconnect(connection); // 动态连接可保存句柄\n// 引用捕获的局部变量必须活到回调结束；复杂逻辑放具名槽", lang: "cpp", block: true)
+  #raw("connect(button,\n        &QPushButton::clicked,\n        this,\n        [this, recordId]\n        {\n            save(recordId); // context 销毁时连接自动断开\n        });\nconst auto connection = connect(source,\n                                &Source::ready,\n                                this,\n                                [this](const Result& r)\n                                {\n                                    show(r);\n                                });\ndisconnect(connection); // 动态连接可保存句柄\n// 引用捕获的局部变量必须活到回调结束；复杂逻辑放具名槽", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -6475,7 +6475,7 @@
   #text("抽象层让上层渲染代码不必直接绑定单一 API，但不保证所有设备都自动硬件加速，也不保证不同后端像素结果完全相同。着色器、驱动和平台插件仍会影响实际表现。部署前应在目标 GPU、操作系统和窗口后端测试，遇到兼容问题时依据官方支持矩阵调整渲染后端。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("QQuickWindow window; qInfo() << window.rendererInterface()->graphicsApi();\nload_shader_page(&window); measure_frame_time_and_memory(); // 在目标GPU/驱动上验证渲染结果", lang: "cpp", block: true)
+  #raw("QQuickWindow window;\nqInfo() << window.rendererInterface()->graphicsApi();\nload_shader_page(&window);\nmeasure_frame_time_and_memory(); // 在目标GPU/驱动上验证渲染结果", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -6486,7 +6486,7 @@
   #text("当断点信息不完整时检查是否生成并加载调试符号。交叉编译还要确认目标 ABI、设备连接和远程调试配置一致。性能优化前先采样，避免把时间花在非热点代码上。IDE 工具不能替代干净构建和 CI；本地可运行仍需测试部署后的插件、资源和目标设备行为。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("auto kit = active_kit(); auto trace = profiler.capture([&] { reproduce_slow_click(); });\nauto hot_path = trace.top_cpu_samples(); move_blocking_io_off_ui_thread(hot_path);\n// 同一目标Kit下复测交互延迟，并在CI使用该构建配置", lang: "cpp", block: true)
+  #raw("auto kit = active_kit();\nauto trace = profiler.capture(\n    [&]\n    {\n        reproduce_slow_click();\n    });\nauto hot_path = trace.top_cpu_samples();\nmove_blocking_io_off_ui_thread(hot_path);\n// 同一目标Kit下复测交互延迟，并在CI使用该构建配置", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -6497,7 +6497,7 @@
   #text("将测试目标链接 Qt::Test，并用合适的宏提供入口后即可放入 CI。优先测试模型、业务规则和错误边界；GUI 事件测试应避免依赖不稳定的绝对延时，必要时等待明确状态。外部网络、时钟和文件系统应抽象或替换为可控对象，降低偶发失败。测试结果仍要覆盖目标平台差异。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("class ModelTest : public QObject {\n    Q_OBJECT\nprivate slots:\n    void rowCountIsUpdated() {\n        TaskModel model; QCOMPARE(model.rowCount(), 0);\n        model.append(Task{QStringLiteral(\"one\")});\n        QCOMPARE(model.rowCount(), 1);\n    }\n};\nQTEST_GUILESS_MAIN(ModelTest) // CMake target_link_libraries(... Qt6::Test)\n// GUI 交互可用 QTest::mouseClick；外部依赖要用 fake 隔离", lang: "cpp", block: true)
+  #raw("class ModelTest : public QObject\n{\n    Q_OBJECT\n  private slots:\n    void rowCountIsUpdated()\n    {\n        TaskModel model;\n        QCOMPARE(model.rowCount(), 0);\n        model.append(Task{QStringLiteral(\"one\")});\n        QCOMPARE(model.rowCount(), 1);\n    }\n};\nQTEST_GUILESS_MAIN(ModelTest) // CMake target_link_libraries(... Qt6::Test)\n// GUI 交互可用 QTest::mouseClick；外部依赖要用 fake 隔离", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -6508,7 +6508,7 @@
   #text("窗口句柄可能在窗口创建、重建或屏幕切换时变化，使用前检查有效性；高 DPI 下逻辑坐标与物理像素也不同。原生调用失败要检查返回值并提供替代行为，避免只在一个系统成功。跨线程访问系统窗口资源还要遵守操作系统自己的线程规则。每个编译目标都应有构建条件，防止平台宏分支未被测试。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("QWindow *window = /* 已创建的平台窗口 */;\n#ifdef Q_OS_WIN\n    const WId handle = window->winId(); // 仅在平台适配层调用原生 API\n    useWin32Handle(handle);\n#elif defined(Q_OS_MACOS)\n    useCocoaWindow(window->winId());\n#else\n    usePortableQtPath(window);\n#endif\n// 检查句柄有效期/DPI；平台头文件不要泄漏到业务层", lang: "cpp", block: true)
+  #raw("QWindow* window = /* 已创建的平台窗口 */;\n#ifdef Q_OS_WIN\nconst WId handle = window->winId(); // 仅在平台适配层调用原生 API\nuseWin32Handle(handle);\n#elif defined(Q_OS_MACOS)\nuseCocoaWindow(window->winId());\n#else\nusePortableQtPath(window);\n#endif\n// 检查句柄有效期/DPI；平台头文件不要泄漏到业务层", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -6519,7 +6519,7 @@
   #text("偶发崩溃应保留符号化调用栈、精确二进制版本和最小复现条件。发布构建也可以分离保存符号，便于之后分析。日志要考虑并发写入、文件轮转和隐私，不得记录口令或令牌。工具输出是线索，仍需回到实际调用路径验证根因；优化前后使用相同输入和环境比较。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("QElapsedTimer timer; timer.start();\nrunRepresentativeOperation();\nqInfo() << \"operation ms\" << timer.elapsed(); // 局部测量而非结论\n// Qt Creator Profiler/GDB 看调用栈、线程、CPU 热点\n// ASan/LSan 或 Valgrind 查内存；发布包保留匹配符号\n// 用同一 Release 配置、同一输入复测改动前后", lang: "cpp", block: true)
+  #raw("QElapsedTimer timer;\ntimer.start();\nrunRepresentativeOperation();\nqInfo() << \"operation ms\" << timer.elapsed(); // 局部测量而非结论\n// Qt Creator Profiler/GDB 看调用栈、线程、CPU 热点\n// ASan/LSan 或 Valgrind 查内存；发布包保留匹配符号\n// 用同一 Release 配置、同一输入复测改动前后", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -6530,7 +6530,7 @@
   #text("跨平台不代表行为处处完全一致：字体排版、文件权限、路径大小写、多屏坐标、输入法和系统托盘都可能不同。平台专属能力应封装，缺少能力时提供合理回退。应在目标 OS、架构和图形后端测试安装、升级和运行，不要用单一开发机上的成功推断所有环境正常。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("QString file_path = QDir(selected_directory).filePath(\"notes.txt\");\nQSaveFile file(file_path); if (file.open(QIODevice::WriteOnly)) { file.write(contents); file.commit(); }\n// 用Qt路径/文件API适配平台差异，并在目标系统验证打包", lang: "cpp", block: true)
+  #raw("QString file_path = QDir(selected_directory).filePath(\"notes.txt\");\nQSaveFile file(file_path);\nif (file.open(QIODevice::WriteOnly))\n{\n    file.write(contents);\n    file.commit();\n}\n// 用Qt路径/文件API适配平台差异，并在目标系统验证打包", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -6541,7 +6541,7 @@
   #text("修复核心是明确唯一所有者，使用 QObject 父子树或 RAII，并让循环引用改用弱引用或显式断开。反复打开关闭相关页面、取消后台任务并检查退出路径，有助于暴露只在生命周期边界出现的泄漏。不要把“进程内存没有立刻下降”直接等同泄漏，分配器可能保留已释放内存；以对象或分配栈证据为准。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("QPointer<Worker> worker = page->worker(); // 观察 QObject 是否仍存活\nconnect(worker, &Worker::done, this, [worker] {\n    if (!worker) return; // 异步时对象可能已销毁\n    consume(worker->result());\n});\npage->close(); // 父子树回收其子对象\n// 用 sanitizer/堆快照定位孤儿对象、环和重复创建资源\n// 修复后反复打开关闭页面并检查退出路径", lang: "cpp", block: true)
+  #raw("QPointer<Worker> worker = page->worker(); // 观察 QObject 是否仍存活\nconnect(worker,\n        &Worker::done,\n        this,\n        [worker]\n        {\n            if (!worker)\n                return; // 异步时对象可能已销毁\n            consume(worker->result());\n        });\npage->close(); // 父子树回收其子对象\n// 用 sanitizer/堆快照定位孤儿对象、环和重复创建资源\n// 修复后反复打开关闭页面并检查退出路径", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -6552,7 +6552,7 @@
   #text("运行时切换语言时，已创建控件可能要重新执行 retranslateUi 或刷新模型的展示文本；缓存的翻译字符串也应更新。用复数形式表达数量，不要把动态内容与固定文本随意拼接。不同语言文本长度差异很大，布局需允许伸缩。多个翻译器的安装顺序影响查找优先级，应明确先后并处理加载失败。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("QTranslator translator; // 生命周期覆盖应用翻译期间\nif (!translator.load(locale, QStringLiteral(\":/i18n/app\"))) reportLoadError();\nqApp->installTranslator(&translator);\nui->retranslateUi(window); // Designer 控件刷新\nmodel->refreshTranslatedLabels(); // 自定义模型文本也需重算\n// 用户文案统一 tr()；复数用 n 参数，不拼接词片段\n// 长词会改变布局，应检查窄窗口和切换时机", lang: "cpp", block: true)
+  #raw("QTranslator translator; // 生命周期覆盖应用翻译期间\nif (!translator.load(locale, QStringLiteral(\":/i18n/app\")))\n    reportLoadError();\nqApp->installTranslator(&translator);\nui->retranslateUi(window); // Designer 控件刷新\nmodel->refreshTranslatedLabels(); // 自定义模型文本也需重算\n// 用户文案统一 tr()；复数用 n 参数，不拼接词片段\n// 长词会改变布局，应检查窄窗口和切换时机", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -6563,7 +6563,7 @@
   #text("应保存符号化崩溃栈、输入数据和精确构建版本，再用 sanitizer 或调试器找到首次错误访问，而不是只处理最终崩溃行。重点检查关闭窗口、取消任务、重复请求和失败回滚等边界。构造最小复现后写回归用例，证明同类生命周期问题不会重现；错误处理也应避免从析构期间继续发出危险回调。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("connect(worker, &Worker::finished, window, [guard = QPointer<Window>(window)](Result r) {\n  if (!guard) return; guard->show_result(r); // 用QObject上下文或QPointer避免访问已销毁窗口\n});", lang: "cpp", block: true)
+  #raw("connect(worker,\n        &Worker::finished,\n        window,\n        [guard = QPointer<Window>(window)](Result r)\n        {\n            if (!guard)\n                return;\n            guard->show_result(r); // 用QObject上下文或QPointer避免访问已销毁窗口\n        });", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -6574,7 +6574,7 @@
   #text("可以用消息处理器把日志送到控制台、文件或系统日志，但处理器可能被多个线程调用，应保证线程安全且不能递归调用 qDebug。发布构建可按需关闭调试级别输出，日志要设轮转和保留策略，并过滤口令、令牌、个人数据。严重错误通常应保留足够上下文，但避免输出敏感请求正文。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("qDebug() << \"cache miss\" << key; // 诊断细节\nqInfo() << \"service started\"; // 运行信息\nqWarning() << \"retrying\" << error; // 可恢复问题\nqCritical() << \"database unavailable\"; // 严重错误仍需明确处理\nif (!query.exec()) handle(query.lastError()); // 日志等级不代替错误检查\n// qFatal 会终止进程；生产日志需轮转并脱敏", lang: "cpp", block: true)
+  #raw("qDebug() << \"cache miss\" << key; // 诊断细节\nqInfo() << \"service started\"; // 运行信息\nqWarning() << \"retrying\" << error; // 可恢复问题\nqCritical() << \"database unavailable\"; // 严重错误仍需明确处理\nif (!query.exec())\n    handle(query.lastError()); // 日志等级不代替错误检查\n// qFatal 会终止进程；生产日志需轮转并脱敏", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -6585,7 +6585,7 @@
   #text("迁移时要逐项映射源文件、模块、资源编译、代码生成、平台条件和第三方依赖，并在目标构建环境验证。不要只把 .pro 改名为 CMakeLists；生成步骤和部署逻辑也要迁移。若旧项目稳定且依赖 qmake，继续维护可能更经济；新项目应结合团队工具链和未来依赖选择。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("find_package(Qt6 REQUIRED COMPONENTS Widgets)\nqt_add_executable(app main.cpp window.cpp window.h)\ntarget_link_libraries(app PRIVATE Qt6::Widgets) # AUTOMOC/资源由Qt CMake集成处理", lang: "cpp", block: true)
+  #raw("find_package(Qt6 REQUIRED COMPONENTS Widgets) qt_add_executable(app main.cpp window.cpp window.h)\n        target_link_libraries(app PRIVATE Qt6::Widgets) #AUTOMOC\n    / 资源由Qt CMake集成处理", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -6607,7 +6607,7 @@
   #text("部署工具只能收集部分依赖，第三方库、字体、证书、媒体编解码器和应用资源仍需单独确认。要在目标 OS 与架构的干净环境测试安装、启动、升级和卸载，避免开发机上恰好存在的库掩盖缺失。使用容器或虚拟机可重复部署验证，但最终仍需覆盖真实目标设备和桌面后端。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("std::vector<std::string> required_plugins = inspect_runtime_dependencies(app);\nverify_installation_on(\"Windows\"); verify_installation_on(\"macOS\"); verify_installation_on(\"Linux\");\n// 每个平台分别处理ABI、签名、插件与证书部署", lang: "cpp", block: true)
+  #raw("std::vector<std::string> required_plugins = inspect_runtime_dependencies(app);\nverify_installation_on(\"Windows\");\nverify_installation_on(\"macOS\");\nverify_installation_on(\"Linux\");\n// 每个平台分别处理ABI、签名、插件与证书部署", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -6618,7 +6618,7 @@
   #text("自定义信号所属类需正确参与元对象系统，包含 Q_OBJECT 并由 moc 生成代码。跨线程 queued slot 还要求参数能传递、目标线程事件循环运行。若连接成功却没有执行，检查信号是否实际发射、条件分支、对象线程和过滤器；不要在每次初始化时重复连接造成多次调用。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("const auto connection = QObject::connect(\n    sender, &Sender::ready, receiver, &Receiver::consume);\nif (!connection) qWarning() << \"connect failed\"; // 新式签名编译期检查\n// 跨线程队列槽依赖接收者事件循环\n// 自定义信号类需要 QObject + Q_OBJECT + 正常 moc\n// 重复初始化要么只连接一次，要么保存句柄按需断开", lang: "cpp", block: true)
+  #raw("const auto connection = QObject::connect(sender, &Sender::ready, receiver, &Receiver::consume);\nif (!connection)\n    qWarning() << \"connect failed\"; // 新式签名编译期检查\n// 跨线程队列槽依赖接收者事件循环\n// 自定义信号类需要 QObject + Q_OBJECT + 正常 moc\n// 重复初始化要么只连接一次，要么保存句柄按需断开", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -6629,7 +6629,7 @@
   #text("批量更新应使用正确的模型通知范围，合并多次 repaint 请求，并用 profiler 找出实际热点。排序、过滤和网络载入可放到后台或专用代理模型，再将结果安全交回模型线程。减少数据量本身常比微调绘制更有效，例如分页、搜索和摘要显示。优化后测量滚动帧率、内存和数据刷新延迟。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("bool Model::canFetchMore(const QModelIndex &parent) const {\n    return !parent.isValid() && loaded_ < total_;\n}\nvoid Model::fetchMore(const QModelIndex &parent) {\n    const int count = qMin(batchSize, total_ - loaded_);\n    beginInsertRows(parent, loaded_, loaded_ + count - 1);\n    loadNextBatch(count); loaded_ += count; endInsertRows();\n}\n// delegate 绘制可见行；缓存必须设上限并在数据改变时失效", lang: "cpp", block: true)
+  #raw("bool Model::canFetchMore(const QModelIndex& parent) const\n{\n    return !parent.isValid() && loaded_ < total_;\n}\nvoid Model::fetchMore(const QModelIndex& parent)\n{\n    const int count = qMin(batchSize, total_ - loaded_);\n    beginInsertRows(parent, loaded_, loaded_ + count - 1);\n    loadNextBatch(count);\n    loaded_ += count;\n    endInsertRows();\n}\n// delegate 绘制可见行；缓存必须设上限并在数据改变时失效", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -6640,7 +6640,7 @@
   #text("Qt 资源系统方便组织和打包文件，但不会自动缩短解码或模块初始化时间。Loader 可以延后创建 QML 页面，却会把成本移到首次打开时，需判断用户体验。分别测冷启动首屏时间和完整功能可用时间；并行初始化也可能争用 CPU 与磁盘。避免在 main() 或构造函数中进行阻塞网络请求。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// QML：首页先显示，低频页面延后构造\nApplicationWindow {\n    Component.onCompleted: Qt.callLater(() => settingsLoader.active = true)\n    Loader { id: settingsLoader; active: false; source: \"Settings.qml\" }\n}\n// 网络与磁盘初始化异步执行，首屏只载入必要资源\n// 分别测首屏时间与全部启动时间，延迟加载不一定缩短总耗时", lang: "cpp", block: true)
+  #raw("// QML：首页先显示，低频页面延后构造\nApplicationWindow\n{\n    Component.onCompleted : Qt.callLater(() = > settingsLoader.active = true) Loader\n    {\n    id:\n        settingsLoader;\n    active:\n        false;\n    source:\n        \"Settings.qml\"\n    }\n}\n// 网络与磁盘初始化异步执行，首屏只载入必要资源\n// 分别测首屏时间与全部启动时间，延迟加载不一定缩短总耗时", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -6651,7 +6651,7 @@
   #text("缓存要在尺寸、主题或数据变化时正确失效，避免使用旧图像；高频刷新还可合并更新。Qt Quick 的渲染后端和硬件加速效果依赖平台，Widgets 的绘制也可能受设备像素比影响。最终要在目标设备上测帧率、CPU 与内存，不应为了减少一次 draw call 引入巨大的全屏缓存。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("void Chart::setPoint(const QPointF &p) {\n    const QRect dirty = markerRect_ | nextMarkerRect(p);\n    marker_ = p; markerRect_ = nextMarkerRect(p);\n    update(dirty); // 仅请求局部重绘\n}\nvoid Chart::paintEvent(QPaintEvent *e) {\n    QPainter painter(this); painter.setClipRegion(e->region());\n    drawCachedGrid(painter); drawMarker(painter, marker_);\n}\n// 不在 paintEvent 做 I/O/复杂计算；Model/View 可虚拟化大列表", lang: "cpp", block: true)
+  #raw("void Chart::setPoint(const QPointF& p)\n{\n    const QRect dirty = markerRect_ | nextMarkerRect(p);\n    marker_ = p;\n    markerRect_ = nextMarkerRect(p);\n    update(dirty); // 仅请求局部重绘\n}\nvoid Chart::paintEvent(QPaintEvent* e)\n{\n    QPainter painter(this);\n    painter.setClipRegion(e->region());\n    drawCachedGrid(painter);\n    drawMarker(painter, marker_);\n}\n// 不在 paintEvent 做 I/O/复杂计算；Model/View 可虚拟化大列表", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -6662,7 +6662,7 @@
   #text("静态链接可能让单个文件更大，也不会自动移除不需要的代码，还需显式处理静态插件和许可证义务。部署工具裁剪前要验证所有功能路径，避免删掉运行时才加载的图像格式、平台插件或 QML 模块。以整个安装目录或安装包大小比较优化效果，确保目标环境能启动和使用。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("target_link_options(app PRIVATE \"$<$<CONFIG:Release>:-s>\")\narchive_debug_symbols(app); copy_only_required_plugins(app);\n// 测量完整安装包并保留符号文件，不能只统计主exe", lang: "cpp", block: true)
+  #raw("target_link_options(app PRIVATE \"$<$<CONFIG:Release>:-s>\") archive_debug_symbols(app);\ncopy_only_required_plugins(app);\n// 测量完整安装包并保留符号文件，不能只统计主exe", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -6673,7 +6673,7 @@
   #text("Qt 隐式共享可让只读副本暂时共用数据，但写入时会分离并复制，不能据此假设成本永远为零。不要无证据地频繁 squeeze 容器或清缓存，这可能增加分配和抖动。检查长列表的分页与图像解码峰值，按典型工作流测量。也要区分泄漏与内存分配器保留的空闲区。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("QImageReader reader(path);\nreader.setScaledSize(targetPixels); // 按目标显示尺寸解码\nQImage thumbnail = reader.read();\nif (thumbnail.isNull()) return report(reader.errorString());\ncache.insert(key, thumbnail); // 缓存设置最大容量和淘汰策略\nif (cache.size() > maxEntries) evictOldest();\nthumbnail = {}; // 不再显示时释放引用\n// 隐式共享能减副本，写操作仍可能触发 detach", lang: "cpp", block: true)
+  #raw("QImageReader reader(path);\nreader.setScaledSize(targetPixels); // 按目标显示尺寸解码\nQImage thumbnail = reader.read();\nif (thumbnail.isNull())\n    return report(reader.errorString());\ncache.insert(key, thumbnail); // 缓存设置最大容量和淘汰策略\nif (cache.size() > maxEntries)\n    evictOldest();\nthumbnail = {}; // 不再显示时释放引用\n// 隐式共享能减副本，写操作仍可能触发 detach", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -6684,7 +6684,7 @@
   #text("重点排查主线程同步 I/O、频繁布局和重绘、过量模型通知、锁等待与网络等待。先优化最热路径，再用相同数据和设备复测；同时观察内存和首屏延迟，避免一个指标变好、另一项恶化。Debug 构建的优化级别与符号开销会影响测量，不能直接代表用户发布体验。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("QElapsedTimer timer; timer.start();\nconst auto result = runHotPath(input);\nconst qint64 elapsedMs = timer.elapsed();\nqInfo() << \"hot path ms\" << elapsedMs; // 测真实路径\n// profiler 先找 CPU/内存/渲染热点，不凭猜测优化\n// 改动后用相同 Release 构建、设备和输入复测\n// 单次耗时会受调度影响，应重复采样", lang: "cpp", block: true)
+  #raw("QElapsedTimer timer;\ntimer.start();\nconst auto result = runHotPath(input);\nconst qint64 elapsedMs = timer.elapsed();\nqInfo() << \"hot path ms\" << elapsedMs; // 测真实路径\n// profiler 先找 CPU/内存/渲染热点，不凭猜测优化\n// 改动后用相同 Release 构建、设备和输入复测\n// 单次耗时会受调度影响，应重复采样", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -6695,7 +6695,7 @@
   #text("若用户提供不可信路径，不能只把它拼到允许根目录后就认为安全；还需规范化后检查根目录边界，并考虑符号链接可能指向外部。不同平台还可能有大小写、盘符和网络路径差异。组合路径用 QDir::filePath，文件访问前验证业务允许范围和权限，避免路径穿越或误写系统文件。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("QDir root(allowedRoot);\nconst QString candidate = root.filePath(userRelativePath); // 不手拼斜杠\nconst QString clean = QDir::cleanPath(candidate);\nif (!isWithinAllowedRoot(clean, root.absolutePath())) return reject();\nQFile file(clean);\nif (!file.open(QIODevice::ReadOnly)) return report(file.errorString());\nconsume(file.readAll());\n// cleanPath 不阻止软链接逃逸；边界校验按真实文件系统路径做", lang: "cpp", block: true)
+  #raw("QDir root(allowedRoot);\nconst QString candidate = root.filePath(userRelativePath); // 不手拼斜杠\nconst QString clean = QDir::cleanPath(candidate);\nif (!isWithinAllowedRoot(clean, root.absolutePath()))\n    return reject();\nQFile file(clean);\nif (!file.open(QIODevice::ReadOnly))\n    return report(file.errorString());\nconsume(file.readAll());\n// cleanPath 不阻止软链接逃逸；边界校验按真实文件系统路径做", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -6706,7 +6706,7 @@
   #text("单例引入全局依赖，测试替换、初始化顺序和销毁顺序都更难。很多服务更适合由应用对象创建后显式传给需要它的组件。若单例是 QObject，不要再给它指定另一个 parent，也不要同时交给智能指针拥有，否则可能双重释放。析构期间依赖其他静态单例也可能遇到静态销毁顺序问题。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("class Service : public QObject {\n    Q_OBJECT\npublic:\n    static Service &instance() { static Service value; return value; }\n    Service(const Service &) = delete;\n    Service &operator=(const Service &) = delete;\nprivate:\n    Service() = default; // 不交给另一个 parent/shared_ptr 重复拥有\n};\n// 首次调用应在 QApplication 构造之后；优先考虑依赖注入", lang: "cpp", block: true)
+  #raw("class Service : public QObject\n{\n    Q_OBJECT\n  public:\n    static Service& instance()\n    {\n        static Service value;\n        return value;\n    }\n    Service(const Service&) = delete;\n    Service& operator=(const Service&) = delete;\n\n  private:\n    Service() = default; // 不交给另一个 parent/shared_ptr 重复拥有\n};\n// 首次调用应在 QApplication 构造之后；优先考虑依赖注入", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -6717,7 +6717,7 @@
   #text("致命信号处理上下文受严格限制，不能安全地调用 QFile、qDebug、锁或内存分配，也不能普遍从段错误中恢复继续运行。应用可保存崩溃前的环形日志，但真正转储交给平台机制。崩溃报告应脱敏并取得适当授权，避免上传口令、令牌或用户文件内容。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("install_crash_handler(); // 平台转储机制需在进程启动时安装\nlog_error_with_context(error, version, request_id); symbolize_offline(dump, matching_symbols);\n// 致命信号处理路径只执行异步信号安全的最小操作", lang: "cpp", block: true)
+  #raw("install_crash_handler(); // 平台转储机制需在进程启动时安装\nlog_error_with_context(error, version, request_id);\nsymbolize_offline(dump, matching_symbols);\n// 致命信号处理路径只执行异步信号安全的最小操作", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -6728,7 +6728,7 @@
   #text("处理器内部不能再次调用 Qt 日志函数，否则容易递归；也不应在 GUI 线程同步上传网络日志或做长时间磁盘操作。生产日志要配置容量和轮转，记录中应遮盖凭据、个人信息和敏感正文。若磁盘不可写，应有回退或丢弃策略，避免日志故障反过来阻塞主要功能。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("static QMutex logMutex;\nvoid messageHandler(QtMsgType type, const QMessageLogContext &, const QString &msg) {\n    QMutexLocker lock(&logMutex); // handler 可从多线程并发进入\n    writeRotatingLog(type, msg.toUtf8()); // 自有写入函数\n    if (type == QtFatalMsg) std::abort();\n}\nqInstallMessageHandler(messageHandler);\n// handler 内不能再调 qDebug/qWarning，否则递归；不要同步上传网络", lang: "cpp", block: true)
+  #raw("static QMutex logMutex;\nvoid messageHandler(QtMsgType type, const QMessageLogContext&, const QString& msg)\n{\n    QMutexLocker lock(&logMutex); // handler 可从多线程并发进入\n    writeRotatingLog(type, msg.toUtf8()); // 自有写入函数\n    if (type == QtFatalMsg)\n        std::abort();\n}\nqInstallMessageHandler(messageHandler);\n// handler 内不能再调 qDebug/qWarning，否则递归；不要同步上传网络", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -6739,7 +6739,7 @@
   #text("集中权限服务可以让界面查询可用操作、业务层验证命令并记录拒绝事件。日志用于审计时要控制访问和保留期限，避免存入凭据。离线应用也需考虑本地配置可被篡改，界面上的“管理员”布尔值不构成可信认证。权限变更和缓存过期应有明确策略，防止旧授权继续生效。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("if (!authorization.allow(user, \"delete\", record_id)) return forbidden();\nauto record = repository.load(record_id); if (record.version != expected_version) return conflict();\nrepository.erase(record_id); audit.write(user, \"delete\", record_id); // 后端每次请求独立授权", lang: "cpp", block: true)
+  #raw("if (!authorization.allow(user, \"delete\", record_id))\n    return forbidden();\nauto record = repository.load(record_id);\nif (record.version != expected_version)\n    return conflict();\nrepository.erase(record_id);\naudit.write(user, \"delete\", record_id); // 后端每次请求独立授权", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -6750,7 +6750,7 @@
   #text("皮肤切换不只是更换背景色，还要检查禁用、悬停、焦点和选中状态，以及对比度、键盘操作和可访问性。自绘控件或缓存图像若固化旧颜色，需主动刷新或重建。QSS 不是完整 CSS，复杂状态可能需要 QStyle 或控件绘制；切换时也要确保样式表加载失败能回退到可用主题。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("QFile qssFile(stylePath);\nif (!qssFile.open(QIODevice::ReadOnly)) return report(qssFile.errorString());\nqApp->setStyleSheet(QString::fromUtf8(qssFile.readAll())); // Widgets 换肤\n// QML：Theme 属性可绑定并驱动组件重绘\\ntheme.accent = \"#2878c8\"; theme.spacing = 12;\n// 组件按 theme 属性刷新自绘缓存；选择器尽量限制作用范围\n// 验证焦点、禁用态、平台原生外观和可访问性", lang: "cpp", block: true)
+  #raw("QFile qssFile(stylePath);\nif (!qssFile.open(QIODevice::ReadOnly))\n    return report(qssFile.errorString());\nqApp->setStyleSheet(QString::fromUtf8(qssFile.readAll())); // Widgets 换肤\n// QML：Theme 属性可绑定并驱动组件重绘\\ntheme.accent = \"#2878c8\"; theme.spacing = 12;\n// 组件按 theme 属性刷新自绘缓存；选择器尽量限制作用范围\n// 验证焦点、禁用态、平台原生外观和可访问性", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -6761,7 +6761,7 @@
   #text("更新器应分阶段写入临时目录，检查磁盘空间和权限，替换成功后保存版本状态；中断时能继续下载或回滚到上一个可用版本。不要在程序运行中直接覆盖正在使用的二进制。签名密钥要安全管理，失败日志不能包含令牌。上线前测试断网、校验失败、升级中断和回退场景。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("auto manifest = https_get(update_url); if (!verify_signature(manifest)) reject_update();\ndownload_to_temp(manifest.package); verify_hash_and_platform(temp_file, manifest);\nrun_standalone_updater(temp_file); // 替换失败时回滚，主程序不自行覆盖正在运行的文件", lang: "cpp", block: true)
+  #raw("auto manifest = https_get(update_url);\nif (!verify_signature(manifest))\n    reject_update();\ndownload_to_temp(manifest.package);\nverify_hash_and_platform(temp_file, manifest);\nrun_standalone_updater(temp_file); // 替换失败时回滚，主程序不自行覆盖正在运行的文件", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -6772,7 +6772,7 @@
   #text("QSettings 适合普通配置，不适合作为口令或令牌的明文保险箱；敏感凭据应使用系统密钥链或安全存储。同一应用多个进程同时写同一配置时，sync 不会替应用解决所有更新冲突，需定义谁拥有配置或实现锁与合并策略。读取到的值也要验证范围，防止损坏配置导致异常窗口尺寸或资源消耗。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("QSettings settings;\nsettings.beginGroup(QStringLiteral(\"config\"));\nconst int version = settings.value(\"version\", 0).toInt();\nif (version < 2) migrateV1ToV2(settings); // 配置结构版本迁移\nsettings.setValue(\"version\", 2);\nsettings.endGroup(); settings.sync();\nif (settings.status() != QSettings::NoError) reportSettingsError();\n// 凭据放系统密钥链，不写普通 INI/注册表键", lang: "cpp", block: true)
+  #raw("QSettings settings;\nsettings.beginGroup(QStringLiteral(\"config\"));\nconst int version = settings.value(\"version\", 0).toInt();\nif (version < 2)\n    migrateV1ToV2(settings); // 配置结构版本迁移\nsettings.setValue(\"version\", 2);\nsettings.endGroup();\nsettings.sync();\nif (settings.status() != QSettings::NoError)\n    reportSettingsError();\n// 凭据放系统密钥链，不写普通 INI/注册表键", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -6783,7 +6783,7 @@
   #text("手工无边框实现不止拖动，还要处理边缘缩放、最大化恢复、双击标题栏、多屏工作区、设备像素比和键盘可访问性。鼠标被其他控件接收时拖动区域也要明确。原生移动接口及可用性有 Qt 版本和平台差异，应在目标系统验证；普通窗口优先保留系统标题栏，减少自定义边缘问题。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("setWindowFlags(Qt::Window | Qt::FramelessWindowHint);\nauto *bar = new QWidget(this); auto *layout = new QHBoxLayout(bar);\nlayout->addWidget(titleLabel); layout->addWidget(closeButton);\nconnect(closeButton, &QPushButton::clicked, this, &QWidget::close);\nvoid TitleBar::mousePressEvent(QMouseEvent *e) {\n    dragOffset_ = e->globalPosition().toPoint() - window()->pos();\n}\nvoid TitleBar::mouseMoveEvent(QMouseEvent *e) {\n    if (e->buttons() & Qt::LeftButton)\n        window()->move(e->globalPosition().toPoint() - dragOffset_);\n}\n// 还需双击最大化、边缘缩放、高 DPI 与键盘操作", lang: "cpp", block: true)
+  #raw("setWindowFlags(Qt::Window | Qt::FramelessWindowHint);\nauto* bar = new QWidget(this);\nauto* layout = new QHBoxLayout(bar);\nlayout->addWidget(titleLabel);\nlayout->addWidget(closeButton);\nconnect(closeButton, &QPushButton::clicked, this, &QWidget::close);\nvoid TitleBar::mousePressEvent(QMouseEvent* e)\n{\n    dragOffset_ = e->globalPosition().toPoint() - window()->pos();\n}\nvoid TitleBar::mouseMoveEvent(QMouseEvent* e)\n{\n    if (e->buttons() & Qt::LeftButton)\n        window()->move(e->globalPosition().toPoint() - dragOffset_);\n}\n// 还需双击最大化、边缘缩放、高 DPI 与键盘操作", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -6794,7 +6794,7 @@
   #text("设备可能被拔出、占用或配置失败，应监听错误并允许用户重新连接。不要在 GUI 线程长时间调用 waitForReadyRead()；事件驱动方式更适合交互工具。显示十六进制和文本时要区分原始字节与编码后的文本，日志应限制大小。串口配置必须与设备协议一致，校验失败和粘拆包都要在协议层处理。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("QSerialPort port(this); port.setPortName(portName);\nport.setBaudRate(QSerialPort::Baud115200);\nport.setDataBits(QSerialPort::Data8); port.setParity(QSerialPort::NoParity);\nport.setStopBits(QSerialPort::OneStop);\nif (!port.open(QIODevice::ReadWrite)) return report(port.errorString());\nconnect(&port, &QSerialPort::readyRead, this, [this] { buffer_ += port.readAll(); parseFrames(buffer_); });\n// 检查错误/拔出；GUI 线程不 waitForReadyRead() 阻塞", lang: "cpp", block: true)
+  #raw("QSerialPort port(this);\nport.setPortName(portName);\nport.setBaudRate(QSerialPort::Baud115200);\nport.setDataBits(QSerialPort::Data8);\nport.setParity(QSerialPort::NoParity);\nport.setStopBits(QSerialPort::OneStop);\nif (!port.open(QIODevice::ReadWrite))\n    return report(port.errorString());\nconnect(&port,\n        &QSerialPort::readyRead,\n        this,\n        [this]\n        {\n            buffer_ += port.readAll();\n            parseFrames(buffer_);\n        });\n// 检查错误/拔出；GUI 线程不 waitForReadyRead() 阻塞", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -6805,7 +6805,7 @@
   #text("超大或不可信图片可能消耗大量内存，应限制宽高和总像素，必要时按目标大小解码，并在后台线程完成耗时读图。检查 reader 错误和保存结果；EXIF 方向可通过自动变换处理。高 DPI 下还需区分逻辑尺寸和实际像素。显示图像数据在线程间传递时，应明确 QImage 与 GUI 资源的使用边界。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("QImageReader reader(path);\nreader.setAutoTransform(true); // 应用 EXIF 方向\nreader.setScaledSize(targetPixels); // 避免解完整超大图\nQImage image = reader.read();\nif (image.isNull()) return report(reader.errorString());\npreview->setPixmap(QPixmap::fromImage(image)); // 在 GUI 线程显示\n// 保存用 QImageWriter 并检查错误；外部输入限制像素数\n// 滚轮缩放由变换矩阵控制，别反复全尺寸重采样", lang: "cpp", block: true)
+  #raw("QImageReader reader(path);\nreader.setAutoTransform(true); // 应用 EXIF 方向\nreader.setScaledSize(targetPixels); // 避免解完整超大图\nQImage image = reader.read();\nif (image.isNull())\n    return report(reader.errorString());\npreview->setPixmap(QPixmap::fromImage(image)); // 在 GUI 线程显示\n// 保存用 QImageWriter 并检查错误；外部输入限制像素数\n// 滚轮缩放由变换矩阵控制，别反复全尺寸重采样", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -6816,7 +6816,7 @@
   #text("系统对捕获其他窗口或整个桌面有权限限制。Wayland 等桌面环境可能禁止应用任意读取屏幕，需通过系统授权门户或用户选择窗口/区域的流程。不能用抓取结果来绕过用户隐私授权。目标屏幕可能在运行中变化，应该重新查询并处理无屏幕或捕获失败的情况。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("QScreen *screen = QGuiApplication::primaryScreen();\nif (!screen) return report(QStringLiteral(\"no screen\"));\nQPixmap shot = screen->grabWindow(0); // 平台权限可能限制\nif (shot.isNull()) return report(QStringLiteral(\"capture unavailable\"));\nif (!shot.save(outputPath)) return report(QStringLiteral(\"save failed\"));\n// 多屏先按窗口所在 QScreen 选择并换算 DPR/逻辑坐标\n// Wayland 等环境应走平台授权门户", lang: "cpp", block: true)
+  #raw("QScreen* screen = QGuiApplication::primaryScreen();\nif (!screen)\n    return report(QStringLiteral(\"no screen\"));\nQPixmap shot = screen->grabWindow(0); // 平台权限可能限制\nif (shot.isNull())\n    return report(QStringLiteral(\"capture unavailable\"));\nif (!shot.save(outputPath))\n    return report(QStringLiteral(\"save failed\"));\n// 多屏先按窗口所在 QScreen 选择并换算 DPR/逻辑坐标\n// Wayland 等环境应走平台授权门户", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -6827,7 +6827,7 @@
   #text("版本变化要明确：Qt Charts 从 Qt 6.10 起弃用，新项目应评估 Qt Graphs 的支持范围与迁移成本；不应忽略目标小版本差异。图表库不保证适合高频海量散点，实际性能依图形后端和设备而变。自绘能定制外观，但要自行实现轴、命中测试和可访问性。用代表数据测帧率和交互延迟。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("if (samples.size() > visible_limit) samples.erase(samples.begin(), samples.begin() + excess);\nchart_model.append(timestamp, value); timer.start(100ms); // 合并刷新，限制每次显示数据量\n// 在目标GPU上测量缩放、滚动和绘制延迟", lang: "cpp", block: true)
+  #raw("if (samples.size() > visible_limit)\n    samples.erase(samples.begin(), samples.begin() + excess);\nchart_model.append(timestamp, value);\ntimer.start(100ms); // 合并刷新，限制每次显示数据量\n// 在目标GPU上测量缩放、滚动和绘制延迟", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -6838,7 +6838,7 @@
   #text("手动实现还要增加边缘调整尺寸、最大化/还原、屏幕边界、键盘快捷方式和高 DPI 支持。可用平台提供的系统移动/调整大小接口保留系统贴边行为，但 Qt 版本和平台支持不同，不能假设处处可用。触屏和窗口管理器行为也需测试。若没有明确设计需求，使用系统标题栏通常更可靠。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("setWindowFlags(Qt::Window | Qt::FramelessWindowHint);\nvoid Window::mousePressEvent(QMouseEvent *e) {\n    if (e->button() == Qt::LeftButton) dragOffset_ = e->globalPosition().toPoint() - pos();\n}\nvoid Window::mouseMoveEvent(QMouseEvent *e) {\n    if (e->buttons() & Qt::LeftButton) move(e->globalPosition().toPoint() - dragOffset_);\n}\n// 优先用平台原生 startSystemMove；手动窗口还需边缘缩放\n// 多屏边界、最大化恢复和无障碍键盘操作都要处理", lang: "cpp", block: true)
+  #raw("setWindowFlags(Qt::Window | Qt::FramelessWindowHint);\nvoid Window::mousePressEvent(QMouseEvent* e)\n{\n    if (e->button() == Qt::LeftButton)\n        dragOffset_ = e->globalPosition().toPoint() - pos();\n}\nvoid Window::mouseMoveEvent(QMouseEvent* e)\n{\n    if (e->buttons() & Qt::LeftButton)\n        move(e->globalPosition().toPoint() - dragOffset_);\n}\n// 优先用平台原生 startSystemMove；手动窗口还需边缘缩放\n// 多屏边界、最大化恢复和无障碍键盘操作都要处理", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -6849,7 +6849,7 @@
   #text("不同桌面环境对图标可见性、激活方式和通知支持不完全相同。托盘图标资源必须随安装包部署；图标不可用时应用仍应保留正常窗口操作。退出时停止后台任务、断开设备并保存状态，不能只从托盘菜单直接 quit 而遗留资源。对无托盘环境提供系统菜单或普通窗口替代。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("QSystemTrayIcon tray(QIcon(\":/icons/app.png\"), this);\nif (!QSystemTrayIcon::isSystemTrayAvailable()) reportNoTray();\nauto *menu = new QMenu(this); menu->addAction(tr(\"Show\"), this, &Window::showNormal);\nmenu->addAction(tr(\"Quit\"), qApp, &QCoreApplication::quit);\ntray.setContextMenu(menu);\nconnect(&tray, &QSystemTrayIcon::activated, this, [this](auto reason) {\n    if (reason == QSystemTrayIcon::Trigger) showNormal();\n});\ntray.show(); // 关闭窗口可 hide 而不是退出，并保留真正退出入口", lang: "cpp", block: true)
+  #raw("QSystemTrayIcon tray(QIcon(\":/icons/app.png\"), this);\nif (!QSystemTrayIcon::isSystemTrayAvailable())\n    reportNoTray();\nauto* menu = new QMenu(this);\nmenu->addAction(tr(\"Show\"), this, &Window::showNormal);\nmenu->addAction(tr(\"Quit\"), qApp, &QCoreApplication::quit);\ntray.setContextMenu(menu);\nconnect(&tray,\n        &QSystemTrayIcon::activated,\n        this,\n        [this](auto reason)\n        {\n            if (reason == QSystemTrayIcon::Trigger)\n                showNormal();\n        });\ntray.show(); // 关闭窗口可 hide 而不是退出，并保留真正退出入口", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -6860,7 +6860,7 @@
   #text("自动发送使用 QTimer，但应限制频率和待发送队列，避免设备或网络被压满。日志文本框要限制行数和刷新批次，不能无上限保存所有字节。展示层与传输层分开，连接断开时及时清理缓冲和状态；调试工具也需防止用户输入超大数据、误连敏感端口或把凭据写入日志。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("socket.connectToHost(host, port);\nconnect(&socket, &QTcpSocket::readyRead, this, [&] { rx_buffer += socket.readAll(); parse_complete_frames(rx_buffer); });\nsocket.write(parse_hex_input(text)); // TCP字节流要由应用协议分帧", lang: "cpp", block: true)
+  #raw("socket.connectToHost(host, port);\nconnect(&socket,\n        &QTcpSocket::readyRead,\n        this,\n        [&]\n        {\n            rx_buffer += socket.readAll();\n            parse_complete_frames(rx_buffer);\n        });\nsocket.write(parse_hex_input(text)); // TCP字节流要由应用协议分帧", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -6871,7 +6871,7 @@
   #text("网络传输和数据库访问应放在异步服务层，模型在所属线程通过排队结果更新。delegate 的 paint 只负责读取已准备好的显示数据和绘制，不能在绘制时查询数据库或阻塞网络。长消息要按可用宽度换行，状态变化需发出模型通知。大量历史记录通过分页和视区缓存控制内存。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("class MessageModel : public QAbstractListModel { /* roles: body/time/status */ };\nMessageModel model; QListView list; list.setModel(&model);\nlist.setItemDelegate(new BubbleDelegate(&list)); // delegate 绘制气泡而非每行 QWidget\nconnect(sendButton, &QPushButton::clicked, this, [this] {\n    emit sendRequested(input->text()); input->clear();\n});\nconnect(networkWorker, &Worker::messageReceived, &model, &MessageModel::append,\n        Qt::QueuedConnection);\n// 分页载入历史；绘制时不查数据库/不做网络请求", lang: "cpp", block: true)
+  #raw("class MessageModel : public QAbstractListModel\n{ /* roles: body/time/status */\n};\nMessageModel model;\nQListView list;\nlist.setModel(&model);\nlist.setItemDelegate(new BubbleDelegate(&list)); // delegate 绘制气泡而非每行 QWidget\nconnect(sendButton,\n        &QPushButton::clicked,\n        this,\n        [this]\n        {\n            emit sendRequested(input->text());\n            input->clear();\n        });\nconnect(\n    networkWorker, &Worker::messageReceived, &model, &MessageModel::append, Qt::QueuedConnection);\n// 分页载入历史；绘制时不查数据库/不做网络请求", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -6882,7 +6882,7 @@
   #text("编解码格式依赖平台媒体后端及已安装组件，setSource 成功不保证文件一定能解码。应显示 errorOccurred、缓冲和播放状态，并允许用户看到失败原因。Qt 5 与 Qt 6 的接口差异明显，旧的播放列表 API 也有变化，迁移时查看目标版本文档。测试时覆盖暂停、 seek、音量和后端不支持格式。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("auto *player = new QMediaPlayer(this);\nauto *audio = new QAudioOutput(this); player->setAudioOutput(audio);\nauto *video = new QVideoWidget(this); player->setVideoOutput(video);\nconnect(player, &QMediaPlayer::errorOccurred, this, &Window::showMediaError);\nconnect(player, &QMediaPlayer::positionChanged, slider, &QSlider::setValue);\nplayer->setSource(QUrl::fromLocalFile(filePath)); player->play();\n// 检查后端格式/缓冲状态；音量由 QAudioOutput 管理", lang: "cpp", block: true)
+  #raw("auto* player = new QMediaPlayer(this);\nauto* audio = new QAudioOutput(this);\nplayer->setAudioOutput(audio);\nauto* video = new QVideoWidget(this);\nplayer->setVideoOutput(video);\nconnect(player, &QMediaPlayer::errorOccurred, this, &Window::showMediaError);\nconnect(player, &QMediaPlayer::positionChanged, slider, &QSlider::setValue);\nplayer->setSource(QUrl::fromLocalFile(filePath));\nplayer->play();\n// 检查后端格式/缓冲状态；音量由 QAudioOutput 管理", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -6904,7 +6904,7 @@
   #text("处理器可能从多个线程并发进入，写共享文件要同步或使用线程安全队列。不要在 handler 里再次调用 qDebug 等 Qt 日志函数，否则会递归；也不要执行阻塞网络上传。应用退出时刷新文件并恢复旧 handler。记录之前要做凭据脱敏和文件轮转，磁盘写入失败也不能让整个进程失控。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("static QMutex outputMutex;\nvoid handler(QtMsgType type, const QMessageLogContext &ctx, const QString &msg) {\n    QMutexLocker lock(&outputMutex); // 可能由多个线程调用\n    appendWithTimestamp(type, ctx.category, msg.toUtf8());\n    // 不在 handler 中再次调用 qDebug，避免递归\n}\nauto oldHandler = qInstallMessageHandler(handler);\n// 退出时刷新并恢复 oldHandler；写入做轮转和隐私脱敏", lang: "cpp", block: true)
+  #raw("static QMutex outputMutex;\nvoid handler(QtMsgType type, const QMessageLogContext& ctx, const QString& msg)\n{\n    QMutexLocker lock(&outputMutex); // 可能由多个线程调用\n    appendWithTimestamp(type, ctx.category, msg.toUtf8());\n    // 不在 handler 中再次调用 qDebug，避免递归\n}\nauto oldHandler = qInstallMessageHandler(handler);\n// 退出时刷新并恢复 oldHandler；写入做轮转和隐私脱敏", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -6915,7 +6915,7 @@
   #text("Qt 6 默认文本编码为 UTF-8；Qt 5 的本地 8 位编码接口及默认行为不同，不能把旧代码原样当作 UTF-8 处理。终端自身字体和代码页也会影响日志显示，文件里的正确字节可能只是终端呈现不对。不要通过重复转码“试到能看”为止，应该检查原始字节和协议约定。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("QByteArray incoming = socket->readAll(); // 网络层先得到字节\nQString text = QString::fromUtf8(incoming); // 按协议编码解码\nQFile file(path); if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) return;\nQTextStream out(&file); out.setEncoding(QStringConverter::Utf8);\nout << text; // 文件编码也明确为 UTF-8\nqInfo().noquote() << text; // 日志终端另检查编码设置\n// QString 是 Unicode 文本；不要把本地 8 位编码当 UTF-8", lang: "cpp", block: true)
+  #raw("QByteArray incoming = socket->readAll(); // 网络层先得到字节\nQString text = QString::fromUtf8(incoming); // 按协议编码解码\nQFile file(path);\nif (!file.open(QIODevice::WriteOnly | QIODevice::Text))\n    return;\nQTextStream out(&file);\nout.setEncoding(QStringConverter::Utf8);\nout << text; // 文件编码也明确为 UTF-8\nqInfo().noquote() << text; // 日志终端另检查编码设置\n// QString 是 Unicode 文本；不要把本地 8 位编码当 UTF-8", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -6926,7 +6926,7 @@
   #text("QueuedConnection 只把槽调用排进接收者线程，不会自动锁住其他共享字段。QObject 的线程亲和性也不代表普通成员函数可同时跨线程调用；事件驱动对象应在所属线程使用，QWidget 只能由 GUI 线程操作。用 ThreadSanitizer 等工具帮助复现定位，修复后检查关闭、取消和对象销毁期间的并发路径。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("connect(worker, &Worker::resultReady, controller, &Controller::apply,\n        Qt::QueuedConnection); // 消息传递优先\nQMutexLocker lock(&stateMutex); // 所有访问共享状态的路径都持同锁\nsharedState = nextState;\n// 队列连接只安排槽执行，不保护另一个共享变量\n// GUI 控件只在 GUI 线程访问；可改传不可变副本\n// ThreadSanitizer/sanitizer 用于复现并定位竞争", lang: "cpp", block: true)
+  #raw("connect(worker,\n        &Worker::resultReady,\n        controller,\n        &Controller::apply,\n        Qt::QueuedConnection); // 消息传递优先\nQMutexLocker lock(&stateMutex); // 所有访问共享状态的路径都持同锁\nsharedState = nextState;\n// 队列连接只安排槽执行，不保护另一个共享变量\n// GUI 控件只在 GUI 线程访问；可改传不可变副本\n// ThreadSanitizer/sanitizer 用于复现并定位竞争", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -6937,7 +6937,7 @@
   #text("setUpdatesEnabled(false) 只适用于很短的批量控件修改，结束后必须恢复；它不会让阻塞 I/O 变快，也不能解决后台线程竞争。避免把 processEvents 当作长期补丁。修复后用相同操作测首帧响应、滚动和更新延迟，确认数据通知与缓存失效仍正确。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("auto *watcher = new QFutureWatcher<Result>(this);\nconnect(watcher, &QFutureWatcher<Result>::finished, this, [this, watcher] {\n    model->apply(watcher->result()); watcher->deleteLater();\n});\nwatcher->setFuture(QtConcurrent::run([input] { return crunch(input); }));\n// 数据批量更新用 begin/end 模型通知；合并 update 区域\n// setUpdatesEnabled(false) 只包围短批量界面修改并恢复\n// profile 找到主线程热点后再优化", lang: "cpp", block: true)
+  #raw("auto* watcher = new QFutureWatcher<Result>(this);\nconnect(watcher,\n        &QFutureWatcher<Result>::finished,\n        this,\n        [this, watcher]\n        {\n            model->apply(watcher->result());\n            watcher->deleteLater();\n        });\nwatcher->setFuture(QtConcurrent::run(\n    [input]\n    {\n        return crunch(input);\n    }));\n// 数据批量更新用 begin/end 模型通知；合并 update 区域\n// setUpdatesEnabled(false) 只包围短批量界面修改并恢复\n// profile 找到主线程热点后再优化", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -6948,7 +6948,7 @@
   #text("把结果通过 queued signal 返回 GUI，并为长任务设计取消、超时和失败传播。processEvents() 在当前栈中嵌套处理事件，会让尚未完成的状态被其他回调观察，重入风险很高，不应掩盖持续阻塞。排查等待锁时也要分析等待环；只增加超时时间不等于解决死锁。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("QThreadPool::globalInstance()->start([this] {\n    const Result result = blockingIoOrCompute(); // 移出 GUI 事件回调\n    QMetaObject::invokeMethod(this, [this, result] {\n        apply(result); // 结果回 GUI 线程\n    }, Qt::QueuedConnection);\n});\n// 任务要有取消/超时；分析线程栈定位锁、同步 I/O 或等待环\n// processEvents 会重入，不应用来掩盖长期阻塞", lang: "cpp", block: true)
+  #raw("QThreadPool::globalInstance()->start(\n    [this]\n    {\n        const Result result = blockingIoOrCompute(); // 移出 GUI 事件回调\n        QMetaObject::invokeMethod(\n            this,\n            [this, result]\n            {\n                apply(result); // 结果回 GUI 线程\n            },\n            Qt::QueuedConnection);\n    });\n// 任务要有取消/超时；分析线程栈定位锁、同步 I/O 或等待环\n// processEvents 会重入，不应用来掩盖长期阻塞", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -6959,7 +6959,7 @@
   #text("不要同时让 Qt 自动缩放又手工按倍率重复缩放，否则尺寸和绘制位置会错。窗口移到另一块屏幕后，应查询当前 QScreen 的设备像素比，不能永久假定主屏幕配置。Qt 5 的高 DPI 开关和行为依版本变化，迁移需核对目标版本。自绘内容应按逻辑坐标绘制，并在目标倍率下检查文字和细线。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("QScreen *screen = window->screen(); // 多屏移动后重新查询\nconst qreal dpr = screen ? screen->devicePixelRatio() : 1.0;\nconst QSize physical = (logicalSize * dpr).toSize();\nQImage image(physical, QImage::Format_ARGB32_Premultiplied);\nimage.setDevicePixelRatio(dpr); // 布局仍使用逻辑像素\n// 图片资源提供合适倍率或 SVG；避免手工重复缩放\n// Qt 5 高 DPI 开关随版本变化，按目标版本确认", lang: "cpp", block: true)
+  #raw("QScreen* screen = window->screen(); // 多屏移动后重新查询\nconst qreal dpr = screen ? screen->devicePixelRatio() : 1.0;\nconst QSize physical = (logicalSize * dpr).toSize();\nQImage image(physical, QImage::Format_ARGB32_Premultiplied);\nimage.setDevicePixelRatio(dpr); // 布局仍使用逻辑像素\n// 图片资源提供合适倍率或 SVG；避免手工重复缩放\n// Qt 5 高 DPI 开关随版本变化，按目标版本确认", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -6970,7 +6970,7 @@
   #text("模块数量应随实际变化点增长，不要先造一堆空壳抽象。界面切换时如果业务规则不变，就说明边界较合理；如果一个 UI 头文件传遍所有层，依赖过深。跨模块使用稳定值类型和少量接口，线程边界与对象所有权也要写清。项目架构是为了降低修改成本，不是追求图表层级。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("class ImportUseCase { FileReader& reader; TaskRepository& repository; public: Result run(Path p) { return repository.save(reader.read(p)); } };\n// UI调用用例；测试可注入FakeRepository，业务层不依赖QWidget/QML", lang: "cpp", block: true)
+  #raw("class ImportUseCase\n{\n    FileReader& reader;\n    TaskRepository& repository;\n\n  public:\n    Result run(Path p)\n    {\n        return repository.save(reader.read(p));\n    }\n};\n// UI调用用例；测试可注入FakeRepository，业务层不依赖QWidget/QML", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -6981,7 +6981,7 @@
   #text("UniqueConnection 不适用于 lambda/functor 的通用去重，因为 Qt 无法按任意闭包身份判断两次连接是否相同。此时由调用方保存连接句柄，按对象生命周期管理；若有大量条目状态变化，用模型和批量通知表达，不要给每行都建立大量临时信号连接。测试可统计一次信号是否产生预期次数。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("QMetaObject::Connection connection;\nvoid Controller::startObserving() {\n    if (connection) return; // 固定初始化只连一次\n    connection = connect(source, &Source::changed, this, &Controller::refresh);\n}\nvoid Controller::stopObserving() { QObject::disconnect(connection); connection = {}; }\n// UniqueConnection 适用于成员槽，不支持 lambda/functor 去重\n// 动态生命周期可保存句柄并显式断开", lang: "cpp", block: true)
+  #raw("QMetaObject::Connection connection;\nvoid Controller::startObserving()\n{\n    if (connection)\n        return; // 固定初始化只连一次\n    connection = connect(source, &Source::changed, this, &Controller::refresh);\n}\nvoid Controller::stopObserving()\n{\n    QObject::disconnect(connection);\n    connection = {};\n}\n// UniqueConnection 适用于成员槽，不支持 lambda/functor 去重\n// 动态生命周期可保存句柄并显式断开", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -6992,7 +6992,7 @@
   #text("静态构建通常让二进制更大，依赖和升级也更复杂。还需逐一确认第三方库是否可静态链接、平台插件注册方式以及 Qt 许可义务；交付形式不同会影响许可要求，应查当前官方许可文本。生成后在干净环境测试平台插件、资源和多媒体功能，并保留符号文件以支持崩溃诊断。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("find_package(Qt6 REQUIRED COMPONENTS Core Widgets)\ntarget_link_libraries(app PRIVATE Qt6::Core Qt6::Widgets)\n// 静态Qt需匹配工具链并保留静态插件导入；验证许可证与最终依赖", lang: "cpp", block: true)
+  #raw("find_package(Qt6 REQUIRED COMPONENTS Core Widgets)\n    target_link_libraries(app PRIVATE Qt6::Core Qt6::Widgets)\n    // 静态Qt需匹配工具链并保留静态插件导入；验证许可证与最终依赖", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -7003,7 +7003,7 @@
   #text("QPointer 是 QObject 的观察指针：目标销毁时会自动变空，但它不拥有或延长对象寿命。QObject 通常由 parent 管理，或由明确的单一智能指针管理，不能同时交给 parent 和 shared_ptr，否则可能双重释放。跨线程对象还应按所属线程销毁，必要时通过 deleteLater，而不是任意线程直接 delete。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("auto owned = std::make_unique<PlainResource>(); // 普通 C++ 资源独占\nQPointer<QObject> observer = object; // 只观察 QObject，不拥有\nif (observer) observer->deleteLater(); // 由对象线程事件循环处理\nQSharedPointer<Cache> shared = QSharedPointer<Cache>::create(); // 共享非 QObject 数据\nQWeakPointer<Cache> weak = shared.toWeakRef(); // 可观察而不形成强引用环\n// QObject 用 parent 或单一智能指针所有权，不能两者都拥有", lang: "cpp", block: true)
+  #raw("auto owned = std::make_unique<PlainResource>(); // 普通 C++ 资源独占\nQPointer<QObject> observer = object; // 只观察 QObject，不拥有\nif (observer)\n    observer->deleteLater(); // 由对象线程事件循环处理\nQSharedPointer<Cache> shared = QSharedPointer<Cache>::create(); // 共享非 QObject 数据\nQWeakPointer<Cache> weak = shared.toWeakRef(); // 可观察而不形成强引用环\n// QObject 用 parent 或单一智能指针所有权，不能两者都拥有", lang: "cpp", block: true)
 ]
 
 #heading(level: 1, outlined: true)[#text("第15章 OpenCV 与计算机视觉", size: 15pt, weight: "bold", fill: rgb("#000000"))]
@@ -7016,7 +7016,7 @@
   #text("低阈值和高阈值控制召回与噪点，不能照搬固定数值到所有图像。低对比场景可降低阈值，但也可能引入纹理噪声；模糊过强则会抹掉细小边界。输出是单通道边缘掩码，不是语义轮廓，若需要对象边界还要结合二值化、轮廓提取或后处理。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("cv::Mat gray = cv::imread(path, cv::IMREAD_GRAYSCALE);\nif (gray.empty()) return reportReadFailure();\ncv::Mat smooth, edges;\ncv::GaussianBlur(gray, smooth, cv::Size(5, 5), 0); // 先抑制噪声\ncv::Canny(smooth, edges, lowThreshold, highThreshold);\nshow(edges);\n// 高阈值找强边缘，低阈值参与滞后连接；按图像对比度调参", lang: "cpp", block: true)
+  #raw("cv::Mat gray = cv::imread(path, cv::IMREAD_GRAYSCALE);\nif (gray.empty())\n    return reportReadFailure();\ncv::Mat smooth, edges;\ncv::GaussianBlur(gray, smooth, cv::Size(5, 5), 0); // 先抑制噪声\ncv::Canny(smooth, edges, lowThreshold, highThreshold);\nshow(edges);\n// 高阈值找强边缘，低阈值参与滞后连接；按图像对比度调参", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -7027,7 +7027,7 @@
   #text("这种方法运行快、无需 GPU，但模型和环境变化会明显影响召回率，侧脸、遮挡、强逆光或非典型人脸可能漏检。均衡直方图会改变对比度，也可能放大噪声，应通过样例判断是否有益。矩形只表示检测器认为可能有人脸，不等于身份识别或可靠的安全认证。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("cv::CascadeClassifier detector;\nif (!detector.load(cascadeXml) || detector.empty()) return reportModelError();\ncv::Mat gray, equalized;\ncv::cvtColor(frame, gray, cv::COLOR_BGR2GRAY);\ncv::equalizeHist(gray, equalized); // 光照允许时增强局部对比\nstd::vector<cv::Rect> faces;\ndetector.detectMultiScale(equalized, faces, 1.1, 3, 0, cv::Size(30, 30));\nfor (const auto &face : faces) cv::rectangle(frame, face, cv::Scalar(0, 255, 0), 2);\n// scaleFactor/minNeighbors 改变速度与候选框过滤强度", lang: "cpp", block: true)
+  #raw("cv::CascadeClassifier detector;\nif (!detector.load(cascadeXml) || detector.empty())\n    return reportModelError();\ncv::Mat gray, equalized;\ncv::cvtColor(frame, gray, cv::COLOR_BGR2GRAY);\ncv::equalizeHist(gray, equalized); // 光照允许时增强局部对比\nstd::vector<cv::Rect> faces;\ndetector.detectMultiScale(equalized, faces, 1.1, 3, 0, cv::Size(30, 30));\nfor (const auto& face : faces)\n    cv::rectangle(frame, face, cv::Scalar(0, 255, 0), 2);\n// scaleFactor/minNeighbors 改变速度与候选框过滤强度", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -7038,7 +7038,7 @@
   #text("Mat 的普通复制和赋值通常只复制矩阵头并共享像素；如果只读可共享，若需要独立修改或异步保存，就用 clone() 取得自己的数据。把 cvarrToMat 得到的 Mat 当成独立拥有的数据会产生生命周期问题，因为底层可能仍由 IplImage 所有。释放旧图像前先完成借用操作，或先 clone。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("IplImage *legacy = cvLoadImage(path, CV_LOAD_IMAGE_COLOR);\nif (!legacy) return reportReadFailure();\ncv::Mat borrowed = cv::cvarrToMat(legacy); // 仍依赖 legacy 的数据生命周期\ncv::Mat owned = borrowed.clone(); // 复制像素后才可独立使用\ncvReleaseImage(&legacy); // 旧 C API 必须显式释放\nprocess(owned); // cv::Mat 析构按引用计数回收自己的缓冲区\n// 新代码优先用 Mat；ROI/普通复制仍可能共享像素", lang: "cpp", block: true)
+  #raw("IplImage* legacy = cvLoadImage(path, CV_LOAD_IMAGE_COLOR);\nif (!legacy)\n    return reportReadFailure();\ncv::Mat borrowed = cv::cvarrToMat(legacy); // 仍依赖 legacy 的数据生命周期\ncv::Mat owned = borrowed.clone(); // 复制像素后才可独立使用\ncvReleaseImage(&legacy); // 旧 C API 必须显式释放\nprocess(owned); // cv::Mat 析构按引用计数回收自己的缓冲区\n// 新代码优先用 Mat；ROI/普通复制仍可能共享像素", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -7049,7 +7049,7 @@
   #text("写文件时 imwrite 根据扩展名选择编码器，失败会返回 false，例如目录不可写或格式支持缺失。应在读图后检查 empty()，也要检查输出结果。若图像来自摄像头或网络，颜色通道和步长可能另有约定。不要把 BGR 数组直接当 RGB 给其他库，否则颜色会互换；跨库时明确转换一次。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("cv::Mat bgr = cv::imread(path, cv::IMREAD_COLOR); // 默认 BGR\nif (bgr.empty()) return reportReadFailure();\ncv::Mat gray; cv::cvtColor(bgr, gray, cv::COLOR_BGR2GRAY);\ncv::imshow(\"gray\", gray);\nconst int key = cv::waitKey(1); // 驱动 HighGUI 窗口事件\nif (key == 'q') closeWindow();\nif (!cv::imwrite(outputPath, gray)) reportWriteFailure();\n// 无桌面环境不要依赖 imshow；编码器由扩展名选择", lang: "cpp", block: true)
+  #raw("cv::Mat bgr = cv::imread(path, cv::IMREAD_COLOR); // 默认 BGR\nif (bgr.empty())\n    return reportReadFailure();\ncv::Mat gray;\ncv::cvtColor(bgr, gray, cv::COLOR_BGR2GRAY);\ncv::imshow(\"gray\", gray);\nconst int key = cv::waitKey(1); // 驱动 HighGUI 窗口事件\nif (key == 'q')\n    closeWindow();\nif (!cv::imwrite(outputPath, gray))\n    reportWriteFailure();\n// 无桌面环境不要依赖 imshow；编码器由扩展名选择", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -7060,7 +7060,7 @@
   #text("“能编译运行”不等于每个平台都包含相同模块和后端。摄像头、硬件编解码、CUDA、GUI 窗口和第三方算法取决于构建选项、驱动、编译器和系统依赖。部署前应查看实际 OpenCV build information，并在目标设备验证所需 API；不要仅依据官网支持平台列表推断某个硬件加速功能可用。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("std::cout << cv::getVersionString() << '\\n' << cv::getBuildInformation();\nauto image = cv::imread(test_path); if (image.empty()) return input_error();\n// 构建信息应确认所需模块、摄像头后端和CUDA支持实际存在", lang: "cpp", block: true)
+  #raw("std::cout << cv::getVersionString() << '\\n' << cv::getBuildInformation();\nauto image = cv::imread(test_path);\nif (image.empty())\n    return input_error();\n// 构建信息应确认所需模块、摄像头后端和CUDA支持实际存在", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -7071,7 +7071,7 @@
   #text("二进制 ORB 描述子默认适合 Hamming 距离；若配置 WTA_K 为 3 或 4，应使用 Hamming2。特征数量、图像尺度、模糊和重复纹理都会影响结果。三者输出的距离不可直接比较，匹配阈值需按描述子类型和任务验证；SURF 的可用性还受版本、构建和许可政策影响。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("auto sift = cv::SIFT::create(); // 通常产生浮点描述子\nauto orb = cv::ORB::create(500); // 二进制描述子\nstd::vector<cv::KeyPoint> ks, ko; cv::Mat ds, dorb;\nsift->detectAndCompute(gray, cv::noArray(), ks, ds);\norb->detectAndCompute(gray, cv::noArray(), ko, dorb);\ncv::BFMatcher l2(cv::NORM_L2), hamming(cv::NORM_HAMMING);\nl2.match(ds, siftMatches); hamming.match(dorb, orbMatches);\n// SURF 需对应 contrib/build 配置；算法效果还受尺度和模糊影响", lang: "cpp", block: true)
+  #raw("auto sift = cv::SIFT::create(); // 通常产生浮点描述子\nauto orb = cv::ORB::create(500); // 二进制描述子\nstd::vector<cv::KeyPoint> ks, ko;\ncv::Mat ds, dorb;\nsift->detectAndCompute(gray, cv::noArray(), ks, ds);\norb->detectAndCompute(gray, cv::noArray(), ko, dorb);\ncv::BFMatcher l2(cv::NORM_L2), hamming(cv::NORM_HAMMING);\nl2.match(ds, siftMatches);\nhamming.match(dorb, orbMatches);\n// SURF 需对应 contrib/build 配置；算法效果还受尺度和模糊影响", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -7082,7 +7082,7 @@
   #text("OpenCV 3.2 起 findContours 通常不再修改输入，但如需保留原始掩码或兼顾旧版本，传入 clone 副本更稳妥。轮廓不是自动识别出的物体语义；噪点、断边和二值化质量都会影响结果。绘制可用 drawContours，层级模式下还应按层级关系选择填充或只画某个子轮廓。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("cv::Mat work = binary.clone(); // 保留原掩码，兼顾版本差异\nstd::vector<std::vector<cv::Point>> contours;\nstd::vector<cv::Vec4i> hierarchy;\ncv::findContours(work, contours, hierarchy, cv::RETR_TREE, cv::CHAIN_APPROX_SIMPLE);\nfor (std::size_t i = 0; i < contours.size(); ++i) {\n    const double area = cv::contourArea(contours[i]);\n    if (area > minArea) cv::drawContours(canvas, contours, static_cast<int>(i), cv::Scalar(0, 255, 0), 2);\n}\n// RETR_TREE 保留层级；外轮廓场景可用 RETR_EXTERNAL", lang: "cpp", block: true)
+  #raw("cv::Mat work = binary.clone(); // 保留原掩码，兼顾版本差异\nstd::vector<std::vector<cv::Point>> contours;\nstd::vector<cv::Vec4i> hierarchy;\ncv::findContours(work, contours, hierarchy, cv::RETR_TREE, cv::CHAIN_APPROX_SIMPLE);\nfor (std::size_t i = 0; i < contours.size(); ++i)\n{\n    const double area = cv::contourArea(contours[i]);\n    if (area > minArea)\n        cv::drawContours(canvas, contours, static_cast<int>(i), cv::Scalar(0, 255, 0), 2);\n}\n// RETR_TREE 保留层级；外轮廓场景可用 RETR_EXTERNAL", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -7105,7 +7105,7 @@
   #text("C++ 和 Python 常用于组合流程。CPU 优化是常见路径，但 CUDA 等加速需要相应模块、构建配置和硬件，且并非每个函数都有 GPU 实现；Mat 与 GpuMat 之间传输也有成本。评估方案时应检查构建信息、输入格式、精度和目标设备性能，不能仅凭“使用 OpenCV”推断实时或准确。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("auto image = cv::imread(path); if (image.empty()) return error(\"image load failed\");\ncv::Mat gray, blurred, mask; cv::cvtColor(image, gray, cv::COLOR_BGR2GRAY);\ncv::GaussianBlur(gray, blurred, {5, 5}, 0); cv::threshold(blurred, mask, 128, 255, cv::THRESH_BINARY);", lang: "cpp", block: true)
+  #raw("auto image = cv::imread(path);\nif (image.empty())\n    return error(\"image load failed\");\ncv::Mat gray, blurred, mask;\ncv::cvtColor(image, gray, cv::COLOR_BGR2GRAY);\ncv::GaussianBlur(gray, blurred, {5, 5}, 0);\ncv::threshold(blurred, mask, 128, 255, cv::THRESH_BINARY);", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -7116,7 +7116,7 @@
   #text("它依赖相邻帧外观相对稳定的假设；快速运动、遮挡、弱纹理、运动模糊和亮度突变都会造成误差。金字塔参数和窗口大小影响可处理运动范围与细节，需根据帧率调试。输出的 flow 是位移，不是速度；若要速度，还要用实际帧时间换算，并过滤不可信区域。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("cv::Mat flow;\ncv::calcOpticalFlowFarneback(previousGray, currentGray, flow,\n                             0.5, 3, 15, 3, 5, 1.2, 0);\n// flow 为 CV_32FC2；两个分量分别是水平/垂直位移\nconst cv::Point2f motion = flow.at<cv::Point2f>(y, x);\ndrawArrow(frame, cv::Point(x, y), cv::Point2f(x, y) + motion);\n// 两帧尺寸应一致；弱纹理、遮挡和快速运动会破坏局部假设\npreviousGray = currentGray.clone(); // 为下一次保留独立帧", lang: "cpp", block: true)
+  #raw("cv::Mat flow;\ncv::calcOpticalFlowFarneback(previousGray, currentGray, flow, 0.5, 3, 15, 3, 5, 1.2, 0);\n// flow 为 CV_32FC2；两个分量分别是水平/垂直位移\nconst cv::Point2f motion = flow.at<cv::Point2f>(y, x);\ndrawArrow(frame, cv::Point(x, y), cv::Point2f(x, y) + motion);\n// 两帧尺寸应一致；弱纹理、遮挡和快速运动会破坏局部假设\npreviousGray = currentGray.clone(); // 为下一次保留独立帧", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -7127,7 +7127,7 @@
   #text("用 warpPerspective 时要确认 H 的方向与输入、输出坐标定义一致；矩阵空或内点过少时不应继续变换。若场景有明显深度差和相机平移，不同物体的视差不同，单一 H 无法同时对齐，拼接会出现重影。还要计算变换后边界和输出画布，避免结果落在负坐标或被裁切。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("cv::Mat inliers;\ncv::Mat H = cv::findHomography(srcPoints, dstPoints, cv::RANSAC, 3.0, inliers);\nif (H.empty()) return reportDegenerateMatches();\ncv::Mat warped;\ncv::warpPerspective(source, warped, H, outputSize, cv::INTER_LINEAR,\n                    cv::BORDER_CONSTANT);\n// 至少四对不退化对应点；mask 标出 RANSAC 内点\n// 单一 H 不适用于明显深度视差场景", lang: "cpp", block: true)
+  #raw("cv::Mat inliers;\ncv::Mat H = cv::findHomography(srcPoints, dstPoints, cv::RANSAC, 3.0, inliers);\nif (H.empty())\n    return reportDegenerateMatches();\ncv::Mat warped;\ncv::warpPerspective(source, warped, H, outputSize, cv::INTER_LINEAR, cv::BORDER_CONSTANT);\n// 至少四对不退化对应点；mask 标出 RANSAC 内点\n// 单一 H 不适用于明显深度视差场景", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -7138,7 +7138,7 @@
   #text("重叠区域需要融合：曝光补偿可减轻整体亮度差，羽化或多频带融合可缓和接缝。ORB 快但不适合所有尺度变化，匹配质量决定最终几何效果。单应性主要适用于近似平面或相机绕光心旋转的场景；近景视差、动态物体和视角变化大时会产生重影或断裂，需要其他拼接模型或深度信息。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("auto orb = cv::ORB::create(1500);\norb->detectAndCompute(leftGray, cv::noArray(), leftKeys, leftDesc);\norb->detectAndCompute(rightGray, cv::noArray(), rightKeys, rightDesc);\ncv::BFMatcher(cv::NORM_HAMMING).knnMatch(rightDesc, leftDesc, pairs, 2);\nfilterRatioMatches(pairs, good); // 比率检验减少歧义匹配\ncv::Mat H = cv::findHomography(rightPoints, leftPoints, cv::RANSAC, 3.0, inliers);\nif (H.empty()) return reportNoAlignment();\ncv::warpPerspective(rightImage, warped, H, canvasSize); // 先计算平移画布边界\nblendOverlap(leftImage, warped); // 羽化/曝光补偿缓解接缝\n// 平面/纯旋转较适用；近景视差会重影", lang: "cpp", block: true)
+  #raw("auto orb = cv::ORB::create(1500);\norb->detectAndCompute(leftGray, cv::noArray(), leftKeys, leftDesc);\norb->detectAndCompute(rightGray, cv::noArray(), rightKeys, rightDesc);\ncv::BFMatcher(cv::NORM_HAMMING).knnMatch(rightDesc, leftDesc, pairs, 2);\nfilterRatioMatches(pairs, good); // 比率检验减少歧义匹配\ncv::Mat H = cv::findHomography(rightPoints, leftPoints, cv::RANSAC, 3.0, inliers);\nif (H.empty())\n    return reportNoAlignment();\ncv::warpPerspective(rightImage, warped, H, canvasSize); // 先计算平移画布边界\nblendOverlap(leftImage, warped); // 羽化/曝光补偿缓解接缝\n// 平面/纯旋转较适用；近景视差会重影", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -7149,7 +7149,7 @@
   #text("要保留整张图，需根据角度的正弦和余弦计算旋转后包围盒宽高，并把矩阵平移到新画布中心。插值方式会影响边缘清晰度，边界外的像素则由 borderMode 和填充值决定。多次连续旋转会反复插值损失画质，应尽可能从原图一次变换到最终角度。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("const cv::Point2f center(image.cols / 2.0f, image.rows / 2.0f);\ncv::Mat M = cv::getRotationMatrix2D(center, angleDegrees, 1.0);\nconst double radians = angleDegrees * CV_PI / 180.0;\nconst int outW = static_cast<int>(std::ceil(std::abs(image.cols * std::cos(radians)) +\n                                            std::abs(image.rows * std::sin(radians))));\nconst int outH = static_cast<int>(std::ceil(std::abs(image.rows * std::cos(radians)) +\n                                            std::abs(image.cols * std::sin(radians))));\nM.at<double>(0, 2) += outW / 2.0 - center.x; M.at<double>(1, 2) += outH / 2.0 - center.y;\ncv::warpAffine(image, rotated, M, cv::Size(outW, outH)); // 平移后保留完整画布", lang: "cpp", block: true)
+  #raw("const cv::Point2f center(image.cols / 2.0f, image.rows / 2.0f);\ncv::Mat M = cv::getRotationMatrix2D(center, angleDegrees, 1.0);\nconst double radians = angleDegrees * CV_PI / 180.0;\nconst int outW = static_cast<int>(\n    std::ceil(std::abs(image.cols * std::cos(radians)) + std::abs(image.rows * std::sin(radians))));\nconst int outH = static_cast<int>(\n    std::ceil(std::abs(image.rows * std::cos(radians)) + std::abs(image.cols * std::sin(radians))));\nM.at<double>(0, 2) += outW / 2.0 - center.x;\nM.at<double>(1, 2) += outH / 2.0 - center.y;\ncv::warpAffine(image, rotated, M, cv::Size(outW, outH)); // 平移后保留完整画布", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -7160,7 +7160,7 @@
   #text("重建时从最粗层开始逐层上采样并加回对应残差。金字塔融合可在不同尺度平滑混合两幅图，减轻简单硬切换造成的接缝。每层尺寸可能因奇数宽高而取整，重建时需使用原层尺寸和一致边界规则；否则加法尺寸不匹配或图像边缘出现伪影。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("std::vector<cv::Mat> gaussian{image};\nfor (int level = 0; level < levels; ++level) {\n    cv::Mat next; cv::pyrDown(gaussian.back(), next); gaussian.push_back(next);\n}\nstd::vector<cv::Mat> laplacian;\nfor (std::size_t i = 0; i + 1 < gaussian.size(); ++i) {\n    cv::Mat up, detail; cv::pyrUp(gaussian[i + 1], up, gaussian[i].size());\n    cv::subtract(gaussian[i], up, detail); laplacian.push_back(detail);\n}\n// 重建需用相同尺寸取整与边界规则逐层上采样后加回", lang: "cpp", block: true)
+  #raw("std::vector<cv::Mat> gaussian{image};\nfor (int level = 0; level < levels; ++level)\n{\n    cv::Mat next;\n    cv::pyrDown(gaussian.back(), next);\n    gaussian.push_back(next);\n}\nstd::vector<cv::Mat> laplacian;\nfor (std::size_t i = 0; i + 1 < gaussian.size(); ++i)\n{\n    cv::Mat up, detail;\n    cv::pyrUp(gaussian[i + 1], up, gaussian[i].size());\n    cv::subtract(gaussian[i], up, detail);\n    laplacian.push_back(detail);\n}\n// 重建需用相同尺寸取整与边界规则逐层上采样后加回", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -7182,7 +7182,7 @@
   #text("ORB 通常速度快、描述子紧凑，但运动模糊、重复纹理和大尺度变化会降低稳定性。默认 WTA_K=2 时使用 NORM_HAMMING；若 WTA_K=3 或 4 则应选择 NORM_HAMMING2。仅按描述距离过滤不能证明匹配正确，配准任务还应使用 RANSAC 检查空间几何关系。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("auto orb = cv::ORB::create(1000, 1.2f, 8);\nstd::vector<cv::KeyPoint> keypoints; cv::Mat descriptors;\norb->detectAndCompute(gray, mask, keypoints, descriptors);\ncv::BFMatcher matcher(cv::NORM_HAMMING);\nmatcher.knnMatch(descriptors, referenceDescriptors, pairs, 2);\nfor (const auto &pair : pairs)\n    if (pair.size() == 2 && pair[0].distance < 0.75f * pair[1].distance) good.push_back(pair[0]);\n// ORB 描述子是二进制串，匹配用 Hamming 距离", lang: "cpp", block: true)
+  #raw("auto orb = cv::ORB::create(1000, 1.2f, 8);\nstd::vector<cv::KeyPoint> keypoints;\ncv::Mat descriptors;\norb->detectAndCompute(gray, mask, keypoints, descriptors);\ncv::BFMatcher matcher(cv::NORM_HAMMING);\nmatcher.knnMatch(descriptors, referenceDescriptors, pairs, 2);\nfor (const auto& pair : pairs)\n    if (pair.size() == 2 && pair[0].distance < 0.75f * pair[1].distance)\n        good.push_back(pair[0]);\n// ORB 描述子是二进制串，匹配用 Hamming 距离", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -7193,7 +7193,7 @@
   #text("保持宽高比时按同一倍率计算宽和高，再决定补边还是裁剪；直接强行设定目标宽高会拉伸变形。分割标签和二值掩码应使用 INTER_NEAREST，以免插值产生新的类别或灰度值。Mat 的行可能有 stride，外部图像缓冲与视频帧尤其不能假定连续。对视频逐帧缩放也要关注耗时预算。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("if (source.empty()) return reportReadFailure();\ncv::Mat smaller;\ncv::resize(source, smaller, cv::Size(), 0.5, 0.5, cv::INTER_AREA); // 缩小\ncv::Mat larger;\ncv::resize(source, larger, cv::Size(), 2.0, 2.0, cv::INTER_CUBIC); // 放大\n// 相同比例保持宽高比；标签/掩码使用 INTER_NEAREST\n// resize 输出是 Mat，逐行访问仍须尊重 step/stride", lang: "cpp", block: true)
+  #raw("if (source.empty())\n    return reportReadFailure();\ncv::Mat smaller;\ncv::resize(source, smaller, cv::Size(), 0.5, 0.5, cv::INTER_AREA); // 缩小\ncv::Mat larger;\ncv::resize(source, larger, cv::Size(), 2.0, 2.0, cv::INTER_CUBIC); // 放大\n// 相同比例保持宽高比；标签/掩码使用 INTER_NEAREST\n// resize 输出是 Mat，逐行访问仍须尊重 step/stride", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -7204,7 +7204,7 @@
   #text("模板必须不大于搜索图，颜色通道和类型也应匹配。该算法默认不具备尺度或旋转不变性，对亮度和遮挡也可能敏感；可先裁小 ROI、归一化或做图像金字塔。重复纹理可能出现多个高分位置，应设置信心阈值并做非极大值抑制，避免把多个重叠候选都当成目标。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("if (templ.cols > image.cols || templ.rows > image.rows) return;\ncv::Mat response;\ncv::matchTemplate(image, templ, response, cv::TM_CCOEFF_NORMED);\ndouble minScore = 0.0, maxScore = 0.0; cv::Point minLoc, maxLoc;\ncv::minMaxLoc(response, &minScore, &maxScore, &minLoc, &maxLoc);\nconst cv::Point best = maxLoc; // 相关度方法取最大；平方差取最小\ncv::rectangle(image, best, best + templ.size(), cv::Scalar(0, 255, 0), 2);\n// 尺度/旋转不天然鲁棒；可先限制 ROI 或建金字塔", lang: "cpp", block: true)
+  #raw("if (templ.cols > image.cols || templ.rows > image.rows)\n    return;\ncv::Mat response;\ncv::matchTemplate(image, templ, response, cv::TM_CCOEFF_NORMED);\ndouble minScore = 0.0, maxScore = 0.0;\ncv::Point minLoc, maxLoc;\ncv::minMaxLoc(response, &minScore, &maxScore, &minLoc, &maxLoc);\nconst cv::Point best = maxLoc; // 相关度方法取最大；平方差取最小\ncv::rectangle(image, best, best + templ.size(), cv::Scalar(0, 255, 0), 2);\n// 尺度/旋转不天然鲁棒；可先限制 ROI 或建金字塔", lang: "cpp", block: true)
 ]
 
 #heading(level: 2, outlined: true)[#text("15.3 视频分析与相机标定", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
@@ -7216,7 +7216,7 @@
   #text("彩色图像不要分别均衡 B、G、R 三个通道，否则颜色比例变化容易偏色。可转 YCrCb 或 Lab，在亮度通道做均衡后转回。局部照明差异较大时，CLAHE 在分块基础上处理并限制对比度，能避免某些局部过度增强，但分块边界和参数仍要检查。增强仅改善显示/后续算法输入，不会恢复传感器未记录的信息。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("cv::Mat equalized;\ncv::equalizeHist(gray, equalized); // 仅单通道 8-bit 灰度\ncv::Mat ycrcb; cv::cvtColor(bgr, ycrcb, cv::COLOR_BGR2YCrCb);\nstd::vector<cv::Mat> planes; cv::split(ycrcb, planes);\ncv::equalizeHist(planes[0], planes[0]); // 仅均衡亮度 Y\ncv::merge(planes, ycrcb);\ncv::Mat result; cv::cvtColor(ycrcb, result, cv::COLOR_YCrCb2BGR);\n// 彩色直接均衡 B/G/R 容易偏色；强光差可用 CLAHE", lang: "cpp", block: true)
+  #raw("cv::Mat equalized;\ncv::equalizeHist(gray, equalized); // 仅单通道 8-bit 灰度\ncv::Mat ycrcb;\ncv::cvtColor(bgr, ycrcb, cv::COLOR_BGR2YCrCb);\nstd::vector<cv::Mat> planes;\ncv::split(ycrcb, planes);\ncv::equalizeHist(planes[0], planes[0]); // 仅均衡亮度 Y\ncv::merge(planes, ycrcb);\ncv::Mat result;\ncv::cvtColor(ycrcb, result, cv::COLOR_YCrCb2BGR);\n// 彩色直接均衡 B/G/R 容易偏色；强光差可用 CLAHE", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -7227,7 +7227,7 @@
   #text("HSV 把色相与亮度分开一些，但对不同光源、阴影和相机白平衡仍敏感，需要实拍调范围。红色的色相值位于 0 度附近的两端，单一区间无法覆盖，需分两次阈值并 OR 合并。相邻帧可能检测到多个相似目标，应再做最近邻、卡尔曼滤波或其他身份关联，不能只选最大轮廓就假设一直是同一物体。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("cv::VideoCapture capture(device);\nif (!capture.isOpened()) return reportCameraFailure();\nwhile (capture.read(frame)) {\n    cv::cvtColor(frame, hsv, cv::COLOR_BGR2HSV);\n    cv::inRange(hsv, lowerHsv, upperHsv, mask);\n    cv::morphologyEx(mask, clean, cv::MORPH_OPEN, kernel); // 去小噪点\n    cv::findContours(clean, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);\n    selectLargestAndUpdateCentroid(contours); // 面积筛选/跨帧关联\n}\n// 红色 Hue 跨首尾范围时分两次 inRange 后 OR 合并", lang: "cpp", block: true)
+  #raw("cv::VideoCapture capture(device);\nif (!capture.isOpened())\n    return reportCameraFailure();\nwhile (capture.read(frame))\n{\n    cv::cvtColor(frame, hsv, cv::COLOR_BGR2HSV);\n    cv::inRange(hsv, lowerHsv, upperHsv, mask);\n    cv::morphologyEx(mask, clean, cv::MORPH_OPEN, kernel); // 去小噪点\n    cv::findContours(clean, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);\n    selectLargestAndUpdateCentroid(contours); // 面积筛选/跨帧关联\n}\n// 红色 Hue 跨首尾范围时分两次 inRange 后 OR 合并", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -7238,7 +7238,7 @@
   #text("如果只有四对精确角点，可用 getPerspectiveTransform；若有更多带噪声匹配点，应使用 findHomography 并配合 RANSAC 抑制外点。矩阵方向要和期望映射一致，求出的源到目标变换在输出像素采样时通常由函数内部处理逆映射。若输出尺寸不包含变换后范围，结果会被裁切；灰度、颜色和类别掩码也应选相应插值。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("const std::vector<cv::Point2f> sourceCorners{a, b, c, d};\nconst std::vector<cv::Point2f> targetCorners{p, q, r, s}; // 顺序一一对应\ncv::Mat H = cv::getPerspectiveTransform(sourceCorners, targetCorners);\nif (H.empty()) return reportDegenerateCorners();\ncv::warpPerspective(source, output, H, outputSize, cv::INTER_LINEAR,\n                    cv::BORDER_CONSTANT, cv::Scalar());\n // 点不可退化/共线；多于四对含噪点改 findHomography + RANSAC\n// 输出尺寸和边界填充值按目标画布设置", lang: "cpp", block: true)
+  #raw("const std::vector<cv::Point2f> sourceCorners{a, b, c, d};\nconst std::vector<cv::Point2f> targetCorners{p, q, r, s}; // 顺序一一对应\ncv::Mat H = cv::getPerspectiveTransform(sourceCorners, targetCorners);\nif (H.empty())\n    return reportDegenerateCorners();\ncv::warpPerspective(\n    source, output, H, outputSize, cv::INTER_LINEAR, cv::BORDER_CONSTANT, cv::Scalar());\n// 点不可退化/共线；多于四对含噪点改 findHomography + RANSAC\n// 输出尺寸和边界填充值按目标画布设置", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -7271,7 +7271,7 @@
   #text("不能仅按 cols 推算下一行地址；应使用 step 或 OpenCV 提供的行指针。需要独立且连续的数据时调用 clone()，但会付出内存和复制时间。ROI 仍依赖父图像素生命周期，父图释放前 Mat 引用计数会保持底层存储有效；但跨线程写入共享 ROI 仍需同步。〔S14〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("cv::Mat roi = image(rect); // 通常仅新建头，仍沿用父图 stride\nfor (int y = 0; y < roi.rows; ++y) {\n    const auto *row = roi.ptr<std::uint8_t>(y);\n    processRow(row, static_cast<std::size_t>(roi.cols) * roi.elemSize());\n}\nif (!roi.isContinuous()) handleRowsSeparately(); // 不可当成单段内存\ncv::Mat packed = roi.clone(); // 需要连续独立存储时付出一次复制\n// step 描述行间距，不能只用 cols 推出下行地址", lang: "cpp", block: true)
+  #raw("cv::Mat roi = image(rect); // 通常仅新建头，仍沿用父图 stride\nfor (int y = 0; y < roi.rows; ++y)\n{\n    const auto* row = roi.ptr<std::uint8_t>(y);\n    processRow(row, static_cast<std::size_t>(roi.cols) * roi.elemSize());\n}\nif (!roi.isContinuous())\n    handleRowsSeparately(); // 不可当成单段内存\ncv::Mat packed = roi.clone(); // 需要连续独立存储时付出一次复制\n// step 描述行间距，不能只用 cols 推出下行地址", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -7282,7 +7282,7 @@
   #text("应从不同距离、倾角和画面位置拍摄多张清晰图像，让角点覆盖整个视野；重复近似姿态或模糊图会降低估计质量。calibrateCamera 返回重投影误差，但单看一个平均数不够，还要可视化残差并剔除异常视图。之后用 undistort 或预计算映射校正图像。标定板物理尺寸决定外部平移尺度，内参则更依赖图像覆盖和多样姿态。〔S14〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// 每个视角保存同一标定板的已知点与检测角点\nstd::vector<std::vector<cv::Point3f>> objectPoints;\nstd::vector<std::vector<cv::Point2f>> imagePoints;\ncv::Mat cameraMatrix, distortion; std::vector<cv::Mat> rvecs, tvecs;\nconst double rms = cv::calibrateCamera(objectPoints, imagePoints, imageSize,\n    cameraMatrix, distortion, rvecs, tvecs);\nif (!std::isfinite(rms)) return reportCalibrationFailure();\ncv::undistort(testImage, corrected, cameraMatrix, distortion);\n// 多姿态覆盖全画面；模糊/重复视角剔除", lang: "cpp", block: true)
+  #raw("// 每个视角保存同一标定板的已知点与检测角点\nstd::vector<std::vector<cv::Point3f>> objectPoints;\nstd::vector<std::vector<cv::Point2f>> imagePoints;\ncv::Mat cameraMatrix, distortion;\nstd::vector<cv::Mat> rvecs, tvecs;\nconst double rms = cv::calibrateCamera(\n    objectPoints, imagePoints, imageSize, cameraMatrix, distortion, rvecs, tvecs);\nif (!std::isfinite(rms))\n    return reportCalibrationFailure();\ncv::undistort(testImage, corrected, cameraMatrix, distortion);\n// 多姿态覆盖全画面；模糊/重复视角剔除", lang: "cpp", block: true)
 ]
 
 #heading(level: 1, outlined: true)[#text("第16章 音视频与 FFmpeg", size: 15pt, weight: "bold", fill: rgb("#000000"))]
@@ -7295,7 +7295,7 @@
   #text("ADIF 把头部信息集中在文件开头，适合从头读取的完整文件；若从中间开始接收，就缺少逐帧同步信息。封装结构和文件扩展名不能互相替代，转换时应由正确的解析器或复用器处理。仅凭 ADTS/ADIF 也无法判断 AAC 的采样率、码率和主观质量。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("AVPacket* packet = read_access_unit(input);\nwrite_adts_header(output, packet->size, sample_rate, channels); write_packet(output, packet);\n// ADTS适合逐帧传输；文件容器应按目标封装写入索引与元数据", lang: "cpp", block: true)
+  #raw("AVPacket* packet = read_access_unit(input);\nwrite_adts_header(output, packet->size, sample_rate, channels);\nwrite_packet(output, packet);\n// ADTS适合逐帧传输；文件容器应按目标封装写入索引与元数据", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -7306,7 +7306,7 @@
   #text("解码时通常先从 AVStream 的 codecpar 复制参数到新建的 AVCodecContext，再打开解码器。packet 按 stream_index 找到对应的轨道和解码上下文；每条音视频轨通常各有一个 codec context。成功打开输入后，所有错误出口都要关闭 format context；分配的 codec context 也需单独释放。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("AVFormatContext *format = nullptr;\nif (avformat_open_input(&format, path, nullptr, nullptr) < 0) return;\nif (avformat_find_stream_info(format, nullptr) < 0) {\n    avformat_close_input(&format); return reportProbeError();\n}\nint index = av_find_best_stream(format, AVMEDIA_TYPE_VIDEO, -1, -1, nullptr, 0);\nif (index >= 0) {\n    AVStream *stream = format->streams[index]; // 容器中的轨道/时间基\n    AVCodecContext *codec = avcodec_alloc_context3(decoder);\n    avcodec_parameters_to_context(codec, stream->codecpar); // 配置解码状态\n    if (avcodec_open2(codec, decoder, nullptr) >= 0) decode(codec);\n    avcodec_free_context(&codec);\n}\navformat_close_input(&format); // 成功打开后的所有出口都关闭", lang: "cpp", block: true)
+  #raw("AVFormatContext* format = nullptr;\nif (avformat_open_input(&format, path, nullptr, nullptr) < 0)\n    return;\nif (avformat_find_stream_info(format, nullptr) < 0)\n{\n    avformat_close_input(&format);\n    return reportProbeError();\n}\nint index = av_find_best_stream(format, AVMEDIA_TYPE_VIDEO, -1, -1, nullptr, 0);\nif (index >= 0)\n{\n    AVStream* stream = format->streams[index]; // 容器中的轨道/时间基\n    AVCodecContext* codec = avcodec_alloc_context3(decoder);\n    avcodec_parameters_to_context(codec, stream->codecpar); // 配置解码状态\n    if (avcodec_open2(codec, decoder, nullptr) >= 0)\n        decode(codec);\n    avcodec_free_context(&codec);\n}\navformat_close_input(&format); // 成功打开后的所有出口都关闭", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -7317,7 +7317,7 @@
   #text("一个 packet 不保证对应一个可显示 frame：可能一个包生成多帧，也可能需要多个包，解码器还可能为重排序缓存帧。正确流程是向解码器发送 packet，再循环接收所有可用 frame；文件结束时还需发送空 packet 冲刷延迟帧。对象分配和对象持有的数据引用是两回事，最后分别 free packet/frame。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("AVPacket *packet = av_packet_alloc(); // 压缩码流及 stream_index/时间戳\nAVFrame *frame = av_frame_alloc(); // 解码后的平面图像或音频样本\nwhile (av_read_frame(format, packet) >= 0) {\n    if (packet->stream_index == videoIndex) sendAndReceive(decoder, packet, frame);\n    av_packet_unref(packet); // 释放 packet 持有的数据引用\n}\nav_frame_unref(frame); // 可复用 frame 时释放本轮缓冲引用\nav_packet_free(&packet); av_frame_free(&frame); // 释放对象本身\n// 一个 packet 不保证只产出一帧；decoder 可能缓存延迟帧", lang: "cpp", block: true)
+  #raw("AVPacket* packet = av_packet_alloc(); // 压缩码流及 stream_index/时间戳\nAVFrame* frame = av_frame_alloc(); // 解码后的平面图像或音频样本\nwhile (av_read_frame(format, packet) >= 0)\n{\n    if (packet->stream_index == videoIndex)\n        sendAndReceive(decoder, packet, frame);\n    av_packet_unref(packet); // 释放 packet 持有的数据引用\n}\nav_frame_unref(frame); // 可复用 frame 时释放本轮缓冲引用\nav_packet_free(&packet);\nav_frame_free(&frame); // 释放对象本身\n// 一个 packet 不保证只产出一帧；decoder 可能缓存延迟帧", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -7328,7 +7328,7 @@
   #text("libavfilter 可构建滤镜处理图，libavdevice 接入采集设备。某个模块是否存在取决于构建时启用的组件、外部库和平台支持；编码器也可能因许可证或依赖而未编译。部署时需检查运行库版本和可用格式/编解码器，不能仅因链接了 FFmpeg 就假设所有格式都支持。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("while (av_read_frame(input, packet) >= 0) {\n  avcodec_send_packet(decoder, packet); while (avcodec_receive_frame(decoder, frame) == 0) encode_and_mux(frame, output);\n} // format读包，codec解码，sws转换，filter处理，codec编码，format复用", lang: "cpp", block: true)
+  #raw("while (av_read_frame(input, packet) >= 0)\n{\n    avcodec_send_packet(decoder, packet);\n    while (avcodec_receive_frame(decoder, frame) == 0)\n        encode_and_mux(frame, output);\n} // format读包，codec解码，sws转换，filter处理，codec编码，format复用", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -7339,7 +7339,7 @@
   #text("Tag 只说明容器层面数据类型，内部实际编码由音频或视频 codec 标识决定；同一 FLV 可能承载不同编码，支持范围还受播放器与版本影响。时间戳常用于恢复媒体时间顺序，但也要处理回绕和缺失。不能看到 .flv 就判断视频一定是 H.264 或音频一定是 AAC。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("TagHeader tag = read_flv_tag_header(stream); auto payload = read_exact(stream, tag.data_size);\nif (tag.type == TagType::audio) audio_parser.push(payload);\nif (tag.type == TagType::video) video_parser.push(payload); verify_previous_tag_size(stream);", lang: "cpp", block: true)
+  #raw("TagHeader tag = read_flv_tag_header(stream);\nauto payload = read_exact(stream, tag.data_size);\nif (tag.type == TagType::audio)\n    audio_parser.push(payload);\nif (tag.type == TagType::video)\n    video_parser.push(payload);\nverify_previous_tag_size(stream);", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -7361,7 +7361,7 @@
   #text("终端能否播放要综合 profile、level、分辨率、帧率、色度采样、位深和实际码率。编码时设置参数只是提出输出配置，仍应检查编码器实际生成的 SPS 和目标设备支持表。若要兼容旧设备，可采用更普遍支持的组合或提供转码版本。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("AVCodecContext *encoder = avcodec_alloc_context3(codec);\nencoder->width = width; encoder->height = height;\nencoder->pix_fmt = AV_PIX_FMT_YUV420P; encoder->time_base = AVRational{1, 30};\nencoder->profile = FF_PROFILE_H264_HIGH; // 工具集子集\nencoder->level = 40; // 约束能力上限，数值按 codec 定义\nif (avcodec_open2(encoder, codec, nullptr) < 0) reportUnsupportedConfig();\navcodec_free_context(&encoder);\n// 还要验证目标设备能解该 profile/level/尺寸/帧率组合", lang: "cpp", block: true)
+  #raw("AVCodecContext* encoder = avcodec_alloc_context3(codec);\nencoder->width = width;\nencoder->height = height;\nencoder->pix_fmt = AV_PIX_FMT_YUV420P;\nencoder->time_base = AVRational{1, 30};\nencoder->profile = FF_PROFILE_H264_HIGH; // 工具集子集\nencoder->level = 40; // 约束能力上限，数值按 codec 定义\nif (avcodec_open2(encoder, codec, nullptr) < 0)\n    reportUnsupportedConfig();\navcodec_free_context(&encoder);\n// 还要验证目标设备能解该 profile/level/尺寸/帧率组合", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -7372,7 +7372,7 @@
   #text("实际延迟不仅由分片长度决定，还受关键帧对齐、编码器 GOP、播放器缓冲和 CDN 缓存影响。客户端必须能访问列表及每个分片，直播列表还可能滑动并移除旧内容。M3U8 是索引文本，不包含全部媒体本身；只复制清单而未部署分片 URI 指向内容，播放会失败。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("auto master = parse_m3u8(fetch(master_url)); auto variant = choose_variant(master, bandwidth, device);\nauto playlist = parse_m3u8(fetch(variant.url)); auto segment = fetch(playlist.next_segment());\nplayer.buffer(segment); // 直播时刷新媒体清单并按带宽切换变体", lang: "cpp", block: true)
+  #raw("auto master = parse_m3u8(fetch(master_url));\nauto variant = choose_variant(master, bandwidth, device);\nauto playlist = parse_m3u8(fetch(variant.url));\nauto segment = fetch(playlist.next_segment());\nplayer.buffer(segment); // 直播时刷新媒体清单并按带宽切换变体", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -7383,7 +7383,7 @@
   #text("seek、直播分段和丢包恢复需要真正可独立开始的随机访问点，并确保必要的 SPS/PPS 等参数集可获得。编码器 GOP 结构和封装索引会影响定位速度；不能仅凭帧类型字母 I 就认定任意位置都可无损切段。其他编码标准也有各自随机访问图像类型，概念名称不能直接互换。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("for (AVPacket* packet : packets) if (is_idr(packet)) start_new_segment(packet);\nverify_parameter_sets_and_timestamps(segment); // 普通I帧不一定能独立随机访问", lang: "cpp", block: true)
+  #raw("for (AVPacket* packet : packets)\n    if (is_idr(packet))\n        start_new_segment(packet);\nverify_parameter_sets_and_timestamps(segment); // 普通I帧不一定能独立随机访问", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -7394,7 +7394,7 @@
   #text("如果 moov 在文件末尾，渐进播放可能要等下载较多内容才能开始；faststart 通过重写文件把 moov 移到前面，常用于点播文件，但会带来额外读写和处理成本。MP4 只是容器，不表示内部一定采用某一种 codec。流式场景还可使用 fragmented MP4，其组织方式与单个完整 moov/mdat 文件有所不同。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("auto ftyp = mp4.read_box(\"ftyp\"); auto moov = mp4.read_box(\"moov\"); auto mdat = mp4.read_box(\"mdat\");\nif (moov.after(mdat)) faststart_relocate_moov(mp4); verify_sample_offsets(mp4);\n// moov含轨道/样本索引，mdat保存媒体数据，ftyp声明品牌兼容性", lang: "cpp", block: true)
+  #raw("auto ftyp = mp4.read_box(\"ftyp\");\nauto moov = mp4.read_box(\"moov\");\nauto mdat = mp4.read_box(\"mdat\");\nif (moov.after(mdat))\n    faststart_relocate_moov(mp4);\nverify_sample_offsets(mp4);\n// moov含轨道/样本索引，mdat保存媒体数据，ftyp声明品牌兼容性", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -7405,7 +7405,7 @@
   #text("RTMPS 通常是在 RTMP 连接上增加 TLS 保护，仍需验证服务器证书和鉴权。浏览器对传统 RTMP 播放支持有限，服务端常将输入转成 HLS、DASH 或 WebRTC 供观众播放。RTMP 的适用性还受基础设施和终端支持影响；需要超低互动延迟时，应比较其他传输方案。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("RtmpClient client(server_url); client.connect(); client.publish(stream_key);\nwhile (auto packet = encoder.next_packet()) client.write_chunk(packet); // 采集端推送压缩媒体\n// 服务端可转封装为HLS/WebRTC；TLS与发布鉴权需单独启用", lang: "cpp", block: true)
+  #raw("RtmpClient client(server_url);\nclient.connect();\nclient.publish(stream_key);\nwhile (auto packet = encoder.next_packet())\n    client.write_chunk(packet); // 采集端推送压缩媒体\n// 服务端可转封装为HLS/WebRTC；TLS与发布鉴权需单独启用", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -7416,7 +7416,7 @@
   #text("RTCP 与 RTP 配套交换发送端和接收端报告，包括丢包、抖动、收发统计，以及用于音视频时钟映射的信息。应用可用这些反馈调整码率或实现拥塞控制，但 RTCP 自身不是可靠重传协议，也不保证媒体一定送达。实时接收端还需要抖动缓冲和迟到包策略，在延迟与连续播放间取舍。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("RtpPacket packet = receive_rtp(); jitter_buffer.insert(packet.sequence, packet.timestamp, packet.payload);\nif (packet.sequence_gap()) send_rtcp_receiver_report(packet.loss_rate(), packet.jitter());\n// RTP承载媒体，RTCP反馈质量；恢复策略由应用协议设计", lang: "cpp", block: true)
+  #raw("RtpPacket packet = receive_rtp();\njitter_buffer.insert(packet.sequence, packet.timestamp, packet.payload);\nif (packet.sequence_gap())\n    send_rtcp_receiver_report(packet.loss_rate(), packet.jitter());\n// RTP承载媒体，RTCP反馈质量；恢复策略由应用协议设计", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -7427,7 +7427,7 @@
   #text("媒体数据通常通过 RTP/RTCP 传输，也可能 interleaved 交织在 RTSP TCP 连接上。RTSP 负责会话控制，不应与实际音视频负载传输混为一谈。实现时要解析每条响应状态和会话标识，并按服务器能力协商 UDP/TCP；超时、认证失败和连接清理都需要显式处理。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("RtspSession session(url); session.options(); auto sdp = session.describe();\nsession.setup(sdp.audio_track(), transport); session.play(); // 完成后用TEARDOWN释放会话", lang: "cpp", block: true)
+  #raw("RtspSession session(url);\nsession.options();\nauto sdp = session.describe();\nsession.setup(sdp.audio_track(), transport);\nsession.play(); // 完成后用TEARDOWN释放会话", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -7438,7 +7438,7 @@
   #text("流结束时需用空输入继续调用转换函数，把滤波器内部积累的尾部样本冲刷出来；遗漏会截断最后一段声音。注意更新版 FFmpeg 的声道布局 API 与旧版通道数接口存在差异，按目标版本选择。每次输出后根据实际返回样本数写数据，最后释放缓冲、布局和 SwrContext。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("SwrContext *swr = nullptr;\ncheck(swr_alloc_set_opts2(&swr, &outLayout, AV_SAMPLE_FMT_S16, 44100,\n                          &inLayout, AV_SAMPLE_FMT_FLTP, 48000, 0, nullptr));\ncheck(swr_init(swr)); // 参数在初始化前确定\nint capacity = swr_get_out_samples(swr, input->nb_samples);\nallocateOutputPlanes(capacity, outLayout);\nint samples = swr_convert(swr, output, capacity, input->extended_data, input->nb_samples);\nwriteSamples(output, samples); // 输出数与输入数可不同\nint tail = swr_convert(swr, output, capacity, nullptr, 0); // 取滤波器尾部\nfreeOutputPlanes(); av_channel_layout_uninit(&inLayout); av_channel_layout_uninit(&outLayout); swr_free(&swr);", lang: "cpp", block: true)
+  #raw("SwrContext* swr = nullptr;\ncheck(swr_alloc_set_opts2(\n    &swr, &outLayout, AV_SAMPLE_FMT_S16, 44100, &inLayout, AV_SAMPLE_FMT_FLTP, 48000, 0, nullptr));\ncheck(swr_init(swr)); // 参数在初始化前确定\nint capacity = swr_get_out_samples(swr, input->nb_samples);\nallocateOutputPlanes(capacity, outLayout);\nint samples = swr_convert(swr, output, capacity, input->extended_data, input->nb_samples);\nwriteSamples(output, samples); // 输出数与输入数可不同\nint tail = swr_convert(swr, output, capacity, nullptr, 0); // 取滤波器尾部\nfreeOutputPlanes();\nav_channel_layout_uninit(&inLayout);\nav_channel_layout_uninit(&outLayout);\nswr_free(&swr);", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -7449,7 +7449,7 @@
   #text("还应依据帧的色彩元数据设置 BT.601/BT.709 等矩阵和 full/limited range。矩阵错误会使颜色偏差，范围不符会导致黑位发灰或亮部不正确。目标缓冲区应按实际 stride 分配。转换完成后释放 SwsContext 和目标 AVFrame；不同 FFmpeg 版本对色彩 API 可能变化，按目标版本文档确认。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("SwsContext *sws = sws_getContext(srcW, srcH, AV_PIX_FMT_YUV420P,\n    dstW, dstH, AV_PIX_FMT_RGB24, SWS_BILINEAR, nullptr, nullptr, nullptr);\nif (!sws) return reportAllocationFailure();\nallocateRgbFrame(dstW, dstH, &dstData, &dstStride); // 含 padding\nsws_scale(sws, src->data, src->linesize, 0, srcH, dstData, dstStride);\n// 输入 plane 指针和每行 stride 必须来自 AVFrame\nconst int *matrix = sws_getCoefficients(SWS_CS_ITU709);\nsws_setColorspaceDetails(sws, matrix, 0, matrix, 1, 0, 1 << 16, 1 << 16);\nfreeRgbFrame(&dstData); sws_freeContext(sws); // 同时释放源/目标 AVFrame", lang: "cpp", block: true)
+  #raw("SwsContext* sws = sws_getContext(srcW,\n                                 srcH,\n                                 AV_PIX_FMT_YUV420P,\n                                 dstW,\n                                 dstH,\n                                 AV_PIX_FMT_RGB24,\n                                 SWS_BILINEAR,\n                                 nullptr,\n                                 nullptr,\n                                 nullptr);\nif (!sws)\n    return reportAllocationFailure();\nallocateRgbFrame(dstW, dstH, &dstData, &dstStride); // 含 padding\nsws_scale(sws, src->data, src->linesize, 0, srcH, dstData, dstStride);\n// 输入 plane 指针和每行 stride 必须来自 AVFrame\nconst int* matrix = sws_getCoefficients(SWS_CS_ITU709);\nsws_setColorspaceDetails(sws, matrix, 0, matrix, 1, 0, 1 << 16, 1 << 16);\nfreeRgbFrame(&dstData);\nsws_freeContext(sws); // 同时释放源/目标 AVFrame", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -7460,7 +7460,7 @@
   #text("实时媒体常结合 RTP/UDP、抖动缓冲、NACK 重传或 FEC 前向纠错，按业务允许的时延恢复部分丢包；这些机制不是 UDP 自带。企业网络和防火墙可能限制 UDP，需考虑 TURN/TCP 或其他回退。选型应看时延目标、丢包状况、网络策略、终端支持，以及数据是否必须完整。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("if (media_is_time_sensitive) udp.send(packet_with_sequence_and_timestamp);\nelse tcp.send(reliable_ordered_bytes); // 选择前先定义丢包、延迟与重传预算", lang: "cpp", block: true)
+  #raw("if (media_is_time_sensitive)\n    udp.send(packet_with_sequence_and_timestamp);\nelse\n    tcp.send(reliable_ordered_bytes); // 选择前先定义丢包、延迟与重传预算", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -7471,7 +7471,7 @@
   #text("媒体通常优先 UDP，并以拥塞控制与抖动处理平衡时延和丢包；某些 TURN 路径会使用 TCP/TLS。WebSocket 的有序可靠传输容易因重传等待，常用于信令和控制消息，不应简单当作低延迟媒体通道。TURN 的服务器带宽和部署会增加成本，实际穿透成功率也受企业网络影响。〔A127〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("PeerConnection pc(ice_servers); pc.add_track(capture_audio_video());\nauto offer = pc.create_offer(); signaling.send(offer); pc.add_remote_candidates(answer.candidates);\n// ICE先尝试直连，失败时可通过TURN中继媒体", lang: "cpp", block: true)
+  #raw("PeerConnection pc(ice_servers);\npc.add_track(capture_audio_video());\nauto offer = pc.create_offer();\nsignaling.send(offer);\npc.add_remote_candidates(answer.candidates);\n// ICE先尝试直连，失败时可通过TURN中继媒体", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -7482,7 +7482,7 @@
   #text("真实帧每行可能有对齐填充，因此 stride/linesize 可能大于有效宽度；奇数尺寸时色度平面的取整也由格式定义。读取时应依据实际 pixel format 选择 data[] 平面，并按各自行跨度前进。布局不匹配会产生明显偏色，甚至越界读取；跨库处理前应使用明确的像素格式转换接口。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// planar YUV420P：Y、U、V 独立 plane\nconst std::uint8_t *y = frame->data[0], *u = frame->data[1], *v = frame->data[2];\nconst int yStride = frame->linesize[0], uStride = frame->linesize[1];\nsamplePlanar(y, u, v, yStride, uStride);\n// semiplanar NV12：data[1] 内 UV 交错；NV21 为 VU\nconst std::uint8_t *uv = nv12->data[1];\nsampleInterleavedUv(uv, nv12->linesize[1]);\n// 每行用 stride 前进；plane 次序不符会出现明显偏色", lang: "cpp", block: true)
+  #raw("// planar YUV420P：Y、U、V 独立 plane\nconst std::uint8_t *y = frame->data[0], *u = frame->data[1], *v = frame->data[2];\nconst int yStride = frame->linesize[0], uStride = frame->linesize[1];\nsamplePlanar(y, u, v, yStride, uStride);\n// semiplanar NV12：data[1] 内 UV 交错；NV21 为 VU\nconst std::uint8_t* uv = nv12->data[1];\nsampleInterleavedUv(uv, nv12->linesize[1]);\n// 每行用 stride 前进；plane 次序不符会出现明显偏色", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -7505,7 +7505,7 @@
   #text("处理完包后依 stream_index 选择音频、视频或字幕轨，并交给对应模块；一个 packet 可能产出零个或多个 frame。每轮用 av_packet_unref 释放其数据引用，再继续读取，最终用 av_packet_free 释放 packet 对象。需要比较不同轨道时间或送往复用器时，必须在各自时间基之间显式换算时间戳。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("AVPacket *packet = av_packet_alloc();\nif (!packet) return reportAllocationFailure();\nwhile ((ret = av_read_frame(format, packet)) >= 0) {\n    const AVStream *stream = format->streams[packet->stream_index];\n    if (packet->stream_index == videoIndex) decode(packet); // 仍是压缩 packet\n    inspect(packet->pts, packet->dts, stream->time_base);\n    av_packet_unref(packet); // 每次读完都归还 payload 引用\n}\nif (ret != AVERROR_EOF) report(ret); // 区分读错误与正常结束\nav_packet_free(&packet); // 再释放 packet 对象", lang: "cpp", block: true)
+  #raw("AVPacket* packet = av_packet_alloc();\nif (!packet)\n    return reportAllocationFailure();\nwhile ((ret = av_read_frame(format, packet)) >= 0)\n{\n    const AVStream* stream = format->streams[packet->stream_index];\n    if (packet->stream_index == videoIndex)\n        decode(packet); // 仍是压缩 packet\n    inspect(packet->pts, packet->dts, stream->time_base);\n    av_packet_unref(packet); // 每次读完都归还 payload 引用\n}\nif (ret != AVERROR_EOF)\n    report(ret); // 区分读错误与正常结束\nav_packet_free(&packet); // 再释放 packet 对象", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -7516,7 +7516,7 @@
   #text("先辨明时间戳属于哪条流、当前使用哪个 time_base，再选择目标刻度；把两个 time_base 反过来会让时间长度严重错误。无效或缺失时间戳需单独处理，不能盲目缩放 AV_NOPTS_VALUE。封装时通常还要根据输出流的 time_base 调整 packet PTS、DTS 和 duration。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("if (pts != AV_NOPTS_VALUE) {\n    const AVRational streamTb = stream->time_base; // 源时间刻度\n    const AVRational encoderTb{1, 25}; // 目标每帧 1/25 秒\n    const std::int64_t encoderPts = av_rescale_q(pts, streamTb, encoderTb);\n    submitTimestamp(encoderPts); // 先确认 bq/cq 次序\n}\n// 不要直接把 PTS 当毫秒；有理数缩放还可避免乘法溢出", lang: "cpp", block: true)
+  #raw("if (pts != AV_NOPTS_VALUE)\n{\n    const AVRational streamTb = stream->time_base; // 源时间刻度\n    const AVRational encoderTb{1, 25}; // 目标每帧 1/25 秒\n    const std::int64_t encoderPts = av_rescale_q(pts, streamTb, encoderTb);\n    submitTimestamp(encoderPts); // 先确认 bq/cq 次序\n}\n// 不要直接把 PTS 当毫秒；有理数缩放还可避免乘法溢出", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -7527,7 +7527,7 @@
   #text("读到输入 EOF 后发送一次空 packet 进入冲刷状态，再持续 receive，直到 AVERROR_EOF，才能拿到解码器延迟的最后几帧。EAGAIN 是 send/receive 状态切换信号，不代表媒体坏了。packet 的数据仍由调用方管理，送入后仍应按 API 约定 unref；frame 复用时也要释放上一轮引用。该新式流程不同于旧的 avcodec_decode_video2 调用。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// receiveAvailable 循环 receive_frame：处理每帧并 unref，直到 EAGAIN/EOF\nint ret = avcodec_send_packet(decoder, packet);\nif (ret == AVERROR(EAGAIN)) { receiveAvailable(decoder, frame); ret = avcodec_send_packet(decoder, packet); }\nif (ret < 0) return reportDecodeError(ret);\nreceiveAvailable(decoder, frame); // receive 到 EAGAIN 后再送下一包\n// demux EOF 后发送空包进入 draining mode\nwhile ((ret = avcodec_send_packet(decoder, nullptr)) == AVERROR(EAGAIN)) receiveAvailable(decoder, frame);\nif (ret >= 0) receiveUntil(decoder, frame, AVERROR_EOF);\n// 最终 av_packet_free、av_frame_free、avcodec_free_context", lang: "cpp", block: true)
+  #raw("// receiveAvailable 循环 receive_frame：处理每帧并 unref，直到 EAGAIN/EOF\nint ret = avcodec_send_packet(decoder, packet);\nif (ret == AVERROR(EAGAIN))\n{\n    receiveAvailable(decoder, frame);\n    ret = avcodec_send_packet(decoder, packet);\n}\nif (ret < 0)\n    return reportDecodeError(ret);\nreceiveAvailable(decoder, frame); // receive 到 EAGAIN 后再送下一包\n// demux EOF 后发送空包进入 draining mode\nwhile ((ret = avcodec_send_packet(decoder, nullptr)) == AVERROR(EAGAIN))\n    receiveAvailable(decoder, frame);\nif (ret >= 0)\n    receiveUntil(decoder, frame, AVERROR_EOF);\n// 最终 av_packet_free、av_frame_free、avcodec_free_context", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -7538,7 +7538,7 @@
   #text("帧率描述帧产生或显示的频率，并不等同 time_base；固定帧率时二者可能有简单关系，可变帧率时应读取每帧时间戳。显示同步通常依据 PTS，解码顺序依据 DTS。换算时使用 av_rescale_q 并处理缺失时间戳和舍入，不要简单用整数除法。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("const AVRational tb = stream->time_base; // 每个 timestamp 的秒数\nif (frame->pts != AV_NOPTS_VALUE) {\n    const double seconds = frame->pts * av_q2d(tb);\n    showAt(seconds); // 展示时钟使用 PTS\n}\nconst AVRational ms{1, 1000};\nconst std::int64_t timestampMs = av_rescale_q(frame->pts, tb, ms);\n// time_base 不是帧率；不同流刻度不可直接比较", lang: "cpp", block: true)
+  #raw("const AVRational tb = stream->time_base; // 每个 timestamp 的秒数\nif (frame->pts != AV_NOPTS_VALUE)\n{\n    const double seconds = frame->pts * av_q2d(tb);\n    showAt(seconds); // 展示时钟使用 PTS\n}\nconst AVRational ms{1, 1000};\nconst std::int64_t timestampMs = av_rescale_q(frame->pts, tb, ms);\n// time_base 不是帧率；不同流刻度不可直接比较", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -7549,7 +7549,7 @@
   #text("含 B 帧时，解码顺序和显示顺序可能不同：解码器要先收到未来参考图像，再输出更早显示的 B 帧，因此带来重排延迟。seek 和分段应从 IDR 或其他真正可恢复的随机访问点开始。普通 I 帧不一定意味着参考状态刷新；GOP、切片和编码参数都会影响错误恢复。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("for (Frame frame : decode_order) decoded.push(decode(frame));\nstd::sort(decoded.begin(), decoded.end(), by_presentation_timestamp); // B帧解码顺序和显示顺序可不同\n// seek从可恢复随机访问点开始，普通I帧未必是IDR", lang: "cpp", block: true)
+  #raw("for (Frame frame : decode_order)\n    decoded.push(decode(frame));\nstd::sort(decoded.begin(), decoded.end(), by_presentation_timestamp); // B帧解码顺序和显示顺序可不同\n// seek从可恢复随机访问点开始，普通I帧未必是IDR", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -7560,7 +7560,7 @@
   #text("两种封装不应只靠改扩展名互换。送入特定解码器、容器或网络协议时，可能要使用 bitstream filter 转换起始码与长度前缀，并把参数集放到对方预期位置。一个画面访问单元可由多个 NAL 组成，单个 NAL 也不一定对应一整帧。解析必须结合容器配置和 codec 规则。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("const AVBitStreamFilter *filter = av_bsf_get_by_name(\"h264_mp4toannexb\");\nAVBSFContext *bsf = nullptr; check(av_bsf_alloc(filter, &bsf));\navcodec_parameters_copy(bsf->par_in, stream->codecpar); bsf->time_base_in = stream->time_base;\ncheck(av_bsf_init(bsf)); // MP4 length-prefix 转 Annex B 起始码\ncheck(av_bsf_send_packet(bsf, packet)); // 成功后 packet 内容所有权转移\nwhile (av_bsf_receive_packet(bsf, filtered) == 0) writeAnnexB(filtered);\nav_packet_free(&packet); av_packet_free(&filtered); av_bsf_free(&bsf);\n// 参数集和 NAL 格式按目标协议/容器选择", lang: "cpp", block: true)
+  #raw("const AVBitStreamFilter* filter = av_bsf_get_by_name(\"h264_mp4toannexb\");\nAVBSFContext* bsf = nullptr;\ncheck(av_bsf_alloc(filter, &bsf));\navcodec_parameters_copy(bsf->par_in, stream->codecpar);\nbsf->time_base_in = stream->time_base;\ncheck(av_bsf_init(bsf)); // MP4 length-prefix 转 Annex B 起始码\ncheck(av_bsf_send_packet(bsf, packet)); // 成功后 packet 内容所有权转移\nwhile (av_bsf_receive_packet(bsf, filtered) == 0)\n    writeAnnexB(filtered);\nav_packet_free(&packet);\nav_packet_free(&filtered);\nav_bsf_free(&bsf);\n// 参数集和 NAL 格式按目标协议/容器选择", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -7582,7 +7582,7 @@
   #text("音画同步时，应把有效 PTS 换算到共同时间单位，再按播放时钟决定呈现时间。PTS 可能缺失为 AV_NOPTS_VALUE，需按协议和媒体类型处理。不能把 PTS 当作文件字节偏移，也不能总用帧号代替时间；DTS 用来满足解码依赖，PTS 负责显示时序。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("if (packet->dts != AV_NOPTS_VALUE)\n    decoderOrderClock = av_rescale_q(packet->dts, stream->time_base, commonTb);\nif (frame->pts != AV_NOPTS_VALUE)\n    displayClock = av_rescale_q(frame->pts, stream->time_base, commonTb);\n// 有 B 帧时解码次序和显示次序不同，DTS/PTS 不同\nif (frame->pts == AV_NOPTS_VALUE) useFallbackTimestamp();\n// 同步音视频前先把有效时间戳换到共同时钟", lang: "cpp", block: true)
+  #raw("if (packet->dts != AV_NOPTS_VALUE)\n    decoderOrderClock = av_rescale_q(packet->dts, stream->time_base, commonTb);\nif (frame->pts != AV_NOPTS_VALUE)\n    displayClock = av_rescale_q(frame->pts, stream->time_base, commonTb);\n// 有 B 帧时解码次序和显示次序不同，DTS/PTS 不同\nif (frame->pts == AV_NOPTS_VALUE)\n    useFallbackTimestamp();\n// 同步音视频前先把有效时间戳换到共同时钟", lang: "cpp", block: true)
 ]
 
 #heading(level: 2, outlined: true)[#text("16.3 图像、音频与视频编码原理", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
@@ -7594,7 +7594,7 @@
   #text("热点明确后再写平台 intrinsic。需要处理数组尾部不足一个向量的元素、对齐要求和不同 CPU 能力；某机器可运行并不代表所有目标设备都有相同指令集。图像工作经常受内存带宽或缓存限制，算术变快未必明显提速。通过基准测试比较真实输入下的耗时、功耗和结果一致性。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("for (std::size_t i = 0; i + simd_width <= pixels.size(); i += simd_width) {\n  auto lane = load_vector(pixels.data() + i); store_vector(mask.data() + i, lane > threshold);\n}\nfor (std::size_t i = vector_end; i < pixels.size(); ++i) mask[i] = pixels[i] > threshold; // 标量处理尾部", lang: "cpp", block: true)
+  #raw("for (std::size_t i = 0; i + simd_width <= pixels.size(); i += simd_width)\n{\n    auto lane = load_vector(pixels.data() + i);\n    store_vector(mask.data() + i, lane > threshold);\n}\nfor (std::size_t i = vector_end; i < pixels.size(); ++i)\n    mask[i] = pixels[i] > threshold; // 标量处理尾部", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -7605,7 +7605,7 @@
   #text("转换必须匹配 BT.601、BT.709 或 BT.2020 等矩阵，并确认 full range 或 limited range。选择错误会导致颜色偏差、黑位灰或白位不准。RGB 本身也有不同色域和传递函数，通道名称相同不代表色彩空间相同。跨编解码器和显示设备时应传播帧色彩元数据，或明确转换到目标色彩空间。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("SwsContext *convert = makeYuvToRgbContext(frame->width, frame->height);\nconst int *coeff = sws_getCoefficients(SWS_CS_ITU709); // 色彩矩阵\nsws_setColorspaceDetails(convert, coeff, sourceIsFullRange,\n                         coeff, 1, 0, 1 << 16, 1 << 16);\nsws_scale(convert, frame->data, frame->linesize, 0, frame->height, rgb, stride);\nshowRgb(rgb); // 亮度/色度通过矩阵组合到 RGB\nsws_freeContext(convert); // 同时检查 source range/full vs limited metadata", lang: "cpp", block: true)
+  #raw("SwsContext* convert = makeYuvToRgbContext(frame->width, frame->height);\nconst int* coeff = sws_getCoefficients(SWS_CS_ITU709); // 色彩矩阵\nsws_setColorspaceDetails(convert, coeff, sourceIsFullRange, coeff, 1, 0, 1 << 16, 1 << 16);\nsws_scale(convert, frame->data, frame->linesize, 0, frame->height, rgb, stride);\nshowRgb(rgb); // 亮度/色度通过矩阵组合到 RGB\nsws_freeContext(convert); // 同时检查 source range/full vs limited metadata", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -7616,7 +7616,7 @@
   #text("实时流不能无期限等待，因为迟到包通常已没有播放价值。拥塞持续时应降码率、缩短或限制队列，并丢弃过期帧；盲目重传会增加排队，令更多数据超时。文件传输则更重视完整性。策略要结合 RTT、GOP 参考关系、业务延迟预算和网络拥塞控制。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("if (packet_is_late(packet, playback_deadline)) discard(packet);\nelse if (can_recover_before_deadline(packet, rtt)) send_nack(packet.sequence);\nif (reference_chain_broken()) request_keyframe(); // 缓冲必须有界，拥塞时降低码率", lang: "cpp", block: true)
+  #raw("if (packet_is_late(packet, playback_deadline))\n    discard(packet);\nelse if (can_recover_before_deadline(packet, rtt))\n    send_nack(packet.sequence);\nif (reference_chain_broken())\n    request_keyframe(); // 缓冲必须有界，拥塞时降低码率", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -7627,7 +7627,7 @@
   #text("直播切片通常希望关键帧对齐分片边界，否则新片段可能要等待前一段参考帧。固定帧率可近似用帧数换算时间；可变帧率应按 PTS 安排。编码器场景切换插入关键帧也会改变实际间隔，需检查输出码流并在目标播放器验证。间隔应按带宽、延迟和恢复目标决定。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("encoder->time_base = AVRational{1, fps};\nencoder->framerate = AVRational{fps, 1};\nencoder->gop_size = fps * targetKeyframeSeconds; // 近似按秒设随机访问间隔\nencoder->max_b_frames = 0; // 低延迟场景可减少重排\nif (avcodec_open2(encoder, codec, nullptr) < 0) reportUnsupportedSettings();\n// 分片直播常要求关键帧与切片边界对齐\n// 短 GOP 提高恢复频率，也可能增加码率", lang: "cpp", block: true)
+  #raw("encoder->time_base = AVRational{1, fps};\nencoder->framerate = AVRational{fps, 1};\nencoder->gop_size = fps * targetKeyframeSeconds; // 近似按秒设随机访问间隔\nencoder->max_b_frames = 0; // 低延迟场景可减少重排\nif (avcodec_open2(encoder, codec, nullptr) < 0)\n    reportUnsupportedSettings();\n// 分片直播常要求关键帧与切片边界对齐\n// 短 GOP 提高恢复频率，也可能增加码率", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -7638,7 +7638,7 @@
   #text("像素尺寸不等于屏幕物理大小或最终显示比例。非方形像素素材还需看 SAR/PAR 和 DAR，播放器可能据此拉伸或缩放。更高分辨率会提高解码、带宽和存储压力，小屏观看不一定明显更清晰。根据画面细节、终端能力、网络预算和显示尺寸选择编码档位。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("encoder->width = 1920; encoder->height = 1080; // 编码样本宽高\nencoder->sample_aspect_ratio = AVRational{1, 1}; // 方形像素\nstream->sample_aspect_ratio = encoder->sample_aspect_ratio;\nstream->avg_frame_rate = AVRational{30, 1};\nconst AVRational dar = av_mul_q(\n    av_mul_q(AVRational{encoder->width, encoder->height}, encoder->sample_aspect_ratio),\n    AVRational{1, 1});\nlogDisplayRatio(av_q2d(dar)); // 还需结合目标显示像素比例\n// p 通常描述逐行扫描；分辨率不等于显示宽高比", lang: "cpp", block: true)
+  #raw("encoder->width = 1920;\nencoder->height = 1080; // 编码样本宽高\nencoder->sample_aspect_ratio = AVRational{1, 1}; // 方形像素\nstream->sample_aspect_ratio = encoder->sample_aspect_ratio;\nstream->avg_frame_rate = AVRational{30, 1};\nconst AVRational dar =\n    av_mul_q(av_mul_q(AVRational{encoder->width, encoder->height}, encoder->sample_aspect_ratio),\n             AVRational{1, 1});\nlogDisplayRatio(av_q2d(dar)); // 还需结合目标显示像素比例\n// p 通常描述逐行扫描；分辨率不等于显示宽高比", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -7649,7 +7649,7 @@
   #text("关闭滤波会改变重建画面及后续参考，不能随意当作播放器美化开关；过度平滑也会丢失纹理。不同编码标准有自己的环路滤波工具。排查块效应时还要区分编码量化、显示缩放和采样导致的边缘问题，先检查码率、量化参数和解码输出，再决定是否需要滤波调整。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("Frame raw = decode_without_loop_filter(packet); Frame filtered = decode_with_deblocking(packet);\ncompare_boundary_artifacts(raw, filtered); // 去块滤波减轻接缝，也可能损失细节", lang: "cpp", block: true)
+  #raw("Frame raw = decode_without_loop_filter(packet);\nFrame filtered = decode_with_deblocking(packet);\ncompare_boundary_artifacts(raw, filtered); // 去块滤波减轻接缝，也可能损失细节", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -7671,7 +7671,7 @@
   #text("容器支持某编码并不代表设备一定能播放它，还需匹配 codec profile、level、像素格式、位深和音频配置。转封装只改容器包装，不能改变压缩编码；若目标容器不支持当前 codec，就必须重新编码或选择其他容器。判断兼容性要查看容器、轨道和具体解码器能力。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("auto streams = probe_media(input_path); // 容器描述轨道，codec描述压缩方式\nif (target.supports(streams)) remux(input_path, output_path); else transcode(input_path, output_path);\n// 先检查profile、像素格式、音频布局和目标播放器能力", lang: "cpp", block: true)
+  #raw("auto streams = probe_media(input_path); // 容器描述轨道，codec描述压缩方式\nif (target.supports(streams))\n    remux(input_path, output_path);\nelse\n    transcode(input_path, output_path);\n// 先检查profile、像素格式、音频布局和目标播放器能力", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -7682,7 +7682,7 @@
   #text("不同文档有时把 SAR 也写作 sample aspect ratio，简称术语会产生混淆，应看上下文。传统电视视频可能用非方形像素，忽略 PAR 会把圆形显示成椭圆，人物也会被拉伸。缩放时既要保留样本尺寸比例，也要维护 DAR 元数据或正确重采样到方形像素。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("const AVRational sar = stream->sample_aspect_ratio.num\n    ? stream->sample_aspect_ratio : AVRational{1, 1};\nconst AVRational display = av_mul_q(\n    AVRational{stream->codecpar->width, stream->codecpar->height}, sar);\nconst double dar = av_q2d(display); // sample aspect × pixel aspect\nsetDisplayViewport(dar);\n// 元数据缺失时可用 1:1 假设；术语 SAR/PAR 在文档间可能混用\n// 不能只凭像素矩形推断最终显示比例", lang: "cpp", block: true)
+  #raw("const AVRational sar =\n    stream->sample_aspect_ratio.num ? stream->sample_aspect_ratio : AVRational{1, 1};\nconst AVRational display =\n    av_mul_q(AVRational{stream->codecpar->width, stream->codecpar->height}, sar);\nconst double dar = av_q2d(display); // sample aspect × pixel aspect\nsetDisplayViewport(dar);\n// 元数据缺失时可用 1:1 假设；术语 SAR/PAR 在文档间可能混用\n// 不能只凭像素矩形推断最终显示比例", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -7693,7 +7693,7 @@
   #text("无损转封装仍受容器能力约束：目标容器可能不支持某 codec、参数集或时间戳形式，需调整配置或转码。转码则涉及解码、可选滤镜和重编码，耗时更多，并可能产生有损失真。无论哪种操作，都要检查输出轨道、时间戳、索引和媒体时长，不能只看命令是否返回成功。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// Demux：av_read_frame 取压缩 packet，不解码像素\nwhile (av_read_frame(input, packet) >= 0) {\n    const int i = packet->stream_index;\n    packet->stream_index = mapInputToOutput(i);\n    av_packet_rescale_ts(packet, input->streams[i]->time_base,\n                         output->streams[packet->stream_index]->time_base);\n    av_interleaved_write_frame(output, packet); // Mux 到新容器\n}\nav_write_trailer(output); // 写索引/尾部元数据\n// stream copy 适用于目标容器支持 codec；按顺序关闭 AVIO/context", lang: "cpp", block: true)
+  #raw("// Demux：av_read_frame 取压缩 packet，不解码像素\nwhile (av_read_frame(input, packet) >= 0)\n{\n    const int i = packet->stream_index;\n    packet->stream_index = mapInputToOutput(i);\n    av_packet_rescale_ts(\n        packet, input->streams[i]->time_base, output->streams[packet->stream_index]->time_base);\n    av_interleaved_write_frame(output, packet); // Mux 到新容器\n}\nav_write_trailer(output); // 写索引/尾部元数据\n// stream copy 适用于目标容器支持 codec；按顺序关闭 AVIO/context", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -7704,7 +7704,7 @@
   #text("解码器用相同的参考帧、运动矢量和预测规则重建残差，因此参考图像必须此前正确解码。帧间预测通常利用时间相似性节省码率，但在场景切换、随机访问或遮挡区域，帧内预测更有用。实际编码器会在多种模式间权衡质量、码率和计算量，残差也不总是非零。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("auto intra = predict_from_reconstructed_neighbors(current_block);\nauto inter = search_reference_frame(current_block, reference_frames);\nauto mode = choose_lowest_rate_distortion(intra, inter); encode_residual(mode);", lang: "cpp", block: true)
+  #raw("auto intra = predict_from_reconstructed_neighbors(current_block);\nauto inter = search_reference_frame(current_block, reference_frames);\nauto mode = choose_lowest_rate_distortion(intra, inter);\nencode_residual(mode);", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -7715,7 +7715,7 @@
   #text("固定帧率可从相邻 PTS 间隔估算；可变帧率素材每帧间隔不同，应以实际时间戳安排播放，标称平均帧率不能替代逐帧时间。提高帧率会增加编码、传输和存储压力，还受快门时间、显示刷新率和解码能力影响。转帧率可能采用丢帧、重复帧或插帧，各方法观感和延迟不同。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("encoder->time_base = AVRational{1, 30}; // 每帧时钟单位\nfor (std::int64_t index = 0; index < frameCount; ++index) {\n    frame->pts = index; // 固定帧率按编码器时间基递增\n    int ret = avcodec_send_frame(encoder, frame);\n    if (ret == AVERROR(EAGAIN)) {\n        receivePacketsUntilEagain(encoder, packet);\n        ret = avcodec_send_frame(encoder, frame); // 重送尚未接收的帧\n    }\n    check(ret); receivePacketsUntilEagain(encoder, packet);\n}\nsendNullFrameRetryingEagain(encoder, packet); // 输入结束后发送空帧\nreceivePacketsUntil(encoder, packet, AVERROR_EOF); // 取完延迟输出\n// 可变帧率按源 PTS 换算；最后释放 packet/frame/context", lang: "cpp", block: true)
+  #raw("encoder->time_base = AVRational{1, 30}; // 每帧时钟单位\nfor (std::int64_t index = 0; index < frameCount; ++index)\n{\n    frame->pts = index; // 固定帧率按编码器时间基递增\n    int ret = avcodec_send_frame(encoder, frame);\n    if (ret == AVERROR(EAGAIN))\n    {\n        receivePacketsUntilEagain(encoder, packet);\n        ret = avcodec_send_frame(encoder, frame); // 重送尚未接收的帧\n    }\n    check(ret);\n    receivePacketsUntilEagain(encoder, packet);\n}\nsendNullFrameRetryingEagain(encoder, packet); // 输入结束后发送空帧\nreceivePacketsUntil(encoder, packet, AVERROR_EOF); // 取完延迟输出\n// 可变帧率按源 PTS 换算；最后释放 packet/frame/context", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -7726,7 +7726,7 @@
   #text("自适应缓冲可依据最近网络变化调节目标延迟，超出播放期限的数据应丢弃，而不是无限等待。抖动缓冲只吸收有限波动，不能解决持续带宽不足、严重拥塞或长时间断网。实时通话要在连续播放与低延迟之间权衡，并结合丢包恢复和拥塞控制来处理。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("jitter_buffer.insert(packet.sequence, packet.timestamp, packet.arrival_time, packet.payload);\nif (jitter_buffer.delay() > max_latency) jitter_buffer.discard_expired();\n// 按播放时钟取帧，缓冲有界；长期带宽不足应降码率", lang: "cpp", block: true)
+  #raw("jitter_buffer.insert(packet.sequence, packet.timestamp, packet.arrival_time, packet.payload);\nif (jitter_buffer.delay() > max_latency)\n    jitter_buffer.discard_expired();\n// 按播放时钟取帧，缓冲有界；长期带宽不足应降码率", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -7737,7 +7737,7 @@
   #text("协议只是链路的一部分，端到端延迟还受采集缓冲、编码器 B 帧和 GOP、服务器转发或转码、网络排队、播放器缓冲与显示影响。推流成功只代表某段传输建立，不代表观众可以播放；还需检查发布权限、服务端状态和拉流地址。端到端时间戳应跨环节一致。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("AVFormatContext *input = nullptr;\nif (avformat_open_input(&input, pullUrl, nullptr, nullptr) < 0) return reportConnectError();\ncheck(avformat_find_stream_info(input, nullptr)); // 拉流后探测轨道\nAVFormatContext *output = createOutput(pushUrl); // 推流输出上下文\ncopyStreamParameters(input, output); // 协议/容器支持对应 codec 时可直通\nwriteHeader(output); pumpPackets(input, output); // 仍需有界缓存\nwriteTrailer(output); closeOutput(output);\navformat_close_input(&input); // 端到端延迟还取决于 GOP/播放缓冲", lang: "cpp", block: true)
+  #raw("AVFormatContext* input = nullptr;\nif (avformat_open_input(&input, pullUrl, nullptr, nullptr) < 0)\n    return reportConnectError();\ncheck(avformat_find_stream_info(input, nullptr)); // 拉流后探测轨道\nAVFormatContext* output = createOutput(pushUrl); // 推流输出上下文\ncopyStreamParameters(input, output); // 协议/容器支持对应 codec 时可直通\nwriteHeader(output);\npumpPackets(input, output); // 仍需有界缓存\nwriteTrailer(output);\ncloseOutput(output);\navformat_close_input(&input); // 端到端延迟还取决于 GOP/播放缓冲", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -7748,7 +7748,7 @@
   #text("处理时要分清压缩 packet、访问单元和 NAL 单元的层次。MP4 packet 还带容器时间戳，不能把一个 packet 直接当成一整帧。送入某些设备或协议前，可能需要 bitstream filter 转换格式，并携带参数集。简单搜索起始码在长度前缀格式中会失败，解析应遵守对应封装规范。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("auto packet = demuxer.read_packet(); auto nals = parse_nals(packet.data, bitstream_format);\nfor (const NalUnit& nal : nals) if (nal.is_sps() || nal.is_pps()) save_parameter_set(nal);\n// 一个packet不保证等于一帧，PTS/DTS和stream index也要保留", lang: "cpp", block: true)
+  #raw("auto packet = demuxer.read_packet();\nauto nals = parse_nals(packet.data, bitstream_format);\nfor (const NalUnit& nal : nals)\n    if (nal.is_sps() || nal.is_pps())\n        save_parameter_set(nal);\n// 一个packet不保证等于一帧，PTS/DTS和stream index也要保留", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -7770,7 +7770,7 @@
   #text("使用硬件前要检查 codec、profile、level、位深、分辨率、驱动和 FFmpeg 构建支持。硬件帧与系统内存之间的上传/下载复制可能抵消收益，滤镜也可能迫使数据回 CPU。评估端到端吞吐、功耗、延迟和错误恢复，不仅看编码帧率；还要处理设备不可用时的回退路径。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("AVHWDeviceType type = AV_HWDEVICE_TYPE_NONE;\nwhile ((type = av_hwdevice_iterate_types(type)) != AV_HWDEVICE_TYPE_NONE)\n    qInfo() << av_hwdevice_get_type_name(type); // 构建包含的接口\nAVBufferRef *device = nullptr;\nif (av_hwdevice_ctx_create(&device, AV_HWDEVICE_TYPE_CUDA, nullptr, nullptr, 0) < 0)\n    return openSoftwareDecoder(); // 设备/驱动不可用就回退\ncodec->hw_device_ctx = av_buffer_ref(device); // codec 持有自己的引用\nav_buffer_unref(&device); // decoder 关闭时释放 codec context\n// get_format 与目标硬件像素格式回调按设备配置", lang: "cpp", block: true)
+  #raw("AVHWDeviceType type = AV_HWDEVICE_TYPE_NONE;\nwhile ((type = av_hwdevice_iterate_types(type)) != AV_HWDEVICE_TYPE_NONE)\n    qInfo() << av_hwdevice_get_type_name(type); // 构建包含的接口\nAVBufferRef* device = nullptr;\nif (av_hwdevice_ctx_create(&device, AV_HWDEVICE_TYPE_CUDA, nullptr, nullptr, 0) < 0)\n    return openSoftwareDecoder(); // 设备/驱动不可用就回退\ncodec->hw_device_ctx = av_buffer_ref(device); // codec 持有自己的引用\nav_buffer_unref(&device); // decoder 关闭时释放 codec context\n// get_format 与目标硬件像素格式回调按设备配置", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -7781,7 +7781,7 @@
   #text("同一 codec 名称也有不同 profile、level、位深、色度抽样和声道配置，目标设备可能只支持其中一部分。文件后缀一般描述容器，不足以说明内部编码。选择 codec 时要考虑压缩效率、授权和专利政策、硬件解码支持、延迟和终端覆盖；应在真实播放器中验证，而不是只看编码器成功。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("auto info = probe_media(input_path);\nif (!decoder.supports(info.video_codec, info.profile, info.bit_depth)) transcode(input_path, output_path);\n// codec是压缩格式，容器只是封装轨道和时间信息", lang: "cpp", block: true)
+  #raw("auto info = probe_media(input_path);\nif (!decoder.supports(info.video_codec, info.profile, info.bit_depth))\n    transcode(input_path, output_path);\n// codec是压缩格式，容器只是封装轨道和时间信息", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -7792,7 +7792,7 @@
   #text("字幕、细线、彩色边缘和色键处理容易暴露色度抽样的模糊或色边。转换时除了选择 4:2:0 等格式，还要正确指定色度采样位置、色彩矩阵和范围；格式名并不能说明全部颜色语义。高质量图形或后期制作可保留 4:4:4，面向大众播放常以更省带宽的 4:2:0 为主。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("PixelFormat format = is_natural_video ? PixelFormat::yuv420p : PixelFormat::yuv444p;\nconvert_colorspace(frame, format, matrix, range); inspect_fine_color_edges(output);\n// 字幕边缘/色键可能需要更高色度分辨率", lang: "cpp", block: true)
+  #raw("PixelFormat format = is_natural_video ? PixelFormat::yuv420p : PixelFormat::yuv444p;\nconvert_colorspace(frame, format, matrix, range);\ninspect_fine_color_edges(output);\n// 字幕边缘/色键可能需要更高色度分辨率", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -7803,7 +7803,7 @@
   #text("降低延迟可缩短编码队列和 GOP、减少或关闭 B 帧、让关键帧配合分片、限制网络队列、缩小抖动缓冲并丢弃过期帧。但每种办法都会影响抗抖动、画质或压缩率。用相同网络条件测延迟分位数和卡顿率，选择符合业务需求的平衡，不应只追求最低单次延迟。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("auto t0 = capture_timestamp(frame); auto t1 = encoded_timestamp(frame);\nauto t2 = received_timestamp(packet); auto t3 = displayed_timestamp(frame);\nreport_latency(t0, t1, t2, t3); // 分段测量采集、编码、传输到显示延迟", lang: "cpp", block: true)
+  #raw("auto t0 = capture_timestamp(frame);\nauto t1 = encoded_timestamp(frame);\nauto t2 = received_timestamp(packet);\nauto t3 = displayed_timestamp(frame);\nreport_latency(t0, t1, t2, t3); // 分段测量采集、编码、传输到显示延迟", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -7814,7 +7814,7 @@
   #text("处理顺序会改变结果，例如先缩放再定位 overlay，与先定位再缩放不同。滤镜还可能引入缓冲和延迟；实时场景要检查帧时间戳和背压。命令行滤镜和 libavfilter API 使用同一图形概念，但资源与错误处理方式不同。先做小样验证滤镜参数，再对完整视频运行。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("AVFilterGraph *graph = avfilter_graph_alloc();\nAVFilterContext *src = nullptr, *scale = nullptr, *sink = nullptr;\nconst AVFilter *scaleFilter = avfilter_get_by_name(\"scale\");\ncheck(avfilter_graph_create_filter(&src, avfilter_get_by_name(\"buffer\"),\n                                   \"in\", bufferArgs, nullptr, graph));\ncheck(avfilter_graph_create_filter(&scale, scaleFilter, \"scale\",\n                                   \"1280:720\", nullptr, graph));\ncheck(avfilter_graph_create_filter(&sink, avfilter_get_by_name(\"buffersink\"),\n                                   \"out\", nullptr, nullptr, graph));\ncheck(avfilter_link(src, 0, scale, 0)); check(avfilter_link(scale, 0, sink, 0));\n// bufferArgs 应含 video_size、pix_fmt、time_base 与 pixel_aspect\ncheck(avfilter_graph_config(graph, nullptr)); // 之后送帧、取处理帧\navfilter_graph_free(&graph); // 每个负值返回都应清理 graph", lang: "cpp", block: true)
+  #raw("AVFilterGraph* graph = avfilter_graph_alloc();\nAVFilterContext *src = nullptr, *scale = nullptr, *sink = nullptr;\nconst AVFilter* scaleFilter = avfilter_get_by_name(\"scale\");\ncheck(avfilter_graph_create_filter(\n    &src, avfilter_get_by_name(\"buffer\"), \"in\", bufferArgs, nullptr, graph));\ncheck(avfilter_graph_create_filter(&scale, scaleFilter, \"scale\", \"1280:720\", nullptr, graph));\ncheck(avfilter_graph_create_filter(\n    &sink, avfilter_get_by_name(\"buffersink\"), \"out\", nullptr, nullptr, graph));\ncheck(avfilter_link(src, 0, scale, 0));\ncheck(avfilter_link(scale, 0, sink, 0));\n// bufferArgs 应含 video_size、pix_fmt、time_base 与 pixel_aspect\ncheck(avfilter_graph_config(graph, nullptr)); // 之后送帧、取处理帧\navfilter_graph_free(&graph); // 每个负值返回都应清理 graph", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -7825,7 +7825,7 @@
   #text("转封装不改变压缩画面，因此无法把 H.264 变成 HEVC；目标容器还必须支持源轨道及 codec 配置。转码会消耗计算资源，重复有损压缩可能累积画质损失。操作前确认需求是换文件包装还是换编码，并检查输出时长、音画同步、字幕轨和目标设备兼容性。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// 转封装：只改 packet 容器，不解码重编码\nwhile (av_read_frame(input, packet) >= 0) {\n    mapStreamAndRescaleTimestamps(packet, input, output);\n    check(av_interleaved_write_frame(output, packet));\n    av_packet_unref(packet);\n}\nav_write_trailer(output); // 源 codec 必须受目标容器支持\n// 转码则是 send_packet -> receive_frame -> filter -> send_frame -> receive_packet\n// 改尺寸/采样格式需要转码，重编码可能引入失真", lang: "cpp", block: true)
+  #raw("// 转封装：只改 packet 容器，不解码重编码\nwhile (av_read_frame(input, packet) >= 0)\n{\n    mapStreamAndRescaleTimestamps(packet, input, output);\n    check(av_interleaved_write_frame(output, packet));\n    av_packet_unref(packet);\n}\nav_write_trailer(output); // 源 codec 必须受目标容器支持\n// 转码则是 send_packet -> receive_frame -> filter -> send_frame -> receive_packet\n// 改尺寸/采样格式需要转码，重编码可能引入失真", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -7836,7 +7836,7 @@
   #text("现代编码可以使用多个参考帧、亚像素位置和更复杂的分区。更精细搜索可提升预测匹配，也会增加编码计算量。遮挡、光照变化和形变无法只靠平移向量完全描述，需要残差或其他预测模式补足。解码器依赖相同参考帧和运动矢量重建预测，若参考链损坏会影响后续画面。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("auto vector = search_motion_vector(current_block, reference_frame);\nauto prediction = interpolate_reference(reference_frame, vector);\nauto residual = current_block - prediction; encode(vector, residual);", lang: "cpp", block: true)
+  #raw("auto vector = search_motion_vector(current_block, reference_frame);\nauto prediction = interpolate_reference(reference_frame, vector);\nauto residual = current_block - prediction;\nencode(vector, residual);", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -7847,7 +7847,7 @@
   #text("帧时长等于每声道样本数除以采样率；采样数不是所有 codec 都固定。较短帧常有更低处理等待，但每帧头部开销相对更大；较长帧提高效率但可能增加交互延迟。解码后音频还要按 frame.nb_samples、声道布局和样本格式处理，不能把编码 packet 字节数直接当采样点数。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("if (frame->sample_rate > 0 && frame->nb_samples > 0) {\n    const AVRational sampleTb{1, frame->sample_rate};\n    const std::int64_t durationUs =\n        av_rescale_q(frame->nb_samples, sampleTb, AVRational{1, 1'000'000});\n    qInfo() << \"audio frame duration us\" << durationUs;\n}\n// nb_samples / sample_rate 才是音频帧时长\n// AAC/Opus 编码块大小不同；PCM 回调块不是 codec 固定帧", lang: "cpp", block: true)
+  #raw("if (frame->sample_rate > 0 && frame->nb_samples > 0)\n{\n    const AVRational sampleTb{1, frame->sample_rate};\n    const std::int64_t durationUs =\n        av_rescale_q(frame->nb_samples, sampleTb, AVRational{1, 1'000'000});\n    qInfo() << \"audio frame duration us\" << durationUs;\n}\n// nb_samples / sample_rate 才是音频帧时长\n// AAC/Opus 编码块大小不同；PCM 回调块不是 codec 固定帧", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -7858,7 +7858,7 @@
   #text("转换器会有滤波延迟，输出样本数也可能与当前输入批次不同；必须累计实际输出，并在流末尾冲刷内部缓存。声道布局转换还涉及混音策略，不能随意复制或丢弃声道。FFmpeg 可用 SwrContext；创建配置和声道布局 API 会随版本演进，按目标版本检查函数签名和所有权。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("SwrContext *swr = nullptr; // 改采样率/格式/声道布局\ncheck(swr_alloc_set_opts2(&swr, &stereo, AV_SAMPLE_FMT_S16, 44100,\n                          &inputLayout, AV_SAMPLE_FMT_FLTP, 48000, 0, nullptr));\ncheck(swr_init(swr)); // 不只是改 AVFrame 的 sample_rate 字段\nint capacity = swr_get_out_samples(swr, input->nb_samples);\nallocateOutput(capacity);\nint produced = swr_convert(swr, out, capacity, input->extended_data, input->nb_samples);\nconsume(out, produced); // 可能有滤波延迟\nint tail = swr_convert(swr, out, capacity, nullptr, 0); // flush 尾样本\nfreeOutput(); av_channel_layout_uninit(&stereo); av_channel_layout_uninit(&inputLayout); swr_free(&swr);", lang: "cpp", block: true)
+  #raw("SwrContext* swr = nullptr; // 改采样率/格式/声道布局\ncheck(swr_alloc_set_opts2(\n    &swr, &stereo, AV_SAMPLE_FMT_S16, 44100, &inputLayout, AV_SAMPLE_FMT_FLTP, 48000, 0, nullptr));\ncheck(swr_init(swr)); // 不只是改 AVFrame 的 sample_rate 字段\nint capacity = swr_get_out_samples(swr, input->nb_samples);\nallocateOutput(capacity);\nint produced = swr_convert(swr, out, capacity, input->extended_data, input->nb_samples);\nconsume(out, produced); // 可能有滤波延迟\nint tail = swr_convert(swr, out, capacity, nullptr, 0); // flush 尾样本\nfreeOutput();\nav_channel_layout_uninit(&stereo);\nav_channel_layout_uninit(&inputLayout);\nswr_free(&swr);", lang: "cpp", block: true)
 ]
 
 #heading(level: 2, outlined: true)[#text("16.4 FFmpeg 编解码 API 流程", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
@@ -7870,7 +7870,7 @@
   #text("编码器输出的 packet 时间戳通常以 codec time_base 表示，写复用器前要换算到输出流 time_base，并用 interleaved_write_frame 保持多流交错。编码器可能缓存或重排帧，所以一次输入不保证立刻得到一个 packet。结束时发送空 frame 冲刷延迟数据，写 trailer，并按创建顺序释放 codec、流和 format 资源。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// drainPackets 收到 EAGAIN 为止：换时基、mux 并 unref packet\ncheck(avcodec_open2(encoder, codec, nullptr)); check(avformat_write_header(output, nullptr));\nfor (std::int64_t i = 0; i < frameCount; ++i) {\n    frame->pts = i; // 按 encoder time_base 递增\n    int ret = avcodec_send_frame(encoder, frame);\n    if (ret == AVERROR(EAGAIN)) {\n        drainPackets(encoder, output, packet);\n        ret = avcodec_send_frame(encoder, frame); // 重送同一帧\n    }\n    check(ret); drainPackets(encoder, output, packet);\n}\nsendNullRetryingEagain(encoder, output, packet); // EOF 发送空帧\nreceiveAndMuxUntil(encoder, output, packet, AVERROR_EOF); av_write_trailer(output);\n// 释放 packet/frame/codec；avio_closep 后 avformat_free_context", lang: "cpp", block: true)
+  #raw("// drainPackets 收到 EAGAIN 为止：换时基、mux 并 unref packet\ncheck(avcodec_open2(encoder, codec, nullptr));\ncheck(avformat_write_header(output, nullptr));\nfor (std::int64_t i = 0; i < frameCount; ++i)\n{\n    frame->pts = i; // 按 encoder time_base 递增\n    int ret = avcodec_send_frame(encoder, frame);\n    if (ret == AVERROR(EAGAIN))\n    {\n        drainPackets(encoder, output, packet);\n        ret = avcodec_send_frame(encoder, frame); // 重送同一帧\n    }\n    check(ret);\n    drainPackets(encoder, output, packet);\n}\nsendNullRetryingEagain(encoder, output, packet); // EOF 发送空帧\nreceiveAndMuxUntil(encoder, output, packet, AVERROR_EOF);\nav_write_trailer(output);\n// 释放 packet/frame/codec；avio_closep 后 avformat_free_context", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -7881,7 +7881,7 @@
   #text("处理每帧后应按引用计数规则 unref，其他轨道的 packet 也需释放或交给各自处理器。读到 EOF 后仍要发送空 packet 冲刷解码器，取完缓存的延迟帧直至 AVERROR_EOF。错误出口要释放 packet、frame、codec context 和 format context。时间戳结合流 time_base 解释，解码顺序不一定是显示顺序。遇到 send 的 EAGAIN 时要先取出输出再重送输入包。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// 已打开输入并用 codecpar 配置 decoder\nwhile (av_read_frame(format, packet) >= 0) {\n    if (packet->stream_index == videoIndex) {\n        int ret = avcodec_send_packet(decoder, packet);\n        if (ret == AVERROR(EAGAIN)) {\n            receiveAvailable(decoder, frame);\n            ret = avcodec_send_packet(decoder, packet); // 重送此包\n        }\n        check(ret); receiveAvailable(decoder, frame); // 到 EAGAIN\n    }\n    av_packet_unref(packet);\n}\nsendNullPacketRetryingEagain(decoder, frame); receiveUntilEof(decoder, frame); // EOF 取完延迟帧\n// av_packet_free、av_frame_free、avcodec_free_context、avformat_close_input", lang: "cpp", block: true)
+  #raw("// 已打开输入并用 codecpar 配置 decoder\nwhile (av_read_frame(format, packet) >= 0)\n{\n    if (packet->stream_index == videoIndex)\n    {\n        int ret = avcodec_send_packet(decoder, packet);\n        if (ret == AVERROR(EAGAIN))\n        {\n            receiveAvailable(decoder, frame);\n            ret = avcodec_send_packet(decoder, packet); // 重送此包\n        }\n        check(ret);\n        receiveAvailable(decoder, frame); // 到 EAGAIN\n    }\n    av_packet_unref(packet);\n}\nsendNullPacketRetryingEagain(decoder, frame);\nreceiveUntilEof(decoder, frame); // EOF 取完延迟帧\n// av_packet_free、av_frame_free、avcodec_free_context、avformat_close_input", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -7892,7 +7892,7 @@
   #text("各阶段之间应使用有界队列并建立背压，防止生产持续快于消费，造成内存和直播延迟不断增长。传递 AVFrame/packet 时按引用计数约定管理所有权，并传递 EOF、错误和取消状态。线程数增加不一定更快，CPU、GPU、内存带宽和磁盘可能先饱和；用端到端吞吐和尾部延迟调整流水线。队列阻塞和停止时的清理顺序也需明确。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// 每个 AVCodecContext 只由所属 stage 线程调用\nAVFrame *handoff = av_frame_clone(decoded); // 为消费者增加缓冲引用\nif (!handoff) reportOutOfMemory();\nif (!boundedQueue.tryPush(handoff)) { av_frame_free(&handoff); dropExpiredFrame(); }\n// queue 有容量上限；满时背压或丢过期实时帧\n// 消费者处理后 av_frame_free(&ownedFrame)，所有权在队列转移\n// EOF/错误也作为显式状态发送，时间戳随 frame 传递", lang: "cpp", block: true)
+  #raw("// 每个 AVCodecContext 只由所属 stage 线程调用\nAVFrame* handoff = av_frame_clone(decoded); // 为消费者增加缓冲引用\nif (!handoff)\n    reportOutOfMemory();\nif (!boundedQueue.tryPush(handoff))\n{\n    av_frame_free(&handoff);\n    dropExpiredFrame();\n}\n// queue 有容量上限；满时背压或丢过期实时帧\n// 消费者处理后 av_frame_free(&ownedFrame)，所有权在队列转移\n// EOF/错误也作为显式状态发送，时间戳随 frame 传递", lang: "cpp", block: true)
 ]
 
 #heading(level: 2, outlined: true)[#text("16.5 命令行处理与播放器功能", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
@@ -7904,7 +7904,7 @@
   #text("若目标容器不支持源 codec，或要改采样率、声道布局、音量，就必须解码后重新编码。抽取结果仍是 AAC 等压缩数据，不是 PCM 波形；需要逐样本处理时还需解码。多音轨文件先用 ffprobe 查看轨道索引和语言，操作后检查命令退出状态、输出轨道和时长。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("AVFormatContext* input = open_input(path); int audio_index = find_stream(input, AVMEDIA_TYPE_AUDIO, language);\nAVStream* audio = input->streams[audio_index]; remux_stream(input, audio, output);\n// copy压缩packet不重编码；目标容器必须支持该codec", lang: "cpp", block: true)
+  #raw("AVFormatContext* input = open_input(path);\nint audio_index = find_stream(input, AVMEDIA_TYPE_AUDIO, language);\nAVStream* audio = input->streams[audio_index];\nremux_stream(input, audio, output);\n// copy压缩packet不重编码；目标容器必须支持该codec", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -7915,7 +7915,7 @@
   #text("各片段的视频和音频流结构、codec、profile、分辨率、参数集与 time_base 应一致，否则可能失败或出现时间戳跳变。不一致时需先统一转码，或解码后用 concat filter 再编码。清单文件的路径也要限制在可信范围，不能接受不受控用户路径造成任意文件读取。实际还应检查输出首尾是否连续。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("std::vector<std::string> inputs{\"part1.mp4\", \"part2.mp4\"};\nif (streams_compatible(inputs)) concat_demux_and_remux(inputs, \"joined.mp4\"); else normalize_and_transcode(inputs, \"joined.mp4\");", lang: "cpp", block: true)
+  #raw("std::vector<std::string> inputs{\"part1.mp4\", \"part2.mp4\"};\nif (streams_compatible(inputs))\n    concat_demux_and_remux(inputs, \"joined.mp4\");\nelse\n    normalize_and_transcode(inputs, \"joined.mp4\");", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -7926,7 +7926,7 @@
   #text("GIF 的透明度支持有限，复杂视频往往不如 MP4/WebM 高效；要结合循环、透明背景和兼容要求选格式。缩放时应保持宽高比，帧率按运动平滑度决定。滤镜参数依 FFmpeg 版本核验，转换后检查文件大小、渐变色带、透明区域和实际播放效果。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("FilterGraph graph; graph.add(\"fps=12,scale=480:-2,palettegen\");\nauto palette = graph.run(input); graph.add(\"paletteuse\"); encode_gif(input, palette, output);\n// 共享调色板可减少闪烁；宽度和时长控制文件大小", lang: "cpp", block: true)
+  #raw("FilterGraph graph;\ngraph.add(\"fps=12,scale=480:-2,palettegen\");\nauto palette = graph.run(input);\ngraph.add(\"paletteuse\");\nencode_gif(input, palette, output);\n// 共享调色板可减少闪烁；宽度和时长控制文件大小", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -7937,7 +7937,7 @@
   #text("终端兼容性决定分辨率、像素格式、profile 和 level；许多播放设备要求 yuv420p，但具体支持仍需验证。转码会消耗算力，也可能产生有损失真。完成后用 ffprobe 检查输出的 codec、尺寸、时长、声道和像素格式，再在目标播放器试播；只换容器时才考虑 -c copy。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("auto decoded = decode(input); auto resized = scale(decoded, target_width, -2);\nauto encoded = encode(resized, Codec::h264, crf=23, PixelFormat::yuv420p);\nwrite_container(encoded, output); // 转码会重新压缩，之后检查实际播放兼容性", lang: "cpp", block: true)
+  #raw("auto decoded = decode(input);\nauto resized = scale(decoded, target_width, -2);\nauto encoded = encode(resized, Codec::h264, crf = 23, PixelFormat::yuv420p);\nwrite_container(encoded, output); // 转码会重新压缩，之后检查实际播放兼容性", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -7948,7 +7948,7 @@
   #text("取指定时刻可用 -ss；放在 -i 前通常由 demuxer 快速跳到附近 seek point。转码解码时，FFmpeg 通常继续解码并丢弃目标前的帧以提高准确性；stream copy 则不一定能定位到精确帧，因为只能从关键帧开始。截图还要检查旋转元数据和颜色方向。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("AVFrame* frame = seek_and_decode(input, stream_index, timestamp);\nif (frame) write_image(frame, \"first.jpg\"); // 精确时刻需解码到目标帧，不是简单复制packet", lang: "cpp", block: true)
+  #raw("AVFrame* frame = seek_and_decode(input, stream_index, timestamp);\nif (frame)\n    write_image(frame, \"first.jpg\"); // 精确时刻需解码到目标帧，不是简单复制packet", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -7959,7 +7959,7 @@
   #text("含透明度的 PNG 要检查 Alpha 通道在处理链中是否保留，JPEG 没有透明度。叠加后还需核对输出分辨率、颜色范围和编码器兼容性；不能一面应用视频滤镜，一面要求视频流 -c:v copy。水印路径和文字若来自用户输入，应采用安全参数传递方式，避免直接拼接 shell 命令。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("FilterGraph graph; graph.add(\"overlay=x=W-w-20:y=H-h-20:enable=between(t,0,10)\");\nauto watermarked = graph.run(video, transparent_logo); encode_video(watermarked, output);", lang: "cpp", block: true)
+  #raw("FilterGraph graph;\ngraph.add(\"overlay=x=W-w-20:y=H-h-20:enable=between(t,0,10)\");\nauto watermarked = graph.run(video, transparent_logo);\nencode_video(watermarked, output);", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -7981,7 +7981,7 @@
   #text("“零拷贝”仍需要说明缓冲区的所有者、同步时机和最后引用释放时机。GPU 仍在使用时不能复用帧；下游不支持同一硬件格式也可能触发隐式下载。使用有界队列避免长时间持有大量帧。性能改动要对比端到端延迟、内存峰值和吞吐，不能只测一个 memcpy。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("AVFrame *shared = av_frame_clone(decoded); // 新 header，共享引用计数 AVBuffer\nif (!shared) return reportOutOfMemory();\nenqueueOwnedFrame(shared); // 队列拿到所有权，消费后 av_frame_free(&frame)\n// 修改前对共享帧调用 av_frame_make_writable()，可能触发复制\nif (av_frame_make_writable(shared) < 0) reportOutOfMemory();\nav_frame_free(&shared); // 释放本端引用，其他持有者仍有效\n// 零拷贝仍需同步、格式兼容和最后引用释放时机", lang: "cpp", block: true)
+  #raw("AVFrame* shared = av_frame_clone(decoded); // 新 header，共享引用计数 AVBuffer\nif (!shared)\n    return reportOutOfMemory();\nenqueueOwnedFrame(shared); // 队列拿到所有权，消费后 av_frame_free(&frame)\n// 修改前对共享帧调用 av_frame_make_writable()，可能触发复制\nif (av_frame_make_writable(shared) < 0)\n    reportOutOfMemory();\nav_frame_free(&shared); // 释放本端引用，其他持有者仍有效\n// 零拷贝仍需同步、格式兼容和最后引用释放时机", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -7992,7 +7992,7 @@
   #text("应同时检查 ffprobe 退出码和错误输出：正常没有音频流，与文件损坏、无权限或探测失败不同。若选择默认音轨，还要考虑 disposition、语言和用户偏好，不能固定取第一个索引。网络输入可能需先完成流信息探测才能确定所有轨道。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("AVFormatContext *format = nullptr;\nif (avformat_open_input(&format, path, nullptr, nullptr) < 0) return reportProbeError();\nconst int probe = avformat_find_stream_info(format, nullptr);\nif (probe < 0) { avformat_close_input(&format); return reportProbeError(); }\nconst int audio = av_find_best_stream(format, AVMEDIA_TYPE_AUDIO, -1, -1, nullptr, 0);\nif (audio == AVERROR_STREAM_NOT_FOUND) reportNoAudioTrack();\nelse if (audio < 0) reportProbeError();\nelse reportAudioStream(format->streams[audio]);\navformat_close_input(&format); // 无音轨与探测失败是不同状态", lang: "cpp", block: true)
+  #raw("AVFormatContext* format = nullptr;\nif (avformat_open_input(&format, path, nullptr, nullptr) < 0)\n    return reportProbeError();\nconst int probe = avformat_find_stream_info(format, nullptr);\nif (probe < 0)\n{\n    avformat_close_input(&format);\n    return reportProbeError();\n}\nconst int audio = av_find_best_stream(format, AVMEDIA_TYPE_AUDIO, -1, -1, nullptr, 0);\nif (audio == AVERROR_STREAM_NOT_FOUND)\n    reportNoAudioTrack();\nelse if (audio < 0)\n    reportProbeError();\nelse\n    reportAudioStream(format->streams[audio]);\navformat_close_input(&format); // 无音轨与探测失败是不同状态", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -8003,7 +8003,7 @@
   #text("坐标、字号和边距要按输出画面分辨率设计。先缩放再叠加与先叠加再缩放，水印大小和位置效果不同。滤镜可能改变像素格式、颜色范围和时间戳，需检查输出。不要直接把用户输入的文字、字体路径拼成 shell 命令，以免引号和特殊字符改变命令含义。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("DrawTextOptions options{.font_file=font_path, .alpha=0.75, .x=right_margin, .y=bottom_margin};\nFilterGraph graph; graph.add_drawtext(options); encode_video(graph.run(frame), output);\n// 抽帧核对中文字体、透明度和位置，并确认音画时间戳不变", lang: "cpp", block: true)
+  #raw("DrawTextOptions options{\n    .font_file = font_path, .alpha = 0.75, .x = right_margin, .y = bottom_margin};\nFilterGraph graph;\ngraph.add_drawtext(options);\nencode_video(graph.run(frame), output);\n// 抽帧核对中文字体、透明度和位置，并确认音画时间戳不变", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -8014,7 +8014,7 @@
   #text("烘焙旋转后画面宽高常会互换，显示矩阵也要重置；同时检查 SAR、裁剪框和字幕位置。只删除旋转元数据不会旋转像素。无损转封装可保留矩阵，但目标容器和播放器必须支持。输出后在多个播放器验证方向，避免某个播放器恰好自动纠正而掩盖问题。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("std::size_t sideSize = 0;\nconst std::uint8_t *matrix = av_stream_get_side_data(stream, AV_PKT_DATA_DISPLAYMATRIX, &sideSize);\nif (matrix && sideSize >= 9 * sizeof(std::int32_t)) {\n    const double angle = av_display_rotation_get(\n        reinterpret_cast<const std::int32_t *>(matrix));\n    reportRotation(angle); // 先确认播放器是否已自动应用\n}\n// 转码烘焙 transpose 后清理旧显示矩阵，避免双重旋转\n// side data 指针属于 stream；复制前不要跨其生命周期保存", lang: "cpp", block: true)
+  #raw("std::size_t sideSize = 0;\nconst std::uint8_t* matrix = av_stream_get_side_data(stream, AV_PKT_DATA_DISPLAYMATRIX, &sideSize);\nif (matrix && sideSize >= 9 * sizeof(std::int32_t))\n{\n    const double angle = av_display_rotation_get(reinterpret_cast<const std::int32_t*>(matrix));\n    reportRotation(angle); // 先确认播放器是否已自动应用\n}\n// 转码烘焙 transpose 后清理旧显示矩阵，避免双重旋转\n// side data 指针属于 stream；复制前不要跨其生命周期保存", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -8025,7 +8025,7 @@
   #text("音频回调有严格实时期限，不能在回调里等待磁盘、网络或互斥锁，也不要临时分配大量内存。使用有界环形缓冲区把读取线程与回调解耦；缓冲不足时输出静音或按策略处理。进度按已消费的每声道样本数除以采样率估算，文件字节数还受位深和声道影响。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("while (audio_source.read(pcm_ring.write_span())) pcm_ring.commit_written(samples);\nvoid audio_callback(float* out, std::size_t n) { pcm_ring.read_or_silence(out, n); }\n// 音频回调不做磁盘I/O或动态分配；播放秒数=已消费样本数/采样率", lang: "cpp", block: true)
+  #raw("while (audio_source.read(pcm_ring.write_span()))\n    pcm_ring.commit_written(samples);\nvoid audio_callback(float* out, std::size_t n)\n{\n    pcm_ring.read_or_silence(out, n);\n}\n// 音频回调不做磁盘I/O或动态分配；播放秒数=已消费样本数/采样率", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -8047,7 +8047,7 @@
   #text("stream copy 不能保证跳到任意精确帧，因为压缩帧之间有依赖，需要从随机访问点开始。批量按 fps 抽帧应控制输出数量和文件命名，避免大量图像占满磁盘。还要考虑旋转元数据、色彩范围与 JPEG 有损转换。截图工具应检查输出状态并向用户说明实际取帧时刻。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("const std::int64_t target = av_rescale_q(targetUs, AVRational{1, 1'000'000}, stream->time_base);\ndecoder->pkt_timebase = stream->time_base; // 解码输出时间戳刻度\ncheck(av_seek_frame(format, videoIndex, target, AVSEEK_FLAG_BACKWARD)); // 先到前一随机访问点\navcodec_flush_buffers(decoder); // 丢弃 seek 前解码器状态\nwhile (av_read_frame(format, packet) >= 0) {\n    if (packet->stream_index == videoIndex) decodeAndCheckPts(packet, target, frame);\n    av_packet_unref(packet); if (gotFrameAtOrAfterTarget) break;\n}\nconvertFrameToRgb(frame, image); // 保存单帧\n// 输入侧 seek 后还要解码到目标；失败出口释放 packet/frame/context", lang: "cpp", block: true)
+  #raw("const std::int64_t target = av_rescale_q(targetUs, AVRational{1, 1'000'000}, stream->time_base);\ndecoder->pkt_timebase = stream->time_base; // 解码输出时间戳刻度\ncheck(av_seek_frame(format, videoIndex, target, AVSEEK_FLAG_BACKWARD)); // 先到前一随机访问点\navcodec_flush_buffers(decoder); // 丢弃 seek 前解码器状态\nwhile (av_read_frame(format, packet) >= 0)\n{\n    if (packet->stream_index == videoIndex)\n        decodeAndCheckPts(packet, target, frame);\n    av_packet_unref(packet);\n    if (gotFrameAtOrAfterTarget)\n        break;\n}\nconvertFrameToRgb(frame, image); // 保存单帧\n// 输入侧 seek 后还要解码到目标；失败出口释放 packet/frame/context", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -8058,7 +8058,7 @@
   #text("倍速时解码器和网络要持续供给数据，队列需有上限，否则会积累延迟和内存。暂停、seek 和切换倍率时要重设播放时钟基准，避免音画突然跳动。倍率变化也会影响音频处理和丢帧策略，应实测低倍率、高倍率和数据欠载。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("clock.set_rate(playback_speed); decoder.set_drop_policy(DropLateFrames::enabled);\naudio_filter = atempo_chain(playback_speed); // 简单重采样会改变音调\n// seek/暂停后重置时钟基准，队列长度保持有界", lang: "cpp", block: true)
+  #raw("clock.set_rate(playback_speed);\ndecoder.set_drop_policy(DropLateFrames::enabled);\naudio_filter = atempo_chain(playback_speed); // 简单重采样会改变音调\n// seek/暂停后重置时钟基准，队列长度保持有界", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -8069,7 +8069,7 @@
   #text("快退不能简单按文件字节反向读取，因为压缩帧依赖前序参考。常见办法是反复 seek 到较早关键帧，正向解码目标 GOP，把帧缓存后反序显示；长 GOP 和高分辨率会增加等待与内存。快退时通常静音或单独处理音频，并限制缓存大小。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("const std::int64_t target = av_rescale_q(seekUs, AVRational{1, 1'000'000}, stream->time_base);\ndecoder->pkt_timebase = stream->time_base; // 解码输出时间戳刻度\ncheck(av_seek_frame(format, videoIndex, target, AVSEEK_FLAG_BACKWARD)); // seek 到关键帧附近\navcodec_flush_buffers(decoder); // 清空旧参考帧\nwhile (readVideoPacket(packet)) {\n    sendAndReceiveAll(decoder, packet, frame);\n    if (frame->pts != AV_NOPTS_VALUE && frame->pts >= target) display(frame);\n    av_packet_unref(packet); if (targetFrameReady) break;\n}\n// 快退可重复 seek 到更早 GOP 并缓存帧；直接跳 packet 会破坏依赖链\n// seek 后同步音频时钟；最终 free packet/frame/codec/format", lang: "cpp", block: true)
+  #raw("const std::int64_t target = av_rescale_q(seekUs, AVRational{1, 1'000'000}, stream->time_base);\ndecoder->pkt_timebase = stream->time_base; // 解码输出时间戳刻度\ncheck(av_seek_frame(format, videoIndex, target, AVSEEK_FLAG_BACKWARD)); // seek 到关键帧附近\navcodec_flush_buffers(decoder); // 清空旧参考帧\nwhile (readVideoPacket(packet))\n{\n    sendAndReceiveAll(decoder, packet, frame);\n    if (frame->pts != AV_NOPTS_VALUE && frame->pts >= target)\n        display(frame);\n    av_packet_unref(packet);\n    if (targetFrameReady)\n        break;\n}\n// 快退可重复 seek 到更早 GOP 并缓存帧；直接跳 packet 会破坏依赖链\n// seek 后同步音频时钟；最终 free packet/frame/codec/format", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -8080,7 +8080,7 @@
   #text("参数不同的片段应解码后经 concat filter 拼接，先统一画面尺寸、帧率、像素格式和 SAR，并统一音频采样率、格式及声道布局，再编码输出。否则滤镜输入可能不兼容或产生时间跳变。分段首尾还要检查画面、声音和字幕；转码时应重新计算连续 PTS。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("if (all_stream_parameters_match(segments)) remux_concat(segments, output); // copy仅复用packet\nelse { auto frames = decode_all(segments); auto normalized = normalize(frames); encode_concat(normalized, output); }", lang: "cpp", block: true)
+  #raw("if (all_stream_parameters_match(segments))\n    remux_concat(segments, output); // copy仅复用packet\nelse\n{\n    auto frames = decode_all(segments);\n    auto normalized = normalize(frames);\n    encode_concat(normalized, output);\n}", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -8091,7 +8091,7 @@
   #text("若文件已有旋转显示矩阵，先决定保留元数据还是把旋转烘焙到像素，避免重复变换。像素旋转会改变宽高，需检查 SAR、字幕和水印坐标；滤镜处理需要重新编码视频。完成后核对输出尺寸、播放方向和音频同步，不同播放器对显示矩阵的支持可能不同。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("auto rotation = probe_display_matrix(input); auto rotated = transpose(frame, rotation);\nclear_display_matrix(output); // 像素已旋转时清除旧矩阵，避免播放器旋转两次", lang: "cpp", block: true)
+  #raw("auto rotation = probe_display_matrix(input);\nauto rotated = transpose(frame, rotation);\nclear_display_matrix(output); // 像素已旋转时清除旧矩阵，避免播放器旋转两次", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -8102,7 +8102,7 @@
   #text("颜色转换和缩放要匹配 BT.601/709 等矩阵及 full/limited range，像素格式标签应与真实数据一致。更改尺寸或像素格式一般要重新编码。插值方式影响速度和锐度，实时处理应测帧率。输出后用 ffprobe 检查尺寸、SAR 和格式，并检查色彩和几何比例。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("auto scaled = scale(frame, target_width, keep_aspect_ratio=true);\nauto canvas = pad(scaled, canvas_width, canvas_height); // 保留比例并补边", lang: "cpp", block: true)
+  #raw("auto scaled = scale(frame, target_width, keep_aspect_ratio = true);\nauto canvas = pad(scaled, canvas_width, canvas_height); // 保留比例并补边", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -8113,7 +8113,7 @@
   #text("4:2:0 等色度抽样常要求裁剪边界对齐到偶数，否则色度平面定位可能不兼容。裁剪会改变像素尺寸，视频通常需要重编码；若要保持显示比例还可能需补边或更新 SAR。裁剪前预览框位置，输出后确认没有误去字幕、台标或关键动作。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("Crop crop{.x=x, .y=y, .width=width, .height=height};\nif (crop.inside(frame.bounds()) && crop.aligned_for(PixelFormat::yuv420p)) encode_video(apply_crop(frame, crop), output);", lang: "cpp", block: true)
+  #raw("Crop crop{.x = x, .y = y, .width = width, .height = height};\nif (crop.inside(frame.bounds()) && crop.aligned_for(PixelFormat::yuv420p))\n    encode_video(apply_crop(frame, crop), output);", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -8124,7 +8124,7 @@
   #text("源 codec、采样率、time_base 或目标容器不兼容时需转码。两个输入的起始时间可能不同，必须检查时间戳偏移，避免音画不同步。复制 packet 不会修复损坏数据或改变编码。操作后探测输出轨道数和时长，并在播放器验证音画起点、结尾和同步。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("auto video = select_stream(video_input, MediaType::video); auto audio = select_stream(audio_input, MediaType::audio);\nif (compatible(video.codec, audio.codec, container)) mux(video, audio, output);\n// 有时间戳偏差时先校正音频起点，再检查最终同步", lang: "cpp", block: true)
+  #raw("auto video = select_stream(video_input, MediaType::video);\nauto audio = select_stream(audio_input, MediaType::audio);\nif (compatible(video.codec, audio.codec, container))\n    mux(video, audio, output);\n// 有时间戳偏差时先校正音频起点，再检查最终同步", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -8135,7 +8135,7 @@
   #text("codec 的 key_frame 标记不总等于 IDR 或完全独立的随机访问点；开放 GOP 可能有前置依赖。若用于切片或错误恢复，应确认编码结构、参数集和目标解码器能从此处开始。批量提取要限制数量和输出目录，避免长视频写出大量图片。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("// receive_frame 成功后处理，返回 EAGAIN 时送下一 packet\nwhile (decodeNextFrame(decoder, format, packet, frame)) {\n    if (frame->flags & AV_FRAME_FLAG_KEY) { // 帧标记不一定等于 H.264 IDR\n        convertToImage(frame, image);\n        saveImage(image, makeTimestampedPath(frame->pts));\n    }\n    av_frame_unref(frame); // 接收后复用前释放引用\n}\n// 真正随机访问还需 seek 到关键帧并解码依赖帧\n// 结束时 free frame/packet/codec/format", lang: "cpp", block: true)
+  #raw("// receive_frame 成功后处理，返回 EAGAIN 时送下一 packet\nwhile (decodeNextFrame(decoder, format, packet, frame))\n{\n    if (frame->flags & AV_FRAME_FLAG_KEY)\n    { // 帧标记不一定等于 H.264 IDR\n        convertToImage(frame, image);\n        saveImage(image, makeTimestampedPath(frame->pts));\n    }\n    av_frame_unref(frame); // 接收后复用前释放引用\n}\n// 真正随机访问还需 seek 到关键帧并解码依赖帧\n// 结束时 free frame/packet/codec/format", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -8146,7 +8146,7 @@
   #text("AVFrame 实际分配通常按每个 plane 的 linesize 乘以平面高度计算，stride 对齐会增加空间。奇数宽高时色度尺寸要按格式向上取整；硬件帧还可能位于专用显存，CPU 地址空间可见字节数不一定代表设备实际占用。逐行访问和分配时应读取实际帧参数，不能只用可见图像大小推断；计算值也不含播放器缓存和其他工作区。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("const std::size_t visibleY = static_cast<std::size_t>(width) * height;\nconst std::size_t chromaW = (width + 1) / 2, chromaH = (height + 1) / 2;\nconst std::size_t visible = visibleY + 2 * chromaW * chromaH; // Y/U/V\nconst std::size_t allocated =\n    static_cast<std::size_t>(std::abs(frame->linesize[0])) * height\n  + static_cast<std::size_t>(std::abs(frame->linesize[1])) * chromaH\n  + static_cast<std::size_t>(std::abs(frame->linesize[2])) * chromaH;\n// linesize 含对齐；这里只是可见容量 vs 常规 planar 分配估算", lang: "cpp", block: true)
+  #raw("const std::size_t visibleY = static_cast<std::size_t>(width) * height;\nconst std::size_t chromaW = (width + 1) / 2, chromaH = (height + 1) / 2;\nconst std::size_t visible = visibleY + 2 * chromaW * chromaH; // Y/U/V\nconst std::size_t allocated = static_cast<std::size_t>(std::abs(frame->linesize[0])) * height +\n                              static_cast<std::size_t>(std::abs(frame->linesize[1])) * chromaH +\n                              static_cast<std::size_t>(std::abs(frame->linesize[2])) * chromaH;\n// linesize 含对齐；这里只是可见容量 vs 常规 planar 分配估算", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -8157,7 +8157,7 @@
   #text("duration 与 bit_rate 可能缺失、估算或代表整个容器，并不一定等于某条流的精确值；可变帧率视频的 r_frame_rate 也未必是实际平均帧率。探测时检查命令退出码和 JSON 解析错误。编辑和同步若要求精确，应依据 packet/frame 时间戳，而非只依赖容器摘要。网络流有时需多读数据才能得到完整信息。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("AVFormatContext *format = nullptr;\nif (avformat_open_input(&format, path, nullptr, nullptr) < 0) return reportOpenError();\nif (avformat_find_stream_info(format, nullptr) < 0) {\n    avformat_close_input(&format); return reportProbeError();\n}\nqInfo() << \"duration us\" << format->duration; // 单位 AV_TIME_BASE\nfor (unsigned i = 0; i < format->nb_streams; ++i) {\n    const AVStream *s = format->streams[i];\n    qInfo() << s->codecpar->codec_type << s->codecpar->width << s->codecpar->height\n            << s->avg_frame_rate.num << s->avg_frame_rate.den;\n}\navformat_close_input(&format); // duration/bitrate 可能缺失或估算", lang: "cpp", block: true)
+  #raw("AVFormatContext* format = nullptr;\nif (avformat_open_input(&format, path, nullptr, nullptr) < 0)\n    return reportOpenError();\nif (avformat_find_stream_info(format, nullptr) < 0)\n{\n    avformat_close_input(&format);\n    return reportProbeError();\n}\nqInfo() << \"duration us\" << format->duration; // 单位 AV_TIME_BASE\nfor (unsigned i = 0; i < format->nb_streams; ++i)\n{\n    const AVStream* s = format->streams[i];\n    qInfo() << s->codecpar->codec_type << s->codecpar->width << s->codecpar->height\n            << s->avg_frame_rate.num << s->avg_frame_rate.den;\n}\navformat_close_input(&format); // duration/bitrate 可能缺失或估算", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -8168,7 +8168,7 @@
   #text("ffmpeg -encoders、-decoders、-hwaccels 列表可作初筛，但出现接口名不代表设备一定能建立上下文。硬件帧与软件滤镜之间可能触发昂贵复制。应在目标机器创建真实设备、处理代表视频，并测吞吐、功耗、画质和失败回退，不要只在开发机推断。同一接口在不同代芯片上的能力也可能不同，因此以目标设备实测作为依据。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("AVHWDeviceType type = AV_HWDEVICE_TYPE_NONE;\nwhile ((type = av_hwdevice_iterate_types(type)) != AV_HWDEVICE_TYPE_NONE) {\n    qInfo() << av_hwdevice_get_type_name(type); // 当前构建可识别的后端\n}\n// 再按 codec 的 AVCodecHWConfig 选择像素格式和设备类型\n// NVENC/VideoToolbox/VA-API 等能力由硬件、驱动、构建共同决定\n// 实际创建设备并解码验证；失败时回退软件路径", lang: "cpp", block: true)
+  #raw("AVHWDeviceType type = AV_HWDEVICE_TYPE_NONE;\nwhile ((type = av_hwdevice_iterate_types(type)) != AV_HWDEVICE_TYPE_NONE)\n{\n    qInfo() << av_hwdevice_get_type_name(type); // 当前构建可识别的后端\n}\n// 再按 codec 的 AVCodecHWConfig 选择像素格式和设备类型\n// NVENC/VideoToolbox/VA-API 等能力由硬件、驱动、构建共同决定\n// 实际创建设备并解码验证；失败时回退软件路径", lang: "cpp", block: true)
 ]
 
 #heading(level: 2, outlined: true)[#text("16.6 格式、性能与播放质量", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
@@ -8180,7 +8180,7 @@
   #text("容器不决定内部采用什么视频或音频 codec，也不保证播放器支持其中每种 profile、字幕类型与参数。选择时考虑目标终端、是否需要多音轨字幕、点播或直播、索引恢复能力。容器转换有时只需转封装；若 codec 不兼容则要转码，并评估处理耗时和画质损失。还要确认目标平台的字幕与流式播放实现。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("Container target = choose_container(player, tracks, subtitles);\nif (target.supports_all(tracks)) remux(tracks, target); else transcode_unsupported_tracks(tracks, target);", lang: "cpp", block: true)
+  #raw("Container target = choose_container(player, tracks, subtitles);\nif (target.supports_all(tracks))\n    remux(tracks, target);\nelse\n    transcode_unsupported_tracks(tracks, target);", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -8191,7 +8191,7 @@
   #text("质量会受编码器实现、码率、采样率、声道布局和输入素材影响，同码率下也没有适用于所有场景的固定排序。还要核对目标播放器和容器是否支持目标 codec。若追求存档或后期制作，应使用无损或未压缩格式，不要把高码率有损文件称为无损。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("for (Codec codec : {Codec::aac, Codec::mp3, Codec::opus}) {\n  auto sample = encode(source_audio, codec, bitrate); compare_quality_size_and_cpu(sample);\n} // 语音与音乐、目标终端兼容性共同决定选择", lang: "cpp", block: true)
+  #raw("for (Codec codec : {Codec::aac, Codec::mp3, Codec::opus})\n{\n    auto sample = encode(source_audio, codec, bitrate);\n    compare_quality_size_and_cpu(sample);\n} // 语音与音乐、目标终端兼容性共同决定选择", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -8202,7 +8202,7 @@
   #text("可结合重传、FEC 或丢弃过期帧，但恢复策略必须符合剩余播放时限。TCP 会可靠重传，却可能因队头阻塞加剧时延；UDP 延迟策略灵活，但需要应用协议检测丢包与拥塞。服务端和播放器缓冲也会影响结果，需监测端到端延迟和卡顿率。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("if (network.queue_age() > max_latency) encoder.set_bitrate(lower_rate);\nif (packet.is_past_play_deadline()) drop(packet); report_loss_rtt_and_stall();\n// 发送队列有界；按互动延迟要求调码率、重传或FEC", lang: "cpp", block: true)
+  #raw("if (network.queue_age() > max_latency)\n    encoder.set_bitrate(lower_rate);\nif (packet.is_past_play_deadline())\n    drop(packet);\nreport_loss_rtt_and_stall();\n// 发送队列有界；按互动延迟要求调码率、重传或FEC", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -8213,7 +8213,7 @@
   #text("CRF 是部分编码器提供的恒定质量控制，码率会随内容改变，不能承诺固定文件大小或峰值带宽。编码器之间对 CBR、VBR、ABR 和 CRF 的名称及参数含义可能不同，还会有 VBV 等峰值限制设置。根据分发平台、带宽和存储预算选择，并测量平均与峰值码率。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("encoder->bit_rate = targetBps; // 目标平均速率\nencoder->rc_max_rate = peakBps; encoder->rc_buffer_size = bufferBits; // CBR/VBV 类约束\nav_opt_set(encoder->priv_data, \"crf\", \"23\", 0); // 某些编码器的质量模式\nif (avcodec_open2(encoder, codec, nullptr) < 0) return reportOptionError();\nwritePacketsUntilFlush(encoder);\n// CRF 不保证固定文件大小；选项名称/范围依具体编码器\n// 同一模式还受分辨率、场景复杂度和编码器实现影响", lang: "cpp", block: true)
+  #raw("encoder->bit_rate = targetBps; // 目标平均速率\nencoder->rc_max_rate = peakBps;\nencoder->rc_buffer_size = bufferBits; // CBR/VBV 类约束\nav_opt_set(encoder->priv_data, \"crf\", \"23\", 0); // 某些编码器的质量模式\nif (avcodec_open2(encoder, codec, nullptr) < 0)\n    return reportOptionError();\nwritePacketsUntilFlush(encoder);\n// CRF 不保证固定文件大小；选项名称/范围依具体编码器\n// 同一模式还受分辨率、场景复杂度和编码器实现影响", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -8224,7 +8224,7 @@
   #text("逐阶段对比压缩 packet、解码后的 AVFrame 和渲染纹理，记录错误日志、关键帧恢复点和尺寸。YUV420P、NV12/NV21 平面顺序混淆会呈现明显色块或偏色。花屏只在丢包后出现时，等待随机访问点或请求关键帧可能恢复；先区分网络、解码和显示问题再修复。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("if (frame->format == AV_PIX_FMT_NONE) reportMissingPixelFormat();\nfor (int plane = 0; plane < AV_NUM_DATA_POINTERS; ++plane) {\n    if (frame->data[plane]) qInfo() << plane << frame->linesize[plane];\n}\nif (frame->hw_frames_ctx) {\n    check(av_hwframe_transfer_data(cpuFrame, frame, 0)); // 对比软件可读画面\n}\n// 检查 packet 丢失、参考帧、plane/stride、range 与矩阵\n// 用关键帧恢复并比较软件/硬件解码区分输入与渲染问题", lang: "cpp", block: true)
+  #raw("if (frame->format == AV_PIX_FMT_NONE)\n    reportMissingPixelFormat();\nfor (int plane = 0; plane < AV_NUM_DATA_POINTERS; ++plane)\n{\n    if (frame->data[plane])\n        qInfo() << plane << frame->linesize[plane];\n}\nif (frame->hw_frames_ctx)\n{\n    check(av_hwframe_transfer_data(cpuFrame, frame, 0)); // 对比软件可读画面\n}\n// 检查 packet 丢失、参考帧、plane/stride、range 与矩阵\n// 用关键帧恢复并比较软件/硬件解码区分输入与渲染问题", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -8235,7 +8235,7 @@
   #text("根据测量结果优化对应阶段：启用目标设备支持的硬解、异步 I/O、预读和有界队列，或降低输出尺寸与滤镜成本。欠载时补充数据，过载时丢弃过期帧并降码率。保持音频主时钟和视频同步策略清楚，比较卡顿率、CPU、内存和延迟的变化。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("report(decode_latency(), render_latency(), queue_depth(), frame_pts_drift());\nif (decoder_is_bottleneck()) enable_supported_hardware_decode_or_lower_resolution();\n// buffer变大可能减少卡顿，也会提高端到端延迟", lang: "cpp", block: true)
+  #raw("report(decode_latency(), render_latency(), queue_depth(), frame_pts_drift());\nif (decoder_is_bottleneck())\n    enable_supported_hardware_decode_or_lower_resolution();\n// buffer变大可能减少卡顿，也会提高端到端延迟", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -8246,7 +8246,7 @@
   #text("GOP 的开闭结构、B 帧和 IDR 设置也影响图像依赖。开放 GOP 中边界后的图像可能引用前一段，切片不一定能独立解码。帧率变化时按时间定义间隔更可靠。流媒体应结合分段时长、延迟、抗丢包和带宽测试，而不是只用固定 GOP 数值。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("encoder->gop_size = fps * gopSeconds; // 约每 gopSeconds 秒一次随机访问点\nencoder->max_b_frames = 2; // 预测效率/重排延迟的取舍\nencoder->keyint_min = encoder->gop_size / 2; // 如编码器支持\ncheck(avcodec_open2(encoder, codec, nullptr));\nfor (AVFrame *f : frames) sendFrameAndDrainPackets(encoder, f);\n// 切片边界通常要对齐 IDR/随机访问帧\n// 长 GOP 省关键帧开销但切入/恢复更慢；最后 free codec context", lang: "cpp", block: true)
+  #raw("encoder->gop_size = fps * gopSeconds; // 约每 gopSeconds 秒一次随机访问点\nencoder->max_b_frames = 2; // 预测效率/重排延迟的取舍\nencoder->keyint_min = encoder->gop_size / 2; // 如编码器支持\ncheck(avcodec_open2(encoder, codec, nullptr));\nfor (AVFrame* f : frames)\n    sendFrameAndDrainPackets(encoder, f);\n// 切片边界通常要对齐 IDR/随机访问帧\n// 长 GOP 省关键帧开销但切入/恢复更慢；最后 free codec context", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -8257,7 +8257,7 @@
   #text("编码器和解码器必须支持同一 profile 与熵编码工具。H.264 Baseline 不支持 CABAC，Main 和 High profile 可支持；因此设置编码参数时要检查输出 profile 和目标硬件能力。CABAC 不是任何视频标准都采用的统一名称，也不能简单把压缩率优势等同于画质提升。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("auto symbols = quantize(transform(residual));\nif (profile == Profile::baseline) write_cavlc(symbols); else write_cabac(symbols, context_model);\n// 熵编码可无损还原量化符号；量化本身可能有损", lang: "cpp", block: true)
+  #raw("auto symbols = quantize(transform(residual));\nif (profile == Profile::baseline)\n    write_cavlc(symbols);\nelse\n    write_cabac(symbols, context_model);\n// 熵编码可无损还原量化符号；量化本身可能有损", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -8268,7 +8268,7 @@
   #text("全搜索检查许多候选，效果常较好但成本高；菱形、六边形或金字塔分层搜索通过减少候选加快处理。实际编码器还会结合多参考帧、亚像素细化和率失真代价。运动矢量描述压缩预测关系，不一定对应物体真实运动，遮挡、形变和光照变化都会影响估计。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("auto candidates = fast_motion_search(current_block, reference_frame);\nauto best = minimize_rate_distortion(candidates, lambda);\nauto vector = refine_subpixel(best); encode_motion_vector(vector); // 搜索结果不一定等于真实物体运动", lang: "cpp", block: true)
+  #raw("auto candidates = fast_motion_search(current_block, reference_frame);\nauto best = minimize_rate_distortion(candidates, lambda);\nauto vector = refine_subpixel(best);\nencode_motion_vector(vector); // 搜索结果不一定等于真实物体运动", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -8290,7 +8290,7 @@
   #text("同步栅栏、缓冲区所有权和生命周期仍必须正确管理；消费者完成前不能复用生产者的表面。跨设备、颜色格式转换或软件滤镜常会触发读回和复制，所以“零拷贝”通常是减少某段链路复制，不一定全流程完全没有复制。用性能工具确认真实数据路径，并同时监测队列背压和显存占用。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("AVFrame *handoff = av_frame_clone(decoded); // 共享 AVBufferRef 帧数据\nif (!handoff) return reportOutOfMemory();\nqueue.push(handoff); // 队列持有引用，消费者处理完 av_frame_free\nif (needsWrite) check(av_frame_make_writable(handoff)); // 共享时可能复制\n// 硬件帧贯通还要求相同设备/格式并处理同步 fence\n// 跨设备读回或像素格式转换会重新产生拷贝", lang: "cpp", block: true)
+  #raw("AVFrame* handoff = av_frame_clone(decoded); // 共享 AVBufferRef 帧数据\nif (!handoff)\n    return reportOutOfMemory();\nqueue.push(handoff); // 队列持有引用，消费者处理完 av_frame_free\nif (needsWrite)\n    check(av_frame_make_writable(handoff)); // 共享时可能复制\n// 硬件帧贯通还要求相同设备/格式并处理同步 fence\n// 跨设备读回或像素格式转换会重新产生拷贝", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -8301,7 +8301,7 @@
   #text("读取 AVFrame 时检查 format、ch_layout、nb_samples 和 data/extended_data；不能仅按 channels 推断内存布局。高声道数时额外 plane 还可能使用 extended_data。采样位宽和布局错误会造成噪声、声道交换或越界。进入编码器或重采样器前应确认它支持所选格式，必要时用 libswresample 转换。还要用 linesize/采样数正确计算各 plane 的可读长度。", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("const auto format = static_cast<AVSampleFormat>(frame->format);\nqInfo() << av_get_sample_fmt_name(format) << frame->nb_samples << frame->sample_rate;\nif (av_sample_fmt_is_planar(format)) {\n    for (int ch = 0; ch < frame->ch_layout.nb_channels; ++ch)\n        consumeChannel(frame->extended_data[ch], frame->nb_samples); // 每声道 plane\n} else {\n    consumePacked(frame->data[0], frame->nb_samples * frame->ch_layout.nb_channels);\n}\n// 读取前检查 ch_layout/linesize；planar 和 packed 指针布局不同\n", lang: "cpp", block: true)
+  #raw("const auto format = static_cast<AVSampleFormat>(frame->format);\nqInfo() << av_get_sample_fmt_name(format) << frame->nb_samples << frame->sample_rate;\nif (av_sample_fmt_is_planar(format))\n{\n    for (int ch = 0; ch < frame->ch_layout.nb_channels; ++ch)\n        consumeChannel(frame->extended_data[ch], frame->nb_samples); // 每声道 plane\n}\nelse\n{\n    consumePacked(frame->data[0], frame->nb_samples * frame->ch_layout.nb_channels);\n}\n// 读取前检查 ch_layout/linesize；planar 和 packed 指针布局不同", lang: "cpp", block: true)
 ]
 
 #pagebreak()
@@ -9442,7 +9442,7 @@
   #text("NameNode 用 fsimage 和 edit log 管理元数据；高可用部署的 Standby 跟随共享日志，故障时准备接管。心跳、块报告用于发现故障和恢复副本，纠删码也可减少某些场景存储开销。HDFS 适合大文件顺序高吞吐，不适合大量小文件或低延迟随机改写；副本不是异地备份，也防不了误删、权限错误和站点故障。〔N238〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("for (const auto& block : file_blocks) {\n  auto nodes = namenode.allocate_replicas(block, replication_factor);\n  datanode_pipeline.write(nodes, block); // NameNode管元数据，正文由DataNode传输\n  verify_checksum(block);\n}", lang: "cpp", block: true)
+  #raw("for (const auto& block : file_blocks)\n{\n    auto nodes = namenode.allocate_replicas(block, replication_factor);\n    datanode_pipeline.write(nodes, block); // NameNode管元数据，正文由DataNode传输\n    verify_checksum(block);\n}", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -9465,7 +9465,7 @@
   #text("取消与支付并发时要定义晚到款处理。退款请求超时可能渠道已成功但响应丢失，先按退款流水号查渠道状态，再幂等重试并对账，不能直接重复扣款或报失败。状态变更用 Outbox 驱动下游，使业务状态和事件保持可恢复。〔N127〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("if (payment.valid_for(order) && order.compare_exchange_status(Pending, Paid)) {\n  outbox.append_once(payment.transaction_id, OrderPaid{order.id});\n} else handle_duplicate_or_late_payment(payment); // 超时关单也用条件更新竞争", lang: "cpp", block: true)
+  #raw("if (payment.valid_for(order) && order.compare_exchange_status(Pending, Paid))\n{\n    outbox.append_once(payment.transaction_id, OrderPaid{order.id});\n}\nelse\n    handle_duplicate_or_late_payment(payment); // 超时关单也用条件更新竞争", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -9476,7 +9476,7 @@
   #text("盐可以和摘要同库；可选 pepper 要放在数据库之外的密钥管理位置并安排轮换。登录时由库安全验证，若旧记录算法或成本不足，成功后重新散列并更新。还要做在线限速、泄漏密码检查和安全重置流程；日志、异常及监控不能记录原密码或完整凭据。〔N240〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("auto stored = password_hasher.verify(input, user.password_hash, user.salt, user.cost);\nif (!stored) return unauthorized();\nif (user.cost < current_cost) user.update_hash(password_hasher.hash(input, secure_random_salt()));\ncreate_session(user.id); // 仅保存专用慢哈希，不记录明文密码", lang: "cpp", block: true)
+  #raw("auto stored = password_hasher.verify(input, user.password_hash, user.salt, user.cost);\nif (!stored)\n    return unauthorized();\nif (user.cost < current_cost)\n    user.update_hash(password_hasher.hash(input, secure_random_salt()));\ncreate_session(user.id); // 仅保存专用慢哈希，不记录明文密码", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -9487,7 +9487,7 @@
   #text("OAuth 主要表达授权委托，OIDC 在其上增加身份层。退出时要说明只是关闭业务本地会话，还是还要通知中央会话和其他业务。还要处理短期令牌、密钥轮换、跨站 Cookie 和登录 CSRF；身份提供方登录成功并不代表用户有每个业务的权限。〔N241〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("auto state = secure_random(); auto verifier = pkce_verifier();\nredirect_to_idp(state, pkce_challenge(verifier));\nif (!constant_time_equal(callback.state, state)) reject();\nvalidate_id_token(callback.token, issuer, audience, nonce); // 再建立本地会话", lang: "cpp", block: true)
+  #raw("auto state = secure_random();\nauto verifier = pkce_verifier();\nredirect_to_idp(state, pkce_challenge(verifier));\nif (!constant_time_equal(callback.state, state))\n    reject();\nvalidate_id_token(callback.token, issuer, audience, nonce); // 再建立本地会话", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -9498,7 +9498,7 @@
   #text("签名本身不证明业务权限，也不能自动防重放；需结合 nonce 或服务端状态拒绝重复请求。幂等键负责识别业务重试，应绑定调用者、请求内容及已保存结果。统一版本、错误码、审计及密钥轮换，避免客户端和服务端各自猜规则。〔N242、N243〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("verify_tls_and_signature(request); check_timestamp_and_unused_nonce(request);\nif (!authorization.allows(caller, request.resource, request.action)) return forbidden();\nreturn idempotency_store.execute_once(request.key, request.body_hash, [&] { return handle(request); });", lang: "cpp", block: true)
+  #raw("verify_tls_and_signature(request);\ncheck_timestamp_and_unused_nonce(request);\nif (!authorization.allows(caller, request.resource, request.action))\n    return forbidden();\nreturn idempotency_store.execute_once(request.key,\n                                      request.body_hash,\n                                      [&]\n                                      {\n                                          return handle(request);\n                                      });", lang: "cpp", block: true)
 ]
 
 #heading(level: 2, outlined: true)[#text("19.3 容量、隔离与运维", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
@@ -9510,7 +9510,7 @@
   #text("客户端超时不会自动停止服务器已开始的业务；服务端需检查取消和截止时间，尽早停止无用工作，否则重试可能与原操作并行。连接池、线程池和队列设上限，重试受剩余预算与幂等性约束。用 trace 和压测看尾延迟及饱和点，过载时快速拒绝或降级，避免无界等待。〔N244〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("Deadline deadline = now() + 900ms;\nauto response = dependency.call(request, deadline - 100ms);\nif (now() >= deadline) cancel_downstream();\nrecord_success_rate_and_latency(response, percentile=99); // 把“一秒”变成端到端SLO", lang: "cpp", block: true)
+  #raw("Deadline deadline = now() + 900ms;\nauto response = dependency.call(request, deadline - 100ms);\nif (now() >= deadline)\n    cancel_downstream();\nrecord_success_rate_and_latency(response, percentile = 99); // 把“一秒”变成端到端SLO", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -9521,7 +9521,7 @@
   #text("常规 CPython 主要靠引用计数回收对象，同时检测部分容器构成的不可达引用环；细节会随版本和构建变化。三者都不能回收仍被业务引用的数据，也不保证及时关闭文件、连接等外部资源。使用 finally、with、defer 或显式 Close 等结构化清理资源，而不是等 GC。〔N245、N246、N194〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("File file = open_file(path);\ntry { auto data = file.read_all(); } catch (...) { file.close(); throw; }\n// GC管理内存对象，不替代文件、锁、socket等外部资源的确定性关闭", lang: "cpp", block: true)
+  #raw("File file = open_file(path);\ntry\n{\n    auto data = file.read_all();\n}\ncatch (...)\n{\n    file.close();\n    throw;\n}\n// GC管理内存对象，不替代文件、锁、socket等外部资源的确定性关闭", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -9534,7 +9534,7 @@
   #text("如果只需在 TCP 连接建立时做后端分发，四层通常更直接；若需要按 URL 路径分流或读 HTTP 头，才需要七层解析。两层也可串联部署，各自承担不同决策。〔N247〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("auto backend = layer4_route(destination_ip, destination_port); // TCP/UDP连接粒度\nif (http.host == \"api.example\" && http.path.starts_with(\"/v2\")) backend = api_pool.select();\n// 七层代理解析应用请求；转发来源头只信任受控代理写入的值", lang: "cpp", block: true)
+  #raw("auto backend = layer4_route(destination_ip, destination_port); // TCP/UDP连接粒度\nif (http.host == \"api.example\" && http.path.starts_with(\"/v2\"))\n    backend = api_pool.select();\n// 七层代理解析应用请求；转发来源头只信任受控代理写入的值", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -9545,7 +9545,7 @@
   #text("每个隔离区都要有有限队列、超时和拒绝策略，否则只是把无限积压搬到别处。限流控制进入速率，熔断停止调用故障依赖，舱壁限制影响面，三者可协作但不互相替代。切得太细会浪费空闲资源，应按真实饱和指标分配保底和弹性额度，并用故障注入验证关键路径。〔N248〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("ThreadPool orders{20, 40}; ThreadPool reports{4, 8}; // 独立线程和队列限制故障范围\nif (reports.queue_full()) reject_or_defer(report_request);\n// 若共享数据库已饱和，还需限制关键查询或进一步隔离依赖", lang: "cpp", block: true)
+  #raw("ThreadPool orders{20, 40};\nThreadPool reports{4, 8}; // 独立线程和队列限制故障范围\nif (reports.queue_full())\n    reject_or_defer(report_request);\n// 若共享数据库已饱和，还需限制关键查询或进一步隔离依赖", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -9567,7 +9567,7 @@
   #text("按主键范围核对行数、校验和及业务约束。追平后用写入栅栏、短暂冻结或受控路由确定最终边界，再分阶段放量。回滚必须考虑新库已经接受的写入：要么反向同步，要么设明确回滚窗口和写入策略，不能简单把读开关拨回旧库。〔N250〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("auto snapshot = source.export_consistent_snapshot(); target.import(snapshot.data);\ncdc.apply_from(snapshot.binlog_position); compare_row_counts_and_hashes();\nsource.fence_writes(); cdc.wait_until_caught_up(); router.switch_small_cohort(target);\n// 回滚前必须处理新库切流后的写入，避免丢失", lang: "cpp", block: true)
+  #raw("auto snapshot = source.export_consistent_snapshot();\ntarget.import(snapshot.data);\ncdc.apply_from(snapshot.binlog_position);\ncompare_row_counts_and_hashes();\nsource.fence_writes();\ncdc.wait_until_caught_up();\nrouter.switch_small_cohort(target);\n// 回滚前必须处理新库切流后的写入，避免丢失", lang: "cpp", block: true)
 ]
 
 #heading(level: 2, outlined: true)[#text("19.4 容器编排与平台边界", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
@@ -9596,7 +9596,7 @@
   #text("判断是否是 Agent，不看提示词有多长、界面是不是聊天，也不看有没有调用过一次工具，而要看系统是否能用执行结果决定下一步和何时结束。自主行动范围由宿主授权，不代表拥有无限权限。任务简单且路径固定时，单次模型调用或确定流程往往更清楚。〔A1、A2〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("Goal goal{\"查杭州天气并建议是否带伞\"};\nauto proposal = model.plan(goal, tools);\nif (proposal.calls_tool()) { auto result = host.validate_and_execute(proposal.tool_call()); proposal = model.continue_with(result); }\nreturn proposal.final_text(); // 宿主执行工具，不让模型直接访问环境", lang: "cpp", block: true)
+  #raw("Goal goal{\"查杭州天气并建议是否带伞\"};\nauto proposal = model.plan(goal, tools);\nif (proposal.calls_tool())\n{\n    auto result = host.validate_and_execute(proposal.tool_call());\n    proposal = model.continue_with(result);\n}\nreturn proposal.final_text(); // 宿主执行工具，不让模型直接访问环境", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -9607,7 +9607,7 @@
   #text("运行时还要设步数、费用和时限预算，记录版本并支持中断恢复。完成条件应是可验证的业务结果。快照只能保存已经写入的状态，恢复时仍需核对数据库或外部工具是否已执行，避免重复副作用。会话内循环依赖当前进程；独立调度器则可持久安排下一轮。周期任务还要记录时区、触发时间、任务 ID 和重入策略，处理停机错过的轮次。不同产品的会话及恢复规则各不相同，必须按接口文档核实。〔A3、A4、I111〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("while (!task.done() && task.budget_remaining()) {\n  auto proposal = model.next(task.context()); auto result = host.execute_with_policy(proposal);\n  task.persist(result); if (acceptance_test(task)) task.mark_done();\n} // 恢复前先核对外部操作ID，避免重复副作用", lang: "cpp", block: true)
+  #raw("while (!task.done() && task.budget_remaining())\n{\n    auto proposal = model.next(task.context());\n    auto result = host.execute_with_policy(proposal);\n    task.persist(result);\n    if (acceptance_test(task))\n        task.mark_done();\n} // 恢复前先核对外部操作ID，避免重复副作用", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -9618,7 +9618,7 @@
   #text("链式步骤适合阶段固定的任务，路由适合按类别分流，并行适合互不依赖的输入，生成后校验适合有明确验收标准的输出。流程固定不代表结果必然正确，里面的模型或服务仍会失败。应按路径变化程度、验证成本和维护复杂度选足够简单的结构。〔A5〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("auto address = workflow.validate(order.address);\nauto kind = agent.classify(order.description); // 仅动态决策交给Agent\nif (kind == Kind::refund) return refund_workflow.run(order);\nreturn exchange_workflow.run(order); // 固定步骤仍用普通Workflow", lang: "cpp", block: true)
+  #raw("auto address = workflow.validate(order.address);\nauto kind = agent.classify(order.description); // 仅动态决策交给Agent\nif (kind == Kind::refund)\n    return refund_workflow.run(order);\nreturn exchange_workflow.run(order); // 固定步骤仍用普通Workflow", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -9629,7 +9629,7 @@
   #text("这些方法可以组合，例如先拆计划，执行时用 ReAct，并在阶段末根据测试校验。反思模型可能重复原来的错误，应优先引入独立证据并限制修订次数。实现只需保存结构化行动、观察和结果，不必要求模型展示完整的隐含推理。〔A2、A6〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("Plan plan = planner.create(goal);\nfor (Step& step : plan) { auto observation = tools.execute(step.action); if (!tests.pass(observation)) plan.replan(step, observation); }\n// Reflection要依据测试或工具证据，不能只让模型自我确认", lang: "cpp", block: true)
+  #raw("Plan plan = planner.create(goal);\nfor (Step& step : plan)\n{\n    auto observation = tools.execute(step.action);\n    if (!tests.pass(observation))\n        plan.replan(step, observation);\n}\n// Reflection要依据测试或工具证据，不能只让模型自我确认", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -9640,7 +9640,7 @@
   #text("CoT 组织中间推理，ToT 搜索多个候选并回退，GoT 允许中间结果复用和合并；这些表示思考组织方式，不代表执行成功。编程任务可按可运行的业务增量推进，并验证跨模块集成，避免每个子任务单独通过却整体不可用。〔A7、A8、A9〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("Task validate = make_task(\"定义登录契约\");\nTask implement = make_task(\"实现凭证校验\", depends_on(validate));\nTask test = make_task(\"验证成功和失败路径\", depends_on(implement));\nrun_independent_tasks_in_parallel(); run_after_dependencies(test); // 每步都有验收条件", lang: "cpp", block: true)
+  #raw("Task validate = make_task(\"定义登录契约\");\nTask implement = make_task(\"实现凭证校验\", depends_on(validate));\nTask test = make_task(\"验证成功和失败路径\", depends_on(implement));\nrun_independent_tasks_in_parallel();\nrun_after_dependencies(test); // 每步都有验收条件", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -9651,7 +9651,7 @@
   #text("写入时按单条事实或事件记录主体、来源、时间、置信度和适用范围，不要把整段对话一股脑塞进去。读取时按权限、相关性和时效筛选，再放入上下文。还要处理冲突、过期、删除和租户隔离；命中记忆只是候选证据，不能覆盖当前指令或权威业务数据。文件型记忆可先读索引再取主题细节。有些实现会把单次提取与跨任务整合分开，但不能据此推断所有产品都启用相同的记忆机制。〔A10、I90、I91、I92〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("MemoryFact fact{\"user\", \"output_language\", \"Chinese\", source_id, now()};\nif (authorized_to_store(fact) && !conflicts_with_existing(fact)) memory.save_with_provenance(fact);\n// 新任务检索时检查权限、时效和当前明确指令", lang: "cpp", block: true)
+  #raw("MemoryFact fact{\"user\", \"output_language\", \"Chinese\", source_id, now()};\nif (authorized_to_store(fact) && !conflicts_with_existing(fact))\n    memory.save_with_provenance(fact);\n// 新任务检索时检查权限、时效和当前明确指令", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -9662,7 +9662,7 @@
   #text("协作前要约定任务契约、输入输出、共享状态写入权和汇总责任。动态交接应限制目标，并传递目标、证据、未决事项和剩余预算，防止彼此转派。子 Agent 的结果需要验证与消歧，角色不同不代表结果独立可信；共享文件或数据库的并发冲突还要单独设计。〔A11〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("auto a = spawn_agent(task_a, EvidenceList{}); auto b = spawn_agent(task_b, EvidenceList{});\na.wait_with_deadline(deadline); b.wait_with_deadline(deadline);\nreturn supervisor.verify_and_synthesize(a.result(), b.result()); // 仅独立子任务并行", lang: "cpp", block: true)
+  #raw("auto a = spawn_agent(task_a, EvidenceList{});\nauto b = spawn_agent(task_b, EvidenceList{});\na.wait_with_deadline(deadline);\nb.wait_with_deadline(deadline);\nreturn supervisor.verify_and_synthesize(a.result(), b.result()); // 仅独立子任务并行", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -9673,7 +9673,7 @@
   #text("压缩结果应低于触发阈值，摘要也有损，所以保留原始记录供回查。提示缓存只减少重复计算，不会腾出上下文窗口。Responses API 的 compaction 可能包含加密且不透明的 compaction item；使用时应按文档将返回的完整窗口或必要项目继续传递，不能把该项当普通文字摘要改写或任意删除。〔A12、A13、I93〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("if (estimate_tokens(input) + reserved_output > safe_budget) {\n  input = responses_compact(input); // 保留返回的完整状态项，不把其当可编辑摘要\n}\nrequest(input); // 另存任务目标和外部操作ID，便于恢复", lang: "cpp", block: true)
+  #raw("if (estimate_tokens(input) + reserved_output > safe_budget)\n{\n    input = responses_compact(input); // 保留返回的完整状态项，不把其当可编辑摘要\n}\nrequest(input); // 另存任务目标和外部操作ID，便于恢复", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -9684,7 +9684,7 @@
   #text("先拿代表性任务测成功率、延迟、成本和故障恢复，再决定抽象层级。手写仍需实现预算、校验和观测；使用框架仍要理解实际请求、状态变化和边界。两种方式都不替代业务结果验证。〔A1〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("for (Implementation impl : {direct_sdk, agent_framework}) {\n  auto result = evaluate(impl, success_cases, timeout_cases, cancellation_cases);\n  report(result.success_rate, result.p99, result.cost, result.recovery_time);\n} // 按可观测性、权限控制和维护成本选择", lang: "cpp", block: true)
+  #raw("for (Implementation impl : {direct_sdk, agent_framework})\n{\n    auto result = evaluate(impl, success_cases, timeout_cases, cancellation_cases);\n    report(result.success_rate, result.p99, result.cost, result.recovery_time);\n} // 按可观测性、权限控制和维护成本选择", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -9695,7 +9695,7 @@
   #text("信息不足时继续定向读取，信息过多时摘要并保留回查位置。评价的是决策是否正确、遗漏率和成本，而不是塞入多少材料。检索内容与用户指令有冲突时，必须按信任层级处理，不能让仓库或网页内容擅自改变权限。〔A14、A15〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("auto context = read_interface_and_implementation();\ncontext.add(callers_and_tests()); context.add(current_config_and_version());\ncontext.mark_external_documents_untrusted(); // 只放与修改直接相关并可核验的证据", lang: "cpp", block: true)
+  #raw("auto context = read_interface_and_implementation();\ncontext.add(callers_and_tests());\ncontext.add(current_config_and_version());\ncontext.mark_external_documents_untrusted(); // 只放与修改直接相关并可核验的证据", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -9706,7 +9706,7 @@
   #text("恢复时重新读当前代码和配置，核对快照之后的变化；操作结果未知时先查状态。聊天记录不保存环境，重放任务也不保证外部操作只执行一次。还要区分会话恢复、文件回退和远程控制：例如 Claude Code Remote Control 仍在原机器运行，云端新会话可能有独立环境。检查点只覆盖其追踪的文件，不能撤销数据库或网络副作用。〔A4、A16、I95、I94〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("task.persist_checkpoint(git_state, test_revision, pending_operation_ids);\nif (operation.status_unknown()) operation.query_by_id(); // 回退代码不会撤销已发生的外部操作", lang: "cpp", block: true)
+  #raw("task.persist_checkpoint(git_state, test_revision, pending_operation_ids);\nif (operation.status_unknown())\n    operation.query_by_id(); // 回退代码不会撤销已发生的外部操作", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -9728,7 +9728,7 @@
   #text("先补足状态和反馈，再设置连续无进展轮数、总步数、时限和费用上限。触发时可请求缺失信息、换策略、局部重规划或转人工。达到限制后保留已完成结果、失败原因和恢复点；不能只把最大轮数调高，否则只会放大时间与成本。〔A18〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("Signature signature{tool_name, normalize(args), target_id, state.version};\nif (same_signature_without_progress(signature, 3)) stop_and_replan_or_ask_user();\nif (step_budget_exhausted()) persist_resume_state(); // 合法分页需确认游标前进", lang: "cpp", block: true)
+  #raw("Signature signature{tool_name, normalize(args), target_id, state.version};\nif (same_signature_without_progress(signature, 3))\n    stop_and_replan_or_ask_user();\nif (step_budget_exhausted())\n    persist_resume_state(); // 合法分页需确认游标前进", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -9739,7 +9739,7 @@
   #text("模型首个 token 慢要看排队和输入处理，输出慢要看生成长度，工具慢则继续查它的下游。可减少重复检索和无效上下文、并行独立操作、复用稳定结果；优化后同时检查成功率和成本，避免以提前失败换取较短延迟。〔A19、A20〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("Trace trace(task_id); trace.span(\"context_build\", token_count, elapsed);\nfor (const auto& call : model_and_tool_calls) trace.record(call.start, call.end, call.status);\n// 并行跨度按关键路径计算，再比较优化前后成功率与P99", lang: "cpp", block: true)
+  #raw("Trace trace(task_id);\ntrace.span(\"context_build\", token_count, elapsed);\nfor (const auto& call : model_and_tool_calls)\n    trace.record(call.start, call.end, call.status);\n// 并行跨度按关键路径计算，再比较优化前后成功率与P99", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -9750,7 +9750,7 @@
   #text("并行写入要明确文件或对象的所有者，代码任务可用独立工作树和固定基线，由汇总者审查合并。文本无冲突不代表业务兼容，还要跑集成验证。独立上下文不等于独立文件系统：同目录的 Agent 可互相覆盖；Git worktree 隔离工作树和索引，但共享仓库对象，数据库、端口及外部服务仍需单独隔离。〔A21、A11、I96、I97〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("if (lease.generation != current_generation) reject_stale_result();\nWorktree isolated = create_worktree(task_id, current_generation + 1);\nresult = agent_b.resume(last_confirmed_checkpoint); // 发布端用代次隔离迟到写入", lang: "cpp", block: true)
+  #raw("if (lease.generation != current_generation)\n    reject_stale_result();\nWorktree isolated = create_worktree(task_id, current_generation + 1);\nresult = agent_b.resume(last_confirmed_checkpoint); // 发布端用代次隔离迟到写入", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -9761,7 +9761,7 @@
   #text("修改后还要验证业务后置条件：重新读取状态，或确认测试运行对应当前工作区。异步受理、部分完成和结果未知应保持不同状态，模型不能自行把它们升级成成功。报告明确完成范围和证据位置；没有证据的部分就补查或继续执行。〔A22、A23〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("auto receipt = executor.start_deployment(version);\nauto status = executor.query(receipt.id);\nif (status == Accepted || status == Running) report(\"尚未验证完成\");\nif (status == Succeeded && health_check().version == version) report_verified_success();", lang: "cpp", block: true)
+  #raw("auto receipt = executor.start_deployment(version);\nauto status = executor.query(receipt.id);\nif (status == Accepted || status == Running)\n    report(\"尚未验证完成\");\nif (status == Succeeded && health_check().version == version)\n    report_verified_success();", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -9772,7 +9772,7 @@
   #text("如果允许模型写 SQL，应解析语法并限制可操作对象和语句种类。开头是 SELECT 或用了参数绑定，都不能限制任意读取权限。提供准确关系、指标口径和时间范围，并用样例校验查询语义。输出要脱敏；数据库结果是数据，不应被当作更改权限或发起动作的新指令。〔A24、A25〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("auto ast = parse_sql(model_generated_sql);\nif (ast.has_write() || !policy.allows(ast.tables(), ast.columns(), tenant)) reject();\nauto rows = db.execute_with_row_limit_and_timeout(ast, tenant); redact(rows); // 结果仍是数据", lang: "cpp", block: true)
+  #raw("auto ast = parse_sql(model_generated_sql);\nif (ast.has_write() || !policy.allows(ast.tables(), ast.columns(), tenant))\n    reject();\nauto rows = db.execute_with_row_limit_and_timeout(ast, tenant);\nredact(rows); // 结果仍是数据", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -9783,7 +9783,7 @@
   #text("候选规则先在独立回归集上检查质量、安全和成本，再逐步启用并保留回滚与过期删除。单次成功不能证明规则普遍有效；网页或工具里的不可信指令不能直接写成高优先级规则。线上失败应进入审查流程，避免未经验证的自动更新污染后续任务。〔A26、A25〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("auto candidate = derive_rule(repeated_failures, conditions, counterexamples);\nif (regression_set.pass(candidate) && candidate.unauthorized_calls <= baseline) gray_release(candidate);\nelse discard(candidate); // 单次成功不自动改生产策略", lang: "cpp", block: true)
+  #raw("auto candidate = derive_rule(repeated_failures, conditions, counterexamples);\nif (regression_set.pass(candidate) && candidate.unauthorized_calls <= baseline)\n    gray_release(candidate);\nelse\n    discard(candidate); // 单次成功不自动改生产策略", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -9794,7 +9794,7 @@
   #text("网页、仓库和工具返回只能作为数据，不能授权新权限或撤销用户约束。执行端要强制认证和访问控制，拥有某个工具不等于能操作所有资源。审批策略和操作系统沙箱是独立控制：关闭提示不一定关闭隔离；所谓规划模式也不能只靠提示词做到只读。〔A27、A25、I98〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("Approval approval = request_human_approval(hash(action), actor, expiry);\nif (hash(action) != approval.action_hash || now() > approval.expiry) require_new_approval();\nsandbox.enforce_filesystem_network_and_tool_limits(); // 网页或模型文本不能扩大权限", lang: "cpp", block: true)
+  #raw("Approval approval = request_human_approval(hash(action), actor, expiry);\nif (hash(action) != approval.action_hash || now() > approval.expiry)\n    require_new_approval();\nsandbox.enforce_filesystem_network_and_tool_limits(); // 网页或模型文本不能扩大权限", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -9805,7 +9805,7 @@
   #text("固定模型版本、输入和随机种子、降低采样随机性只能减少一部分波动，不能保证跨环境完全复现。历史事件回放、从快照重新请求模型、重放真实工具是三类实验。复现要控制外部依赖和副作用，并多次运行测稳定度。〔A28、A16〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("auto first = replay_with_recorded_inputs(run_a); auto second = replay_with_recorded_inputs(run_b);\ncompare_at_first_divergence(first.trace, second.trace); // 有副作用的真实任务不盲目重放", lang: "cpp", block: true)
+  #raw("auto first = replay_with_recorded_inputs(run_a);\nauto second = replay_with_recorded_inputs(run_b);\ncompare_at_first_divergence(first.trace, second.trace); // 有副作用的真实任务不盲目重放", lang: "cpp", block: true)
 ]
 
 
@@ -9829,7 +9829,7 @@
   #text("两者可以组合：微调模型更好地遵循格式和使用证据，RAG 维护当前事实；也可训练检索器改善召回。RAG 的定义不要求模型完全不训练。最终按事实更新频率、引用要求、业务正确率及总成本比较。〔A34〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("if (fact_changes_often) evidence = retrieval.search(question, current_version);\nelse if (format_is_stable) model = fine_tune(model, format_examples);\nreturn model.answer(question, evidence); // 微调不自动同步知识更新", lang: "cpp", block: true)
+  #raw("if (fact_changes_often)\n    evidence = retrieval.search(question, current_version);\nelse if (format_is_stable)\n    model = fine_tune(model, format_examples);\nreturn model.answer(question, evidence); // 微调不自动同步知识更新", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -9840,7 +9840,7 @@
   #text("重叠能缓解边界截断，却不保证语义完整。可先搜小块，再扩展相邻句或父章节补足上下文。Late Chunking 在长文本编码后按块池化，保留跨块语境，但有模型窗口和计算成本限制。块大小和重叠应通过业务召回及答案评测选择，而不是只凭经验定一个固定比例。〔A37、A38〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("auto hit = search(\"refund period\"); auto parent = document.load_parent(hit.parent_id);\nauto context = expand_with_neighbors_and_table_header(hit, parent);\nanswer_with_source_page(context); // 重叠切块不能替代文档结构", lang: "cpp", block: true)
+  #raw("auto hit = search(\"refund period\");\nauto parent = document.load_parent(hit.parent_id);\nauto context = expand_with_neighbors_and_table_header(hit, parent);\nanswer_with_source_page(context); // 重叠切块不能替代文档结构", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -9851,7 +9851,7 @@
   #text("选择时检查语言、领域、最大长度、部署限制和吞吐，并用真实问题和标注片段测 Recall、排序和延迟。维数更高或排行榜更好不保证业务效果。距离度量、归一化和查询指令要符合模型约定；查询与文档编码必须兼容，换不兼容模型通常要重算整个索引。〔A39、A40〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("auto candidates = vector_index.search(embed(query), top_k=100);\nauto ranked = cross_encoder.rerank(query, candidates);\nreport(recall_at_k(ranked), ndcg_at_k(ranked), p95_latency()); // 更换模型要重建向量", lang: "cpp", block: true)
+  #raw("auto candidates = vector_index.search(embed(query), top_k = 100);\nauto ranked = cross_encoder.rerank(query, candidates);\nreport(recall_at_k(ranked), ndcg_at_k(ranked), p95_latency()); // 更换模型要重建向量", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -9862,7 +9862,7 @@
   #text("容量估算不能只用“条数×向量维度”：还要算图或倒排索引、原文、元数据、缓存和副本。压测时固定硬件、数据分布和过滤条件，同时测召回率、并发吞吐与尾延迟；把权限过滤、持续写入和后台建索引也放进负载。若内存抖动明显，分别检查索引驻留和后台任务；若过滤后结果少，则查过滤成本与候选策略。先测现有数据库或搜索引擎能否达标，再评估独立向量库的更新一致性、扩容与运维成本。〔A41、A42、A43、A36〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("for (IndexConfig config : candidates) {\n  auto result = benchmark(index.build(data, config), queries, permissions);\n  report(result.recall, result.p95, result.throughput, result.memory);\n} // 同时测持续写入和后台合并", lang: "cpp", block: true)
+  #raw("for (IndexConfig config : candidates)\n{\n    auto result = benchmark(index.build(data, config), queries, permissions);\n    report(result.recall, result.p95, result.throughput, result.memory);\n} // 同时测持续写入和后台合并", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -9906,7 +9906,7 @@
   #text("Agentic RAG 则把检索当成可循环调用的工具：模型根据当前证据决定下一条查询，直到证据足够或达到停止条件。循环能够处理一次召回没覆盖的问题，也会放大判断错误、调用费用和等待时间。应限制总调用、轮数和上下文长度；连续几轮没有新增证据时应退出或降级，并规定外部搜索的数据边界。用固定问题集比较单次检索与循环方案的端到端效果。〔A49、A50〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("for (int round = 0; round < 3 && evidence.insufficient(); ++round) {\n  auto more = search(make_query_for_missing_evidence(question, evidence));\n  if (!adds_relevant_evidence(more)) break;\n  evidence.merge_deduplicated(more);\n} // 预算耗尽仍不足就说明无法确认", lang: "cpp", block: true)
+  #raw("for (int round = 0; round < 3 && evidence.insufficient(); ++round)\n{\n    auto more = search(make_query_for_missing_evidence(question, evidence));\n    if (!adds_relevant_evidence(more))\n        break;\n    evidence.merge_deduplicated(more);\n} // 预算耗尽仍不足就说明无法确认", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -9917,7 +9917,7 @@
   #text("微软 GraphRAG 的一种方案会抽取实体关系、划分社区并生成分层摘要，便于回答“这批材料总体讨论了哪些主题”之类全库问题；局部问题则围绕命中实体取邻居和原文。LightRAG 结合低层实体检索、高层关系或主题检索、向量匹配和图邻域来组织证据，不要求同样预生成社区报告。普通片段检索配合查询分解也能解决一部分多跳问题，因此先按问题类型和实测收益决定是否建图，不把论文的成本比例当成普遍保证。〔A51、I99、I100〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("auto entities = graph.find_entities(question);\nauto paths = graph.expand(entities, max_hops=2);\nfor (auto& path : paths) path.attach_source_and_validity();\nanswer_only_from_verified_sources(paths); // 图边也可能是抽取错误", lang: "cpp", block: true)
+  #raw("auto entities = graph.find_entities(question);\nauto paths = graph.expand(entities, max_hops = 2);\nfor (auto& path : paths)\n    path.attach_source_and_validity();\nanswer_only_from_verified_sources(paths); // 图边也可能是抽取错误", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -9928,7 +9928,7 @@
   #text("生成层要检查是否回答了问题、事实是否准确、关键陈述是否得到证据支持，以及引用是否真的指向对应资料。忠实复述错误文档仍然是错答。Ragas 或模型裁判可以辅助批量评测，但需拿人工判断样本校准偏差。线上还应看解决率、纠错、拒答、延迟尾部和总成本；阈值依业务风险制定，任何单一指标都不能独自证明系统可用。〔A52、A48〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("auto hits = retrieve(question, k);\nmetrics.hit_at_k = !hits.relevant().empty(); metrics.recall_at_k = hits.relevant_count() / relevant_count;\nmetrics.mrr = reciprocal_rank(first_relevant_rank(hits));\n// 另评生成事实、引用、拒答和人工抽查", lang: "cpp", block: true)
+  #raw("auto hits = retrieve(question, k);\nmetrics.hit_at_k = !hits.relevant().empty();\nmetrics.recall_at_k = hits.relevant_count() / relevant_count;\nmetrics.mrr = reciprocal_rank(first_relevant_rank(hits));\n// 另评生成事实、引用、拒答和人工抽查", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -9939,7 +9939,7 @@
   #text("发布时先写入新版本，检查数量、抽样内容和检索回归，再切换活动版本或集合别名，最后清理旧数据，避免先删后加造成服务空窗。删除还要同步处理原文、索引和缓存，并确认新查询已看不到它。更换编码模型或切分策略时，可并行构建新索引并保留回滚入口。图增强库还要根据来源依赖重算实体、关系和摘要；被其他有效文档支持的节点不能误删。〔A53、A54、I100、A51〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("auto staged = ingest_new_version(document_id, content_hash, version);\nif (validate_count_and_retrieval(staged)) atomic_switch_active_version(document_id, version);\nelse keep_previous_version_active(); // 失败时旧版继续服务", lang: "cpp", block: true)
+  #raw("auto staged = ingest_new_version(document_id, content_hash, version);\nif (validate_count_and_retrieval(staged))\n    atomic_switch_active_version(document_id, version);\nelse\n    keep_previous_version_active(); // 失败时旧版继续服务", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -9950,7 +9950,7 @@
   #text("如果同一条件下两份有效资料给出相反数字，应把冲突显式传到回答阶段。能够按适用范围和审批规则裁决时，引用有效资料并说明版本；规则不足时，列出分歧、追问必要条件，或交由知识负责人确认，不要让模型猜多数意见。还应记录答案实际引用的文档版本，方便资料被撤回时定位受影响的回答。〔A55、A36〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("auto applicable = filter_by_scope_date_and_permissions(retrieve(question));\nif (contradictory(applicable) && !has_approved_precedence(applicable)) request_clarification();\nelse answer_with_selected_version_and_citations(applicable); // 分数不等于权威等级", lang: "cpp", block: true)
+  #raw("auto applicable = filter_by_scope_date_and_permissions(retrieve(question));\nif (contradictory(applicable) && !has_approved_precedence(applicable))\n    request_clarification();\nelse\n    answer_with_selected_version_and_citations(applicable); // 分数不等于权威等级", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -9972,7 +9972,7 @@
   #text("自主搜索每多读一层就会增加耗时和调用成本，也可能因关键词不准或过早停止漏掉证据。可以先用索引给出可能的文件、位置和版本，再让 Agent 打开原文核验或补查。无论哪种方式，都要确认资料范围、权限和引用完整性，并限制读取量和工具预算。找到几条高分结果或搜过几轮，只能说明执行了搜索，不能证明所有证据都已覆盖。〔A34、A58〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("auto locations = index.search(question, authorized_paths);\nfor (const auto& location : locations) { auto source = read_with_neighbors(location); verify_citation_and_version(source); }\n// 定向检索后再限额查调用者；未读范围不能声称已覆盖", lang: "cpp", block: true)
+  #raw("auto locations = index.search(question, authorized_paths);\nfor (const auto& location : locations)\n{\n    auto source = read_with_neighbors(location);\n    verify_citation_and_version(source);\n}\n// 定向检索后再限额查调用者；未读范围不能声称已覆盖", lang: "cpp", block: true)
 ]
 
 
@@ -9985,7 +9985,7 @@
   #text("工具调用字段和结果回传格式会随接口而不同，因此宿主要保留调用 ID 与结果的对应关系。多个互不依赖的调用可以并行，存在先后依赖时则要等前一步结果。流式响应里参数常以片段到达，不能把未完成的 JSON 当成可执行命令；应按调用标识聚合完整输入，再解析和校验。结构化参数有助于机器读取，但不保证意图正确、事实真实或操作获授权。〔A109、I101〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("auto proposal = model.request_tool_call(question, tool_schema);\nauto args = parse_complete_stream_and_validate(proposal.arguments);\nif (authorization.allows(user, args)) { auto result = tool.execute(args); return model.continue_with(result); }", lang: "cpp", block: true)
+  #raw("auto proposal = model.request_tool_call(question, tool_schema);\nauto args = parse_complete_stream_and_validate(proposal.arguments);\nif (authorization.allows(user, args))\n{\n    auto result = tool.execute(args);\n    return model.continue_with(result);\n}", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -10029,7 +10029,7 @@
   #text("若接口没有原生工具调用，也可尝试文本格式适配，但需自行解析并严格校验，可靠性通常需要额外验证。不同模型版本、模板和解码器可能对工具参数或推理模式有不同限制，应查看对应接口文档并实测完整的“提出调用—执行—回传—继续”流程。若某接口要求携带续接或推理相关字段，应遵循该版本约定，不能假设所有模型都相同。〔A115、A111〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("auto tool_schema = adapt_mcp_tools_to_model(client.discover());\nauto response = model.call(tool_schema, request);\nif (response.has_tool_call()) { auto result = client.call(validate(response.tool_call())); response = model.continue_with(result); }", lang: "cpp", block: true)
+  #raw("auto tool_schema = adapt_mcp_tools_to_model(client.discover());\nauto response = model.call(tool_schema, request);\nif (response.has_tool_call())\n{\n    auto result = client.call(validate(response.tool_call()));\n    response = model.continue_with(result);\n}", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -10040,7 +10040,7 @@
   #text("要区分 Skill 已安装、对模型可见、正文已读取和动作已执行这几种状态。加载只把指令放入上下文，不会改模型权重，也不会自动运行脚本。Skill 描述应说明适用与不适用任务，避免多个条目宽泛重复；用触发和不触发样例检查误选、漏选，并按具体宿主验证上下文管理、压缩保留和脚本授权。〔A114、A116、I103〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("auto registry = scan_skill_descriptions(skill_directory);\nauto selected = model.select_relevant_skill(task, registry);\nif (selected) { auto instructions = read_skill_and_referenced_files(selected); execute_authorized_steps(instructions); }\n// 只看摘要不代表执行过完整步骤", lang: "cpp", block: true)
+  #raw("auto registry = scan_skill_descriptions(skill_directory);\nauto selected = model.select_relevant_skill(task, registry);\nif (selected)\n{\n    auto instructions = read_skill_and_referenced_files(selected);\n    execute_authorized_steps(instructions);\n}\n// 只看摘要不代表执行过完整步骤", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -10051,7 +10051,7 @@
   #text("MCP 主要让一个应用连接工具和上下文服务；A2A 主要让一个 Agent 把工作交给另一个具有独立执行能力的 Agent。被委托的 Agent 内部仍可使用 MCP，因此两者可以配合。卡片中的能力声明不能代替信任判断和权限授予。A2A 的 AgentSkill 是 Agent Card 中描述能力的条目，也不要与含 SKILL.md、供宿主加载的 Skill 包混为一谈；接入时需核实协议及传输版本。〔A117、A118〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("auto card = discover_agent_card(endpoint); verify_identity_and_authorization(card);\nauto task = remote_agent.submit(goal, minimum_required_input);\nwhile (task.running()) task = remote_agent.wait_or_poll(task.id, deadline);\nverify_artifact(task.result()); // accepted不等于completed", lang: "cpp", block: true)
+  #raw("auto card = discover_agent_card(endpoint);\nverify_identity_and_authorization(card);\nauto task = remote_agent.submit(goal, minimum_required_input);\nwhile (task.running())\n    task = remote_agent.wait_or_poll(task.id, deadline);\nverify_artifact(task.result()); // accepted不等于completed", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -10062,7 +10062,7 @@
   #text("按 2025-03-26 规范，Streamable HTTP 取代旧式 HTTP+SSE；2026-07-28 规范将旧传输正式列为弃用并设有迁移期。新旧版本在初始化握手、会话标识和请求元数据方面也有变化，不能只看都用了 SSE 就假定兼容。实际集成应明确双方协商的协议版和 SDK 版本；stdio 的子进程隔离、远程服务认证和网络访问仍需单独管理。〔A119、A120〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("if (server_is_local) transport = StdioTransport(child_process);\nelse transport = StreamableHttpTransport(endpoint, authenticated_session);\ntransport.validate_protocol_version(); // 断线恢复和认证按协商版本处理", lang: "cpp", block: true)
+  #raw("if (server_is_local)\n    transport = StdioTransport(child_process);\nelse\n    transport = StreamableHttpTransport(endpoint, authenticated_session);\ntransport.validate_protocol_version(); // 断线恢复和认证按协商版本处理", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -10073,7 +10073,7 @@
   #text("缓存也必须按语义边界隔离。缓存键应考虑租户、权限、模型与提示版本、资料时效及请求参数；个性化结果或实时状态不能只因向量相似就复用。网关要观测上游错误、尾延迟和总成本，并限制敏感日志及重试放大。流式内容一旦已发送给用户，中途透明切换通常难以拼接，需明确失败和恢复策略。〔A121〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("auto key = hash(tenant, permissions, model_version, prompt_version, request.parameters);\nif (request.is_cacheable() && cache.contains(key)) return cache.get(key);\nauto result = model_gateway.route(request); if (result.complete()) cache.put_with_ttl(key, result);", lang: "cpp", block: true)
+  #raw("auto key = hash(tenant, permissions, model_version, prompt_version, request.parameters);\nif (request.is_cacheable() && cache.contains(key))\n    return cache.get(key);\nauto result = model_gateway.route(request);\nif (result.complete())\n    cache.put_with_ttl(key, result);", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -10084,7 +10084,7 @@
   #text("候选不足时可追问，或按规则逐步扩大搜索范围；高风险操作不能因为排在第一名就自动执行。评测时分开看候选召回率、模型选择、无工具时是否正确拒绝、参数准确率和最终任务成功率，同时观察定义长度、延迟与越权暴露。只优化提示 token 数，可能把真正需要的工具也一并过滤掉。〔A122、A112〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("auto authorized = filter_tools_by_role(tool_registry, caller);\nauto candidates = rerank(retrieve_relevant_tools(task, authorized));\nauto proposal = model.choose(candidates); authorize_again_before_execution(proposal);", lang: "cpp", block: true)
+  #raw("auto authorized = filter_tools_by_role(tool_registry, caller);\nauto candidates = rerank(retrieve_relevant_tools(task, authorized));\nauto proposal = model.choose(candidates);\nauthorize_again_before_execution(proposal);", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -10095,7 +10095,7 @@
   #text("写操作需在执行前保存稳定幂等键和调用状态。超时后先查真实执行记录，再决定重试、恢复或交人工处理；超时不能说明操作一定没发生。回传给模型的错误应是可继续规划的结构化信息，不泄露机密。达到预算或轮数上限时应明确失败或待处理。取消调用也不会自动撤销已完成副作用；外部完成状态应以可核验记录和产物为准。〔A112、A123、I102〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("persist_call_state(idempotency_key, CallState::pending);\nauto result = tool.execute(args, idempotency_key);\nif (result.timed_out()) result = query_actual_status(idempotency_key);\n// 状态未知时不伪造成功，也不盲目重复不可逆操作", lang: "cpp", block: true)
+  #raw("persist_call_state(idempotency_key, CallState::pending);\nauto result = tool.execute(args, idempotency_key);\nif (result.timed_out())\n    result = query_actual_status(idempotency_key);\n// 状态未知时不伪造成功，也不盲目重复不可逆操作", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -10106,7 +10106,7 @@
   #text("宿主调用命令时应把参数作为独立数组传递，避免把模型生成文本拼成 shell 命令；还要校验路径和业务输入。单一宿主适配成熟 CLI 往往最省事；多个兼容宿主希望复用并统一发现和调用时，可在 CLI 外加 MCP Server。CLI 可以访问远程 API，MCP 也可以通过 stdio 使用本地进程，所以应根据复用范围、部署方式和维护成本选择。〔A124、A119〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("ProcessResult result = spawn(argv_array, shell=false, timeout=deadline);\nif (result.exit_code != 0) return structured_error(result.stderr);\nauto status = parse_and_verify(result.stdout); // 多宿主复用后可再封装为MCP工具", lang: "cpp", block: true)
+  #raw("ProcessResult result = spawn(argv_array, shell = false, timeout = deadline);\nif (result.exit_code != 0)\n    return structured_error(result.stderr);\nauto status = parse_and_verify(result.stdout); // 多宿主复用后可再封装为MCP工具", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -10117,7 +10117,7 @@
   #text("普通容器仍共享宿主内核，隔离强度需按威胁模型评估；更强的用户态内核或虚拟机可能增加启动和资源成本。完成后只导出允许的产物，校验路径、大小和业务内容，再清理临时环境并保存执行证据。隔离能限制程序影响范围，却不能证明输出计算正确，也不能替代业务验收。〔A125、N226〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("auto sandbox = create_isolated_workspace(read_only_inputs, network=false, cpu_limit, memory_limit);\nauto process = sandbox.run(generated_code, timeout);\nif (process.cancelled() || process.timed_out()) sandbox.kill_process_group();\nvalidate_allowlisted_artifacts(process.outputs()); sandbox.destroy(); // 沙箱不证明结果正确", lang: "cpp", block: true)
+  #raw("auto sandbox =\n    create_isolated_workspace(read_only_inputs, network = false, cpu_limit, memory_limit);\nauto process = sandbox.run(generated_code, timeout);\nif (process.cancelled() || process.timed_out())\n    sandbox.kill_process_group();\nvalidate_allowlisted_artifacts(process.outputs());\nsandbox.destroy(); // 沙箱不证明结果正确", lang: "cpp", block: true)
 ]
 
 
@@ -10409,7 +10409,7 @@
   #text("所以应按任务的步骤和可验证性选择方式：重复样板适合补全，讨论设计或理解单段代码适合对话，需要跨文件定位且能用测试验收的任务才适合交给 Agent。Agent 能执行命令，不等于它理解了所有业务，也不代表结果天然安全；人仍需检查差异、确认测试覆盖真实需求并决定是否交付。代码写得多、界面里有聊天框，都不能单独说明系统属于哪一类。〔A29〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("auto completion = request_local_code_candidate(context); // 人决定是否采纳\nif (needs_repository_changes) agent.modify_scoped_files();\nreview(diff); run_acceptance_tests(); // Agent编程必须检查实际差异和结果", lang: "cpp", block: true)
+  #raw("auto completion = request_local_code_candidate(context); // 人决定是否采纳\nif (needs_repository_changes)\n    agent.modify_scoped_files();\nreview(diff);\nrun_acceptance_tests(); // Agent编程必须检查实际差异和结果", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -10420,7 +10420,7 @@
   #text("Vibe Coding 借助快速生成和运行反馈探索方向，适合低成本试做、需求尚在变化的阶段；规格驱动先写清可观察的契约，再拆计划、任务和测试，便于长期维护、协作与追责。它们可先探索后收敛：把原型中确认的行为写成验收项，继续迭代时同步规格、实现和测试。规格不是文件名清单或一次写死的流程，更不能因为写得详细就证明实现正确。较大任务还应让需求、澄清、计划、任务和测试彼此可追溯，并优先澄清会影响数据或后续决策的高风险歧义。〔A9〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("EXPECT_EQ(place_order(item, 2), InventoryError::insufficient);\nEXPECT_EQ(database.order_count(), 0); EXPECT_EQ(inventory.quantity(item), 1);\n// 规格同时写出结果和禁止副作用，另测成功路径", lang: "cpp", block: true)
+  #raw("EXPECT_EQ(place_order(item, 2), InventoryError::insufficient);\nEXPECT_EQ(database.order_count(), 0);\nEXPECT_EQ(inventory.quantity(item), 1);\n// 规格同时写出结果和禁止副作用，另测成功路径", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -10442,7 +10442,7 @@
   #text("判断正确性要依靠独立的契约和证据：编译、静态检查可发现部分结构错误，针对性测试与集成运行用于验证行为和组合边界。若测试直接复制实现中的算法，二者可能一起错；应根据需求手工推导预期结果。最终结论要说明审查的版本、真实运行过的命令和结果，也要指出未验证的环境。模型自称正确、代码外观看起来合理或测试全绿，都不能单独构成充分保证。〔A23、A22〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("EXPECT_THROW(pay(balance=10, amount=11), InsufficientFunds);\nEXPECT_EQ(balance, 10); // 失败时不能产生扣款副作用\n// 审查校验顺序、删除的检查和最小反例", lang: "cpp", block: true)
+  #raw("EXPECT_THROW(pay(balance = 10, amount = 11), InsufficientFunds);\nEXPECT_EQ(balance, 10); // 失败时不能产生扣款副作用\n// 审查校验顺序、删除的检查和最小反例", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -10464,7 +10464,7 @@
   #text("单元测试适合隔离局部逻辑，集成测试验证协议和组件组合，模拟依赖时也要还原真实超时、重试或失败语义。覆盖率只说明执行经过哪些代码，变异测试可故意改动条件来检查断言是否敏感，但需排除不改变行为的等价变异。重要需求应能追溯到验证它的用例。迁移旧系统时，若规则要求兼容，可对同一输入比较新旧结果；若业务规则已变，应按新规格制定预期，不能把旧程序自动当作正确答案。〔A32、A22、I104〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("TEST(Order, RejectsQuantityAboveInventory) {\n  EXPECT_EQ(place_order(item, 2), InventoryError::insufficient);\n  EXPECT_EQ(order_count(), 0); EXPECT_EQ(stock(item), 1); // 验证状态与副作用\n}", lang: "cpp", block: true)
+  #raw("TEST(Order, RejectsQuantityAboveInventory)\n{\n    EXPECT_EQ(place_order(item, 2), InventoryError::insufficient);\n    EXPECT_EQ(order_count(), 0);\n    EXPECT_EQ(stock(item), 1); // 验证状态与副作用\n}", lang: "cpp", block: true)
 ]
 
 #block(width: 100%, breakable: true, above: 0.9em, below: 0.9em)[
@@ -10475,7 +10475,7 @@
   #text("异步重建时还要防止竞态：旧任务可能比新任务更晚结束，因此发布结果前应再次确认输入指纹仍是最新值。搜索或语义检索只提供候选位置，真正修改前要回到当前源码，检查定义、调用方和测试。缓存与源码版本一致只能说明材料较新，不能证明摘要理解正确；涉及行为的判断仍需由代码路径和运行证据支持。〔A30、A33〕", size: 9.5pt)
 
   #text("代码示例", size: 9pt, weight: "semibold", fill: rgb("#526778"))
-  #raw("auto before = hash_file(path); auto summary = index_source(path);\nif (hash_file(path) != before) discard(summary); // 源码在索引期间变化，拒绝发布旧摘要\nelse store_summary(path, before, summary);", lang: "cpp", block: true)
+  #raw("auto before = hash_file(path);\nauto summary = index_source(path);\nif (hash_file(path) != before)\n    discard(summary); // 源码在索引期间变化，拒绝发布旧摘要\nelse\n    store_summary(path, before, summary);", lang: "cpp", block: true)
 ]
 
 #heading(level: 2, outlined: true)[#text("20.7 编程 Agent 扩展与持续运行", size: 13pt, weight: "semibold", fill: rgb("#000000"))]
